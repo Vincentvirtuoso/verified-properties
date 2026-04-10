@@ -1,0 +1,55 @@
+import { type Property } from "@/types/property";
+
+export const featuredProperties: Property[] = [
+  {
+    _id: "prop_001",
+    title: "4 BEDROOM TERRACED DUPLEX FOR RENT AT GADUWA ABUJA",
+    location:
+      "By Mobil Filling Station, Off Lokogoma Road, Gaduwa District, Abuja",
+    price: "₦6,000,000",
+    type: "Terraced Duplex",
+    bedrooms: 4,
+    bathrooms: 5,
+    listingType: "Rent",
+    agent: "Eyitayo Olowoloba",
+    timeAgo: "2 hours ago",
+  },
+  {
+    _id: "prop_002",
+    title: "2 BEDROOM EVENT CENTER FOR RENT",
+    location: "Asokoro, Municipal Area Council, Abuja",
+    price: "₦6,000,000",
+    type: "Event Center",
+    bedrooms: 2,
+    bathrooms: 2,
+    listingType: "Rent",
+    agent: "James Bond",
+    timeAgo: "16 days ago",
+    image:
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
+  },
+  {
+    _id: "prop_003",
+    title: "4 BEDROOM HOUSE FOR SALE AT MAITAMA",
+    location: "Maitama, Abuja",
+    price: "₦900,000,000",
+    type: "House",
+    bedrooms: 4,
+    bathrooms: 5,
+    listingType: "Sale",
+    agent: "Genesis Solos",
+    timeAgo: "2 months ago",
+  },
+  {
+    _id: "prop_004",
+    title: "5 BEDROOM SEMI-DETACHED DUPLEX FOR RENT AT KATAMPE",
+    location: "Patrick Yakowa St, Gwarinpa, Abuja",
+    price: "₦12,000,000",
+    type: "Semi-Detached Duplex",
+    bedrooms: 5,
+    bathrooms: 6,
+    listingType: "Rent",
+    agent: "Eyitayo Olowoloba",
+    timeAgo: "a day ago",
+  },
+];
