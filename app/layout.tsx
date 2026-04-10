@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import {
-  Baloo_2,
-  Geist,
-  Geist_Mono,
-  Inter,
-  Montserrat,
-  Ubuntu_Sans,
-} from "next/font/google";
+import { Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
 
-const inter = Montserrat({
-  variable: "--font-inter-sans",
+const lato = Lato({
+  variable: "--font-lato-sans",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -32,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${lato.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
