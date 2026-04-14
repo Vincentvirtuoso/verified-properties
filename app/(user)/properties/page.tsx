@@ -1,4 +1,3 @@
-// app/properties/page.tsx
 "use client";
 
 import {
@@ -12,7 +11,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { properties } from "@/data/properties";
 import { PropertyCard } from "@/components/cards/PropertyCard";
 import { AdvancedFilters } from "@/components/common/AdvancedFilters";
-import { LuFilter, LuX } from "react-icons/lu";
+import { LuFilter, LuX, LuSearch } from "react-icons/lu";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type ListingType = "all" | "rent" | "sale";
 type SortOption = "newest" | "price-low" | "price-high";
@@ -70,8 +70,94 @@ export default function PropertiesPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const currentType = (searchParams.get("type") as ListingType) || "all";
+  const searchParam = searchParams.get("search") || "";
+
+  // Debounce search to avoid excessive filtering
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Initialize search from URL
+  useEffect(() => {
+    if (searchParam && !searchQuery) {
+      setSearchQuery(searchParam);
+    }
+  }, [searchParam]);
+
+  // Generate search suggestions
+  useEffect(() => {
+    if (debouncedSearchQuery.length >= 2) {
+      const suggestions = new Set<string>();
+
+      properties.forEach((property) => {
+        const searchLower = debouncedSearchQuery.toLowerCase();
+
+        // Add matching titles
+        if (property.title.toLowerCase().includes(searchLower)) {
+          suggestions.add(property.title);
+        }
+
+        // Add matching locations
+        if (property.location.toLowerCase().includes(searchLower)) {
+          suggestions.add(property.location);
+        }
+
+        // Add matching property types
+        if (property.type.toLowerCase().includes(searchLower)) {
+          suggestions.add(property.type);
+        }
+      });
+
+      setSearchSuggestions(Array.from(suggestions).slice(0, 5));
+      setShowSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [debouncedSearchQuery]);
+
+  // Update URL with search query
+  const updateSearchParams = useCallback(
+    (query: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      startTransition(() => {
+        if (query) {
+          params.set("search", query);
+        } else {
+          params.delete("search");
+        }
+        router.push(`/properties?${params.toString()}`, { scroll: false });
+      });
+    },
+    [searchParams, router],
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    updateSearchParams(value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    updateSearchParams(suggestion);
+    setShowSuggestions(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    updateSearchParams("");
+    setSearchSuggestions([]);
+  };
 
   useEffect(() => {
     let count = 0;
@@ -90,20 +176,44 @@ export default function PropertiesPage() {
     )
       count++;
     if (filters.agent !== "all") count++;
+    if (searchQuery) count++;
     setActiveFiltersCount(count);
-  }, [filters]);
+  }, [filters, searchQuery]);
 
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
+      // Search filter
+      if (debouncedSearchQuery) {
+        const searchLower = debouncedSearchQuery.toLowerCase();
+        const searchableText = [
+          property.title,
+          property.location,
+          property.type,
+          property.description,
+          property.agent?.name,
+          property.agent?.company,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Type filter
       if (currentType !== "all" && property.listingType !== currentType)
         return false;
 
+      // Price filter
       if (
         property.price < filters.priceRange[0] ||
         property.price > filters.priceRange[1]
       )
         return false;
 
+      // Bedrooms filter
       if (filters.bedrooms !== "any") {
         const bedroomNum = parseInt(filters.bedrooms);
         if (filters.bedrooms === "5+") {
@@ -113,6 +223,7 @@ export default function PropertiesPage() {
         }
       }
 
+      // Bathrooms filter
       if (filters.bathrooms !== "any") {
         const bathroomNum = parseInt(filters.bathrooms);
         if (filters.bathrooms === "5+") {
@@ -122,6 +233,7 @@ export default function PropertiesPage() {
         }
       }
 
+      // Property type filter
       if (
         filters.propertyType.length > 0 &&
         !filters.propertyType.includes(property.type)
@@ -129,6 +241,7 @@ export default function PropertiesPage() {
         return false;
       }
 
+      // Location filter
       if (
         filters.location !== "all" &&
         property.location !== filters.location
@@ -136,11 +249,13 @@ export default function PropertiesPage() {
         return false;
       }
 
+      // Area filter
       if (property.area) {
         if (property.area < filters.minArea || property.area > filters.maxArea)
           return false;
       }
 
+      // Agent filter
       if (filters.agent !== "all" && property.agent?.name !== filters.agent) {
         return false;
       }
@@ -163,7 +278,7 @@ export default function PropertiesPage() {
     });
 
     return { filteredProperties: filtered, sortedProperties: sorted };
-  }, [currentType, sortBy, filters]);
+  }, [currentType, sortBy, filters, debouncedSearchQuery]);
 
   const handleTypeChange = (type: ListingType) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -188,14 +303,38 @@ export default function PropertiesPage() {
 
   const clearAllFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
+    clearSearch();
   }, []);
 
-  const removeFilter = useCallback((filterKey: keyof FilterState) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterKey]: DEFAULT_FILTERS[filterKey],
-    }));
-  }, []);
+  const removeFilter = useCallback(
+    (filterKey: keyof FilterState | "search") => {
+      if (filterKey === "search") {
+        clearSearch();
+      } else {
+        setFilters((prev) => ({
+          ...prev,
+          [filterKey]: DEFAULT_FILTERS[filterKey],
+        }));
+      }
+    },
+    [],
+  );
+
+  // Highlight matching text in suggestions
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="bg-violet-100 text-violet-900 font-medium">
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -240,6 +379,67 @@ export default function PropertiesPage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-2xl">
+            <form onSubmit={handleSearchSubmit}>
+              <div className="relative">
+                <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() =>
+                    searchSuggestions.length > 0 && setShowSuggestions(true)
+                  }
+                  placeholder="Search by location, property type, or keywords..."
+                  className="w-full pl-12 pr-12 py-3 bg-white border border-gray-200 rounded-2xl text-base
+                           focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-transparent
+                           shadow-sm transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <LuX className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Search Suggestions */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute z-50 mt-2 w-full max-w-2xl bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                {searchSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <LuSearch className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-700">
+                        {highlightMatch(suggestion, debouncedSearchQuery)}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Click outside to close suggestions */}
+            {showSuggestions && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowSuggestions(false)}
+              />
+            )}
+          </div>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-6">
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24">
@@ -270,6 +470,12 @@ export default function PropertiesPage() {
                     </span>{" "}
                     {sortedProperties.length === 1 ? "property" : "properties"}{" "}
                     found
+                    {debouncedSearchQuery && (
+                      <span className="text-gray-500">
+                        {" "}
+                        for "{debouncedSearchQuery}"
+                      </span>
+                    )}
                   </p>
 
                   <button
@@ -332,6 +538,12 @@ export default function PropertiesPage() {
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {searchQuery && (
+                      <FilterTag
+                        label={`Search: ${searchQuery}`}
+                        onRemove={() => removeFilter("search")}
+                      />
+                    )}
                     {filters.location !== "all" && (
                       <FilterTag
                         label={`Location: ${filters.location.split(",")[0]}`}
@@ -404,13 +616,15 @@ export default function PropertiesPage() {
                     aria-label="No properties found"
                   >
                     <div className="text-6xl mb-6" aria-hidden="true">
-                      🏠
+                      🔍
                     </div>
                     <h3 className="text-2xl font-semibold text-gray-800">
                       No properties found
                     </h3>
                     <p className="text-gray-500 mt-3 mb-6">
-                      Try adjusting your filters or check back later.
+                      {searchQuery
+                        ? `No results for "${searchQuery}". Try different keywords or adjust your filters.`
+                        : "Try adjusting your filters or check back later."}
                     </p>
                     <button
                       onClick={clearAllFilters}

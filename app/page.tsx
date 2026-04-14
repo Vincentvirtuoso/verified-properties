@@ -52,7 +52,7 @@ export default function HomePage() {
       e.preventDefault();
       if (searchQuery.trim()) {
         console.log("Searching for:", searchQuery);
-        router.push(`/properties?q=${encodeURIComponent(searchQuery)}`);
+        router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
       }
     },
     [searchQuery],
