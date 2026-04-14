@@ -6,7 +6,8 @@ import { Navbar } from "@/components/common/Navbar";
 import { PropertyCard } from "@/components/cards/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { FaSearch, FaArrowDown } from "react-icons/fa";
-import { featuredProperties } from "@/data/properties";
+import { properties } from "@/data/properties";
+import { useRouter } from "next/navigation";
 
 const FILTER_OPTIONS = ["All", "For Sale", "For Rent", "Short Stay"] as const;
 type FilterType = (typeof FILTER_OPTIONS)[number];
@@ -24,6 +25,12 @@ export default function HomePage() {
     "idle" | "success" | "error"
   >("idle");
   const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const router = useRouter();
+
+  const featuredProperties = properties.filter(
+    (property) => property.isFeatured,
+  );
 
   const filteredProperties = useMemo(() => {
     if (activeFilter === "All") return featuredProperties;
@@ -45,7 +52,7 @@ export default function HomePage() {
       e.preventDefault();
       if (searchQuery.trim()) {
         console.log("Searching for:", searchQuery);
-        // router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+        router.push(`/properties?q=${encodeURIComponent(searchQuery)}`);
       }
     },
     [searchQuery],
@@ -215,7 +222,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white py-16 sm:py-20 border-t">
+      <section className="bg-white py-16 sm:py-20 border-t border-border">
         <div className="max-w-2xl mx-auto text-center px-4 sm:px-6">
           <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-violet-700 to-orange-500 bg-clip-text text-transparent">
             Stay Updated
@@ -322,7 +329,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-sm">
+          <div className="border-t border-gray-700 mt-12 pt-8 text-center text-sm">
             <p>
               © VERIFIED PROPERTIES {new Date().getFullYear()}. All Rights
               Reserved.

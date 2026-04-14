@@ -7,8 +7,8 @@ import { Button } from "../ui/Button";
 import { LuMenu as Menu, LuX } from "react-icons/lu";
 
 const navLinks = [
-  { href: "/buy", label: "Buy" },
-  { href: "/rent", label: "Rent" },
+  { href: "/properties?type=sale", label: "Buy" },
+  { href: "/properties?type=rent", label: "Rent" },
   { href: "/distress", label: "Distress Sale" },
   { href: "/brokers", label: "Find Broker" },
   { href: "/news", label: "News & Insight" },
@@ -45,17 +45,15 @@ export function Navbar() {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-white/95 backdrop-blur-md border-b shadow-sm"
-            : "bg-white border-b"
+        className={`sticky top-0 z-50 transition-all duration-300 border-b border-border ${
+          isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-white"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             <Link
               href="/"
-              className="flex items-center space-x-1 text-2xl font-bold transition-opacity hover:opacity-80"
+              className="flex items-center text-2xl font-bold transition-opacity hover:opacity-80"
               aria-label="VerifiedProperties Home"
             >
               <span className="text-violet-700">Verified</span>
@@ -133,7 +131,7 @@ export function Navbar() {
                 ))}
               </div>
 
-              <div className="mt-8 pt-6 border-t space-y-3">
+              <div className="mt-8 pt-6 border-t border-border space-y-3">
                 <Link href="/login" className="block">
                   <Button variant="outline" className="w-full">
                     Sign In
