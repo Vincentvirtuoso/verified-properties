@@ -46,10 +46,25 @@ const AGENTS = [
   ...new Set(properties.map((p) => p.agent?.name).filter(Boolean)),
 ].sort() as string[];
 
-const PRICE_MIN = Math.min(...properties.map((p) => p.price));
-const PRICE_MAX = Math.max(...properties.map((p) => p.price));
-const AREA_MIN = Math.min(...properties.map((p) => p.area || 0));
-const AREA_MAX = Math.max(...properties.map((p) => p.area || 0));
+const PRICE_MIN = useMemo(
+  () => Math.min(...properties.map((p) => p.price || 0)),
+  []
+);
+
+const PRICE_MAX = useMemo(
+  () => Math.max(...properties.map((p) => p.price || 0)),
+  []
+);
+
+const AREA_MIN = useMemo(
+  () => Math.min(...properties.map((p) => p.area || 0)),
+  []
+);
+
+const AREA_MAX = useMemo(
+  () => Math.max(...properties.map((p) => p.area || 0)),
+  []
+);
 
 const DEFAULT_FILTERS: FilterState = {
   priceRange: [PRICE_MIN, PRICE_MAX],
