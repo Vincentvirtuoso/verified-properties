@@ -19,6 +19,7 @@ export type PropertyImage = {
 
 export type Property = {
   _id: string;
+  slug: string;
 
   title: string;
   description?: string;
