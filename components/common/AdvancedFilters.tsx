@@ -69,7 +69,6 @@ export function AdvancedFilters({
       </div>
 
       <div className="space-y-4">
-        {/* Price Range */}
         <FilterSection
           title="Price Range"
           expanded={expandedSections.price}
@@ -140,7 +139,6 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
-        {/* Location */}
         <FilterSection
           title="Location"
           expanded={expandedSections.location}
@@ -162,7 +160,6 @@ export function AdvancedFilters({
           </select>
         </FilterSection>
 
-        {/* Property Type */}
         <FilterSection
           title="Property Type"
           expanded={expandedSections.propertyType}
@@ -191,7 +188,6 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
-        {/* Rooms */}
         <FilterSection
           title="Rooms & Beds"
           expanded={expandedSections.rooms}
@@ -235,7 +231,6 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
-        {/* Area */}
         <FilterSection
           title="Area (m²)"
           expanded={expandedSections.area}
@@ -276,7 +271,6 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
-        {/* Agent */}
         <FilterSection
           title="Listed By"
           expanded={expandedSections.agent}

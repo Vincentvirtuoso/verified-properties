@@ -48,8 +48,8 @@ const AGENTS = [
 
 const PRICE_MIN = Math.min(...properties.map((p) => p.price || 0));
 const PRICE_MAX = Math.max(...properties.map((p) => p.price || 0));
-const AREA_MIN  = Math.min(...properties.map((p) => p.area  || 0));
-const AREA_MAX  = Math.max(...properties.map((p) => p.area  || 0));
+const AREA_MIN = Math.min(...properties.map((p) => p.area || 0));
+const AREA_MAX = Math.max(...properties.map((p) => p.area || 0));
 
 const DEFAULT_FILTERS: FilterState = {
   priceRange: [PRICE_MIN, PRICE_MAX],
@@ -77,17 +77,14 @@ export default function PropertiesPage() {
   const currentType = (searchParams.get("type") as ListingType) || "all";
   const searchParam = searchParams.get("search") || "";
 
-  // Debounce search to avoid excessive filtering
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Initialize search from URL
   useEffect(() => {
     if (searchParam && !searchQuery) {
       setSearchQuery(searchParam);
     }
   }, [searchParam]);
 
-  // Generate search suggestions
   useEffect(() => {
     if (debouncedSearchQuery.length >= 2) {
       const suggestions = new Set<string>();
@@ -95,17 +92,14 @@ export default function PropertiesPage() {
       properties.forEach((property) => {
         const searchLower = debouncedSearchQuery.toLowerCase();
 
-        // Add matching titles
         if (property.title.toLowerCase().includes(searchLower)) {
           suggestions.add(property.title);
         }
 
-        // Add matching locations
         if (property.location.toLowerCase().includes(searchLower)) {
           suggestions.add(property.location);
         }
 
-        // Add matching property types
         if (property.type.toLowerCase().includes(searchLower)) {
           suggestions.add(property.type);
         }
@@ -119,7 +113,6 @@ export default function PropertiesPage() {
     }
   }, [debouncedSearchQuery]);
 
-  // Update URL with search query
   const updateSearchParams = useCallback(
     (query: string) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -182,7 +175,6 @@ export default function PropertiesPage() {
 
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
-      // Search filter
       if (debouncedSearchQuery) {
         const searchLower = debouncedSearchQuery.toLowerCase();
         const searchableText = [
@@ -202,18 +194,15 @@ export default function PropertiesPage() {
         }
       }
 
-      // Type filter
       if (currentType !== "all" && property.listingType !== currentType)
         return false;
 
-      // Price filter
       if (
         property.price < filters.priceRange[0] ||
         property.price > filters.priceRange[1]
       )
         return false;
 
-      // Bedrooms filter
       if (filters.bedrooms !== "any") {
         const bedroomNum = parseInt(filters.bedrooms);
         if (filters.bedrooms === "5+") {
@@ -223,7 +212,6 @@ export default function PropertiesPage() {
         }
       }
 
-      // Bathrooms filter
       if (filters.bathrooms !== "any") {
         const bathroomNum = parseInt(filters.bathrooms);
         if (filters.bathrooms === "5+") {
@@ -233,7 +221,6 @@ export default function PropertiesPage() {
         }
       }
 
-      // Property type filter
       if (
         filters.propertyType.length > 0 &&
         !filters.propertyType.includes(property.type)
@@ -241,7 +228,6 @@ export default function PropertiesPage() {
         return false;
       }
 
-      // Location filter
       if (
         filters.location !== "all" &&
         property.location !== filters.location
@@ -249,13 +235,11 @@ export default function PropertiesPage() {
         return false;
       }
 
-      // Area filter
       if (property.area) {
         if (property.area < filters.minArea || property.area > filters.maxArea)
           return false;
       }
 
-      // Agent filter
       if (filters.agent !== "all" && property.agent?.name !== filters.agent) {
         return false;
       }
@@ -320,7 +304,6 @@ export default function PropertiesPage() {
     [],
   );
 
-  // Highlight matching text in suggestions
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
 
@@ -379,7 +362,6 @@ export default function PropertiesPage() {
           </div>
         </div>
 
-        {/* Search Bar */}
         <div className="mb-6">
           <div className="relative max-w-2xl">
             <form onSubmit={handleSearchSubmit}>
@@ -410,7 +392,6 @@ export default function PropertiesPage() {
               </div>
             </form>
 
-            {/* Search Suggestions */}
             {showSuggestions && searchSuggestions.length > 0 && (
               <div className="absolute z-50 mt-2 w-full max-w-2xl bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
                 {searchSuggestions.map((suggestion, index) => (
@@ -420,7 +401,7 @@ export default function PropertiesPage() {
                     className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
                   >
                     <div className="flex items-center gap-3">
-                      <LuSearch className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <LuSearch className="w-4 h-4 text-gray-400 shrink-0" />
                       <span className="text-gray-700">
                         {highlightMatch(suggestion, debouncedSearchQuery)}
                       </span>
@@ -430,7 +411,6 @@ export default function PropertiesPage() {
               </div>
             )}
 
-            {/* Click outside to close suggestions */}
             {showSuggestions && (
               <div
                 className="fixed inset-0 z-40"
@@ -441,7 +421,7 @@ export default function PropertiesPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="hidden lg:block w-80 flex-shrink-0">
+          <aside className="hidden lg:block w-80 shrink-0">
             <div className="sticky top-24">
               <AdvancedFilters
                 filters={filters}
@@ -719,8 +699,8 @@ function MobileFilterDrawer({
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Filters</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-semibold">Apply filters</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
