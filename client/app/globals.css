@@ -320,7 +320,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--neutral-100);
+  background: var(--neutral-500);
   border-radius: 9999px;
 }
 
@@ -329,7 +329,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--neutral-400);
+  background: var(--primary);
   border-radius: 9999px;
 }
 
