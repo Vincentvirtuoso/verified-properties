@@ -130,12 +130,11 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSearch}>
             <div className="bg-card rounded-2xl shadow-xl p-2 flex items-center border border-border">
-              <FaSearch className="text-muted-foreground ml-4 mr-3 text-xl shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search properties, locations, keywords..."
+                placeholder="Search properties, locations..."
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-lg py-3"
                 aria-label="Property search"
               />
