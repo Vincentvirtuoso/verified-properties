@@ -20,7 +20,7 @@ import {
   LuHouse,
 } from "react-icons/lu";
 import { FiGrid } from "react-icons/fi";
-import { imageLoader } from "@/components/cards/helpers";
+import { imageLoader } from "@/utils/helpers";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, BreadcrumbSchema } from "@/components/common/BreadCrumbs";
 import {

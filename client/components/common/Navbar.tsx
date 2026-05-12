@@ -8,12 +8,13 @@ import { LuMenu, LuUser } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { Brandmark } from "./BrandMark";
 
 const navLinks = [
   { href: "/properties?type=sale", label: "Buy" },
   { href: "/properties?type=rent", label: "Rent" },
   { href: "/brokers", label: "JV Insist Pro" },
-  { href: "/learn-real-estate", label: "Learn Real Estate" },
+  { href: "/academy", label: "Learn Real Estate" },
   { href: "/agent/properties/new", label: "Sell & Let" },
 ];
 
@@ -59,23 +60,7 @@ export function Navbar() {
                 <LuMenu className="w-6 h-6" />
               </button>
             )}
-            {!isDesktop ||
-              (isCollapsed && (
-                <Link
-                  href="/"
-                  className="flex items-center group"
-                  aria-label="VerifiedProperties Home"
-                >
-                  <span className="text-xl md:text-2xl font-extrabold tracking-tight">
-                    <span className="text-primary group-hover:text-primary/90 transition-colors">
-                      Verified
-                    </span>
-                    <span className="text-orange-500 group-hover:text-orange-600 transition-colors">
-                      Properties
-                    </span>
-                  </span>
-                </Link>
-              ))}
+            <Brandmark taglineOnly={isDesktop && !isCollapsed} />
           </div>
 
           <div className="hidden lg:flex items-center bg-muted/50 rounded-full px-1 py-1 border border-foreground">

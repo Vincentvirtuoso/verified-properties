@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import {
@@ -18,9 +19,9 @@ import {
   PROPERTY_FEATURE_LABELS,
 } from "@/utils/constants";
 import { PropertyFilterState } from "@/types";
-import { FilterSidebar } from "@/components/properties/FilterSidebar";
-import { ListingType, SortOption, useProperty } from "@/hooks/useProperty";
-import { MobileFilterDrawer } from "@/components/properties/MobileFilterDropdown";
+import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
+import { FilterType, SortOption, useProperty } from "@/hooks/useProperty";
+import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -38,6 +39,7 @@ export default function PropertiesPage() {
     AREA_MIN,
     AREA_MAX,
     DEFAULT_FILTERS,
+    ALL_DOCUMENTS,
   } = useProperty();
   const [isPending, startTransition] = useTransition();
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -48,7 +50,7 @@ export default function PropertiesPage() {
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const currentType = (searchParams.get("type") as ListingType) || "all";
+  const currentType = (searchParams.get("type") as FilterType) || "all";
   const searchParam = searchParams.get("search") || "";
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -57,7 +59,7 @@ export default function PropertiesPage() {
     if (searchParam && !searchQuery) {
       setSearchQuery(searchParam);
     }
-  }, [searchParam]);
+  }, [searchParam, searchQuery]);
 
   useEffect(() => {
     if (debouncedSearchQuery.length >= 2) {
@@ -133,11 +135,11 @@ export default function PropertiesPage() {
     setShowSuggestions(false);
   };
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchQuery("");
     updateSearchParams("");
     setSearchSuggestions([]);
-  };
+  }, [updateSearchParams]);
 
   useEffect(() => {
     let count = 0;
@@ -150,6 +152,7 @@ export default function PropertiesPage() {
     if (filters.bathrooms !== "any") count++;
     if (filters.category !== "all") count++;
     if (filters.type.length > 0) count++;
+    if (filters.documents.length > 0) count++;
     if (filters.features.length > 0) count++;
     if (filters.location !== "all") count++;
     if (
@@ -160,7 +163,13 @@ export default function PropertiesPage() {
     if (filters.agent !== "all") count++;
     if (searchQuery) count++;
     setActiveFiltersCount(count);
-  }, [filters, searchQuery]);
+  }, [
+    DEFAULT_FILTERS.maxArea,
+    DEFAULT_FILTERS.minArea,
+    DEFAULT_FILTERS.priceRange,
+    filters,
+    searchQuery,
+  ]);
 
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
@@ -186,8 +195,20 @@ export default function PropertiesPage() {
         }
       }
 
-      if (currentType !== "all" && property.listingType !== currentType)
+      if (currentType === "deals") {
+        if (
+          !property.discount ||
+          (property.discount.amount == null &&
+            property.discount.percentage == null)
+        ) {
+          return false;
+        }
+      } else if (
+        currentType !== "all" &&
+        property.listingType !== currentType
+      ) {
         return false;
+      }
 
       if (
         property.price < filters.priceRange[0] ||
@@ -213,6 +234,12 @@ export default function PropertiesPage() {
         return false;
 
       if (filters.type.length > 0 && !filters.type.includes(property.type))
+        return false;
+
+      if (
+        filters.documents.length > 0 &&
+        !property.documents?.some((doc) => filters.documents.includes(doc.type))
+      )
         return false;
 
       if (filters.features.length > 0) {
@@ -252,7 +279,7 @@ export default function PropertiesPage() {
     return { filteredProperties: filtered, sortedProperties: sorted };
   }, [currentType, sortBy, filters, debouncedSearchQuery]);
 
-  const handleTypeChange = (type: ListingType) => {
+  const handleTypeChange = (type: FilterType) => {
     const params = new URLSearchParams(searchParams.toString());
 
     startTransition(() => {
@@ -279,7 +306,7 @@ export default function PropertiesPage() {
   const clearAllFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
     clearSearch();
-  }, []);
+  }, [DEFAULT_FILTERS, clearSearch]);
 
   const removeFilter = useCallback(
     (filterKey: keyof PropertyFilterState | "search") => {
@@ -292,7 +319,7 @@ export default function PropertiesPage() {
         }));
       }
     },
-    [clearSearch],
+    [DEFAULT_FILTERS, clearSearch],
   );
 
   const highlightMatch = (text: string, query: string) => {
@@ -423,6 +450,7 @@ export default function PropertiesPage() {
             clearAllFilters={clearAllFilters}
             allCategories={ALL_CATEGORIES}
             allFeatures={ALL_FEATURES}
+            allDocuments={ALL_DOCUMENTS}
           />
           <div className="flex-1">
             <div className="bg-card rounded-2xl p-4 shadow-sm border border-border mb-6">
@@ -444,7 +472,7 @@ export default function PropertiesPage() {
                       {debouncedSearchQuery && (
                         <span className="text-muted-foreground">
                           {" "}
-                          for "{debouncedSearchQuery}"
+                          for &quot;{debouncedSearchQuery}&quot;
                         </span>
                       )}
                     </p>
@@ -526,6 +554,12 @@ export default function PropertiesPage() {
                       <FilterTag
                         label={`Type: ${filters.type.length} selected`}
                         onRemove={() => removeFilter("type")}
+                      />
+                    )}
+                    {filters.documents.length > 0 && (
+                      <FilterTag
+                        label={`Documents: ${filters.documents.length} types selected`}
+                        onRemove={() => removeFilter("documents")}
                       />
                     )}
                     {filters.features.length > 0 && (

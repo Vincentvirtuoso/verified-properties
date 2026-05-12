@@ -2,18 +2,23 @@
 
 import { properties } from "@/data/properties";
 import {
+  ListingType,
+  Property,
   PropertyCategory,
+  PropertyDocument,
   PropertyFeature,
   PropertyFilterState,
 } from "@/types";
 
-export type ListingType = "all" | "rent" | "sale";
+export type FilterType = "all" | "deals" | ListingType;
+
 export type SortOption = "newest" | "price-low" | "price-high";
 export function useProperty() {
-  const FILTER_OPTIONS: { value: ListingType; label: string }[] = [
+  const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
     { value: "all", label: "All Properties" },
     { value: "sale", label: "For Sale" },
     { value: "rent", label: "For Rent" },
+    { value: "deals", label: "Deals" },
   ];
 
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -31,6 +36,9 @@ export function useProperty() {
   const ALL_FEATURES = [
     ...new Set(properties.flatMap((p) => p.features ?? [])),
   ] as PropertyFeature[];
+  const ALL_DOCUMENTS = [
+    ...new Set(properties.flatMap((p) => p.documents ?? [])),
+  ] as PropertyDocument[];
 
   const AGENTS = [
     ...new Set(properties.map((p) => p.agent?.name).filter(Boolean)),
@@ -52,6 +60,7 @@ export function useProperty() {
     minArea: AREA_MIN,
     maxArea: AREA_MAX,
     agent: "all",
+    documents: [],
   };
   return {
     FILTER_OPTIONS,
@@ -66,5 +75,6 @@ export function useProperty() {
     AREA_MIN,
     AREA_MAX,
     DEFAULT_FILTERS,
+    ALL_DOCUMENTS,
   };
 }

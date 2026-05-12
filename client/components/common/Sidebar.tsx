@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,86 +13,184 @@ import {
   LuLogOut,
   LuChevronRight,
   LuChevronLeft,
+  LuLayoutDashboard,
+  LuHistory,
+  LuHeart,
+  LuBell,
+  LuCircleHelp,
+  LuCirclePlus,
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
+import { Brandmark } from "./BrandMark";
 
 export interface SidebarLink {
   href: string;
   label: string;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
+  category?: string;
 }
 
 const defaultLinks: SidebarLink[] = [
   { href: "/", label: "Home", icon: <LuHouse /> },
-  { href: "/properties", label: "Properties", icon: <LuSearch /> },
-  { href: "/profile", label: "Profile", icon: <LuUser /> },
-  { href: "/settings", label: "Settings", icon: <LuSettings /> },
+  { href: "/dashboard", label: "Dashboard", icon: <LuLayoutDashboard /> },
+  { href: "/properties", label: "Search Properties", icon: <LuSearch /> },
+
+  {
+    href: "/my-listings",
+    label: "My Listings",
+    icon: <LuCirclePlus />,
+    category: "Management",
+  },
+  {
+    href: "/favorites",
+    label: "Saved Homes",
+    icon: <LuHeart />,
+    category: "Management",
+  },
+  {
+    href: "/history",
+    label: "Recent Views",
+    icon: <LuHistory />,
+    category: "Management",
+  },
+
+  { href: "/profile", label: "Profile", icon: <LuUser />, category: "Account" },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: <LuBell />,
+    category: "Account",
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: <LuSettings />,
+    category: "Account",
+  },
+  {
+    href: "/help",
+    label: "Support",
+    icon: <LuCircleHelp />,
+    category: "Account",
+  },
 ];
 
-interface SidebarProps {
-  links?: SidebarLink[];
-  isOpen?: boolean;
-  onClose?: () => void;
-  variant?: "persistent" | "overlay" | "collapsible";
-  position?: "left" | "right";
+const NavItem = ({
+  link,
+  isActive,
+  collapsed,
+  onClose,
+}: {
+  link: SidebarLink;
+  isActive: boolean;
   collapsed?: boolean;
-  onCollapsedChange?: () => void;
-}
+  onClose?: () => void;
+}) => (
+  <Link
+    href={link.href}
+    onClick={onClose}
+    title={collapsed ? link.label : undefined}
+    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+      isActive
+        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+        : "text-sidebar-foreground hover:bg-muted"
+    } ${collapsed ? "justify-center" : "justify-start"}`}
+  >
+    <span
+      className={`text-xl shrink-0 ${!isActive && "text-muted-foreground group-hover:text-primary"}`}
+    >
+      {link.icon}
+    </span>
+
+    {!collapsed && <span className="flex-1 truncate">{link.label}</span>}
+
+    {/* Active indicator bar */}
+    {isActive && !collapsed && (
+      <motion.div
+        layoutId="activeSide"
+        className="absolute left-0 w-1 h-5 bg-primary-foreground rounded-r-full"
+      />
+    )}
+
+    {!isActive && !collapsed && (
+      <LuChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-muted-foreground" />
+    )}
+  </Link>
+);
 
 const SidebarContent = ({
   links,
   pathname,
+  collapsed,
   onClose,
 }: {
   links: SidebarLink[];
   pathname: string;
+  collapsed?: boolean;
   onClose?: () => void;
-}) => (
-  <>
-    <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2 custom-scrollbar">
-      {links.map((link) => {
-        const isActive = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            onClick={onClose}
-            className={`group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-              isActive
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 dark:shadow-none"
-                : "text-sidebar-foreground hover:bg-sidebar-hover-bg dark:hover:bg-sidebar-hover-bg"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xl transition-colors ${
-                  isActive
-                    ? "text-primary-foreground"
-                    : "text-sidebar-foreground/60 group-hover:text-primary"
-                }`}
-              >
-                {link.icon}
-              </span>
-              {link.label}
-            </div>
-            {!isActive && (
-              <LuChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
+}) => {
+  const groupedLinks = useMemo(() => {
+    return links.reduce(
+      (acc, link) => {
+        const cat = link.category || "General";
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(link);
+        return acc;
+      },
+      {} as Record<string, SidebarLink[]>,
+    );
+  }, [links]);
 
-    <div className="p-4 mt-auto border-t border-border">
-      <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors group">
-        <div className="p-2 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-colors">
-          <LuLogOut className="w-5 h-5" />
-        </div>
-        Logout
-      </button>
+  return (
+    <div className="flex flex-col h-full">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar">
+        {Object.entries(groupedLinks).map(([category, items]) => (
+          <div key={category} className="space-y-1">
+            {!collapsed && (
+              <h4 className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                {category}
+              </h4>
+            )}
+            {items.map((link) => (
+              <NavItem
+                key={link.href}
+                link={link}
+                isActive={pathname === link.href}
+                collapsed={collapsed}
+                onClose={onClose}
+              />
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-4 mt-auto border-t border-border">
+        <button
+          className={`flex items-center gap-3 w-full p-2.5 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors group ${collapsed ? "justify-center" : ""}`}
+        >
+          <LuLogOut className="w-5 h-5 shrink-0" />
+          {!collapsed && <span>Logout</span>}
+        </button>
+      </div>
     </div>
-  </>
-);
+  );
+};
+
+interface SidebarProps {
+  links?: SidebarLink[];
+
+  isOpen?: boolean;
+
+  onClose?: () => void;
+
+  variant?: "persistent" | "overlay" | "collapsible";
+
+  position?: "left" | "right";
+
+  collapsed?: boolean;
+
+  onCollapsedChange?: () => void;
+}
 
 export const Sidebar = ({
   links = defaultLinks,
@@ -109,106 +207,38 @@ export const Sidebar = ({
 
   useEffect(() => {
     if (isOpen && variant === "overlay") {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = originalStyle;
+        document.body.style.overflow = "unset";
       };
-    } else {
-      document.body.style.overflow = "unset";
     }
   }, [isOpen, variant]);
 
-  const sidebarBaseClasses = `
-    fixed top-0 ${isLeft ? "left-0" : "right-0"} 
-    h-full bg-sidebar-bg flex flex-col
-    border-border
-    ${isLeft ? "border-r" : "border-l"}
-  `;
+  const width = collapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded";
 
-  if (variant === "persistent") {
+  if (variant !== "overlay") {
     return (
       <aside
-        className={`${sidebarBaseClasses} w-sidebar-expanded z-40 hidden lg:flex`}
+        className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full z-40 hidden lg:flex flex-col bg-sidebar-bg border-border transition-all duration-300 ease-in-out ${isLeft ? "border-r" : "border-l"} ${width}`}
         style={{ paddingTop: bannerHeight }}
       >
-        <div className="px-8 py-7">
-          <h2 className="text-xl font-bold tracking-tight text-sidebar-foreground">
-            LOGO
-          </h2>
-        </div>
-        <SidebarContent links={links} pathname={pathname} />
-      </aside>
-    );
-  }
-
-  if (variant === "collapsible") {
-    const width = collapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded";
-    const toggleIcon = collapsed ? <LuChevronRight /> : <LuChevronLeft />;
-
-    return (
-      <aside
-        className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} 
-          h-full ${width} z-40 hidden lg:flex flex-col
-          border-r border-border
-          bg-sidebar-bg transition-all duration-300 ease-in-out`}
-        style={{ paddingTop: bannerHeight }}
-      >
-        <div className="flex items-center justify-between px-4 py-6">
-          {!collapsed && (
-            <h2 className="text-xl font-bold tracking-tight text-sidebar-foreground">
-              LOGO
-            </h2>
-          )}
+        <div
+          className={`flex items-center px-4 py-6 ${collapsed ? "justify-center" : "justify-between"}`}
+        >
+          {!collapsed && <Brandmark logoOnly logoSize={40} />}
           <button
             onClick={onCollapsedChange}
-            className="p-2 rounded-md hover:bg-sidebar-hover-bg transition-colors text-sidebar-foreground"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
           >
-            {toggleIcon}
+            {collapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
-          {links.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
-                  ${collapsed ? "justify-center" : "justify-start"}
-                  ${
-                    isActive
-                      ? "bg-sidebar-active-bg text-sidebar-active-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-hover-bg"
-                  }`}
-                title={collapsed ? link.label : undefined}
-              >
-                <span className="text-xl shrink-0">{link.icon}</span>
-                {!collapsed && (
-                  <span className="text-sm font-medium">{link.label}</span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {!collapsed && (
-          <div className="p-4 mt-auto border-t border-border">
-            <button className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors">
-              <LuLogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
-        )}
-        {collapsed && (
-          <div className="p-4 mt-auto border-t border-border flex justify-center">
-            <button className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors">
-              <LuLogOut className="w-5 h-5" />
-            </button>
-          </div>
-        )}
+        <SidebarContent
+          links={links}
+          pathname={pathname}
+          collapsed={collapsed}
+        />
       </aside>
     );
   }
@@ -222,26 +252,22 @@ export const Sidebar = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-[2px] z-60"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-60"
           />
 
           <motion.aside
             initial={{ x: isLeft ? "-100%" : "100%" }}
             animate={{ x: 0 }}
             exit={{ x: isLeft ? "-100%" : "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className={`${sidebarBaseClasses} w-75 z-70 shadow-xl`}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full w-75 z-70 bg-sidebar-bg shadow-2xl border-border flex flex-col ${isLeft ? "border-r" : "border-l"}`}
             style={{ paddingTop: bannerHeight }}
           >
             <div className="flex items-center justify-between px-6 py-6">
-              <div>
-                <h2 className="text-xl font-black text-sidebar-foreground">
-                  LOGO
-                </h2>
-              </div>
+              <Brandmark logoOnly logoSize={40} />
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-sidebar-hover-bg text-sidebar-foreground transition-colors"
+                className="p-2 rounded-full hover:bg-muted text-muted-foreground"
               >
                 <LuX className="w-6 h-6" />
               </button>

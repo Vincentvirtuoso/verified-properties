@@ -2,6 +2,13 @@
 import { useEffect } from "react";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
+import {
+  PropertyCategory,
+  PropertyDocument,
+  PropertyFeature,
+  PropertyFilterState,
+  PropertyType,
+} from "@/types";
 
 export const FilterSidebar = ({
   filters,
@@ -14,7 +21,20 @@ export const FilterSidebar = ({
   clearAllFilters,
   allCategories,
   allFeatures,
-}: any) => {
+  allDocuments,
+}: {
+  filters: PropertyFilterState;
+  handleFilterChange: (newFilters: Partial<PropertyFilterState>) => void;
+  locations: string[];
+  propertyTypes: PropertyType[];
+  agents: string[];
+  priceRange: [number, number];
+  areaRange: [number, number];
+  clearAllFilters: () => void;
+  allCategories: PropertyCategory[];
+  allFeatures: PropertyFeature[];
+  allDocuments: PropertyDocument[];
+}) => {
   const { bannerHeight } = useBannerHeightContext();
 
   useEffect(() => {
@@ -39,7 +59,7 @@ export const FilterSidebar = ({
 
   return (
     <aside
-      className="hidden lg:block w-64 shrink-0"
+      className="hidden lg:block w-70 shrink-0"
       aria-label="Filter sidebar"
     >
       <div
@@ -73,9 +93,9 @@ export const FilterSidebar = ({
             agents={agents}
             priceRange={priceRange}
             areaRange={areaRange}
-            onClearAll={clearAllFilters}
             allCategories={allCategories}
             allFeatures={allFeatures}
+            allDocuments={allDocuments}
           />
         </div>
       </div>

@@ -1,17 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import Link from "next/link";
-import { PropertyCard } from "@/components/cards/PropertyCard";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
-import {
-  FaSearch,
-  FaArrowDown,
-  FaStar,
-  FaHome,
-  FaBuilding,
-  FaCity,
-} from "react-icons/fa";
+import { FaSearch, FaArrowDown, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import {
   fetchFeaturedProperties,
@@ -20,10 +11,9 @@ import {
 } from "@/lib/api";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { Property, Stats, Testimonial } from "@/types";
-import Footer from "@/components/common/Footer";
-
-const FILTER_OPTIONS = ["All", "For Sale", "For Rent"] as const;
-type FilterType = (typeof FILTER_OPTIONS)[number];
+import StatsAndPartners from "@/components/home/StatsAndPatners";
+import QuickActions from "@/components/home/QuickActions";
+import { FeaturedProperties } from "@/components/home/FeaturedProperties";
 
 export default function HomePage() {
   const router = useRouter();
@@ -31,7 +21,6 @@ export default function HomePage() {
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoadingProperties, setIsLoadingProperties] = useState(true);
   const [propertyError, setPropertyError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -92,13 +81,6 @@ export default function HomePage() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const filteredProperties = useMemo(() => {
-    if (!featuredProperties.length) return [];
-    if (activeFilter === "All") return featuredProperties;
-    const listingType = activeFilter === "For Sale" ? "sale" : "rent";
-    return featuredProperties.filter((p) => p.listingType === listingType);
-  }, [featuredProperties, activeFilter]);
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -165,135 +147,15 @@ export default function HomePage() {
         </div>
       </div>
 
-      <section className="py-12 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {isLoadingStats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse bg-muted rounded-xl h-24"
-                />
-              ))}
-            </div>
-          ) : stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="bg-primary/10 rounded-xl p-6 flex items-center gap-4">
-                <FaHome className="text-3xl text-primary" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stats.totalProperties}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Properties Listed
-                  </p>
-                </div>
-              </div>
-              <div className="bg-warning/10 rounded-xl p-6 flex items-center gap-4">
-                <FaCity className="text-3xl text-warning" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stats.cities}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Cities Covered
-                  </p>
-                </div>
-              </div>
-              <div className="bg-success/10 rounded-xl p-6 flex items-center gap-4">
-                <FaBuilding className="text-3xl text-success" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stats.agents}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Verified Agents
-                  </p>
-                </div>
-              </div>
-              <div className="bg-info/10 rounded-xl p-6 flex items-center gap-4">
-                <FaStar className="text-3xl text-info" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stats.happyClients}+
-                  </p>
-                  <p className="text-sm text-muted-foreground">Happy Clients</p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </section>
+      <QuickActions />
 
-      <section id="featured" className="py-16 bg-muted/20 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
-            <div className="text-center lg:text-left">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
-                Featured Properties
-              </h2>
-              <p className="text-muted-foreground mt-2">
-                Handpicked premium listings across Nigeria
-              </p>
-            </div>
+      <StatsAndPartners stats={stats} isLoading={isLoadingStats} />
 
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {FILTER_OPTIONS.map((filter) => (
-                <Button
-                  key={filter}
-                  variant={activeFilter === filter ? "primary" : "outline"}
-                  onClick={() => setActiveFilter(filter)}
-                  size="sm"
-                >
-                  {filter}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {isLoadingProperties ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-card rounded-2xl h-100 animate-pulse border border-border"
-                />
-              ))}
-            </div>
-          ) : propertyError ? (
-            <div className="text-center py-12">
-              <p className="text-destructive mb-4">{propertyError}</p>
-              <Button onClick={() => window.location.reload()}>Retry</Button>
-            </div>
-          ) : filteredProperties.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-                {filteredProperties.map((property) => (
-                  <PropertyCard key={property._id} {...property} />
-                ))}
-              </div>
-              <div className="text-center mt-12">
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href="/properties">Browse All Properties</Link>
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg">
-                No properties found for "{activeFilter}"
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setActiveFilter("All")}
-              >
-                View All Properties
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
+      <FeaturedProperties
+        properties={featuredProperties}
+        propertyError={propertyError}
+        isLoading={isLoadingProperties}
+      />
 
       {!isLoadingTestimonials && testimonials.length > 0 && (
         <section className="py-16 bg-background">
@@ -313,7 +175,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-muted-foreground italic mb-4">
-                    "{t.text}"
+                    &quot;{t.text}&quot;
                   </p>
                   <p className="font-semibold text-foreground">{t.author}</p>
                   <p className="text-sm text-muted-foreground">{t.role}</p>
@@ -379,7 +241,6 @@ export default function HomePage() {
           <FaArrowDown className="rotate-180 w-5 h-5" />
         </button>
       )}
-      <Footer />
     </>
   );
 }

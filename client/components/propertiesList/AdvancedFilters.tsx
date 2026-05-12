@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LuChevronDown, LuChevronUp } from "react-icons/lu";
 import {
   PROPERTY_TYPE_LABELS,
@@ -11,6 +11,7 @@ import {
   PropertyType,
   PropertyCategory,
   PropertyFeature,
+  PropertyDocument,
 } from "@/types/property";
 import { PropertyFilterState } from "@/types";
 import { Checkbox } from "../ui/Checkbox";
@@ -18,15 +19,15 @@ import { Slider } from "../ui/Slider";
 
 interface AdvancedFiltersProps {
   filters: PropertyFilterState;
-  onFilterChange: (filters: any) => void;
+  onFilterChange: (filters: Partial<PropertyFilterState>) => void;
   locations: string[];
   propertyTypes: PropertyType[];
   allCategories: PropertyCategory[];
   allFeatures: PropertyFeature[];
+  allDocuments: PropertyDocument[];
   agents: string[];
   priceRange: [number, number];
   areaRange: [number, number];
-  onClearAll: () => void;
 }
 
 export function AdvancedFilters({
@@ -37,9 +38,9 @@ export function AdvancedFilters({
   allCategories,
   allFeatures,
   agents,
+  allDocuments,
   priceRange: [globalMinPrice, globalMaxPrice],
   areaRange: [globalMinArea, globalMaxArea],
-  onClearAll,
 }: AdvancedFiltersProps) {
   const [expandedSections, setExpandedSections] = useState({
     price: true,
@@ -50,6 +51,7 @@ export function AdvancedFilters({
     rooms: true,
     area: false,
     agent: false,
+    documents: false,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -61,8 +63,41 @@ export function AdvancedFilters({
     return `₦${(price / 1000).toFixed(0)}K`;
   };
 
+  const [docSearchTerm, setDocSearchTerm] = useState("");
+
+  const filteredDocuments = useMemo(() => {
+    if (!docSearchTerm.trim()) return allDocuments;
+    const lower = docSearchTerm.toLowerCase();
+    return allDocuments.filter((doc) =>
+      doc?.type.toLowerCase().includes(lower),
+    );
+  }, [allDocuments, docSearchTerm]);
+
+  const toggleDocumentType = (docType: string, checked: boolean) => {
+    const newDocs = checked
+      ? [...filters.documents, docType]
+      : filters.documents.filter((t) => t !== docType);
+    onFilterChange({ documents: newDocs });
+  };
+
+  const selectAllVisibleDocs = (checked: boolean) => {
+    const visibleTypes = filteredDocuments.map((doc) => doc.type);
+    const newDocs = checked
+      ? [...new Set([...filters.documents, ...visibleTypes])]
+      : filters.documents.filter((t) => !visibleTypes.includes(t));
+    onFilterChange({ documents: newDocs });
+  };
+
+  const clearAllDocs = () => {
+    onFilterChange({ documents: [] });
+  };
+
+  const allVisibleSelected =
+    filteredDocuments.length > 0 &&
+    filteredDocuments.every((doc) => filters.documents.includes(doc.type));
+
   return (
-    <div className="">
+    <div className="pr-2">
       <div className="space-y-4">
         <FilterSection
           title="Price Range"
@@ -260,6 +295,61 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
+        <FilterSection
+          title="Documents"
+          expanded={expandedSections.documents} // ✅ fixed key
+          onToggle={() => toggleSection("documents")} // ✅ fixed
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Search documents..."
+                value={docSearchTerm}
+                onChange={(e) => setDocSearchTerm(e.target.value)}
+                className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
+              />
+              <button
+                onClick={clearAllDocs}
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
+              >
+                Clear
+              </button>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={(e) => selectAllVisibleDocs(e.target.checked)}
+                className="rounded border-border"
+              />
+              <span>Select all visible</span>
+            </label>
+
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border p-2">
+              {filteredDocuments.length === 0 ? (
+                <p className="py-2 text-center text-sm text-muted-foreground">
+                  {docSearchTerm
+                    ? "No matching documents"
+                    : "No documents available"}
+                </p>
+              ) : (
+                filteredDocuments.map((doc) => (
+                  <Checkbox
+                    key={doc.id ?? doc.type}
+                    label={doc.title}
+                    checked={filters.documents.includes(doc.type)}
+                    onChange={(e) =>
+                      toggleDocumentType(doc.type, e.target.checked)
+                    }
+                    className="rounded border-border text-primary focus:ring-ring"
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </FilterSection>
         <FilterSection
           title="Listed By"
           expanded={expandedSections.agent}

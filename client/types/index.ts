@@ -15,3 +15,4 @@ export interface Testimonial {
 
 export * from "./property";
 export * from "./filters";
+export * from "./stats";

@@ -4,21 +4,21 @@ import { Property } from "@/types/property";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaBed, FaBath, FaExpand, FaAward } from "react-icons/fa";
+import { FaBed, FaBath, FaExpand, FaAward, FaFile } from "react-icons/fa";
 import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
 import { formatPrice, formatRelativeTime } from "@/lib/formatters";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { RiHeartLine, RiHeartFill } from "react-icons/ri";
-import { LuMapPin } from "react-icons/lu";
-import { imageLoader } from "./helpers";
+import { LuFileText, LuImage, LuMapPin, LuVideo } from "react-icons/lu";
+import { imageLoader } from "../../utils/helpers";
 import VerifiedBadge from "../icons/VerifiedBadge";
 
 const defaultImage = "/placeholder-property.png";
 const defaultAgentImage = "/placeholder_agent.png";
 
 export function PropertyCard({
-  _id,
+  // _id,
   slug,
   title,
   location,
@@ -33,6 +33,9 @@ export function PropertyCard({
   agent,
   discount,
   createdAt,
+  documents,
+  videoLinks,
+  gallery,
 }: Property) {
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState(image || defaultImage);
@@ -49,6 +52,8 @@ export function PropertyCard({
       : price;
 
   const hasDiscount = discount && (discount.percentage || discount.amount);
+  const hasDocuments = documents && documents?.length > 0;
+  const hasVideoLinks = videoLinks && videoLinks?.length > 0;
   const savingsAmount = price - discountedPrice;
   const savingsPercentage =
     discount?.percentage || Math.round((savingsAmount / price) * 100);
@@ -155,6 +160,38 @@ export function PropertyCard({
           >
             For {listingType}
           </motion.div>
+        </div>
+        <div className="absolute bottom-3 right-3 z-10 pointer-events-none flex flex-wrap gap-2">
+          {hasDocuments && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
+            >
+              <LuFileText size={18} /> {documents.length}
+            </motion.div>
+          )}
+          {hasVideoLinks && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
+            >
+              <LuVideo size={18} /> {videoLinks.length}
+            </motion.div>
+          )}
+          {gallery && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
+            >
+              <LuImage size={18} /> {gallery.length}
+            </motion.div>
+          )}
         </div>
 
         <AnimatePresence>

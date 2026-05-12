@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthForm } from "@/components/forms/AuthForm";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Field } from "@/components/ui/Field";
 import { useState } from "react";
 import { FiLock, FiMail } from "react-icons/fi";
@@ -84,16 +85,12 @@ const LoginPage = () => {
       />
 
       <div className="flex items-center justify-between text-sm pt-2">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            name="rememberMe"
-            checked={formData.rememberMe}
-            onChange={handleChange}
-            className="w-4 h-4 accent-violet-600 rounded border-gray-300 focus:ring-violet-500"
-          />
-          <span className="text-gray-700 font-medium">Remember me</span>
-        </label>
+        <Checkbox
+          label="Remember me"
+          name="rememberMe"
+          checked={formData.rememberMe}
+          onChange={handleChange}
+        />
 
         <a
           href="/forgot-password"

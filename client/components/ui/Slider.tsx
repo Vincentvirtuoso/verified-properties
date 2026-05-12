@@ -30,7 +30,7 @@ export const Slider: React.FC<SliderProps> = ({
   const getRelativeX = (clientX: number): number => {
     if (!sliderRef.current) return 0;
     const rect = sliderRef.current.getBoundingClientRect();
-    let x = (clientX - rect.left) / rect.width;
+    const x = (clientX - rect.left) / rect.width;
     return Math.min(1, Math.max(0, x));
   };
 
@@ -119,7 +119,7 @@ export const Slider: React.FC<SliderProps> = ({
       </div>
       <div
         ref={sliderRef}
-        className={`relative h-2 bg-muted rounded-full ${disabled ? "opacity-50" : ""}`}
+        className={`relative h-1.25 bg-neutral-500 rounded-full ${disabled ? "opacity-50" : ""}`}
         onMouseDown={(e) => {
           if (disabled) return;
           const x = getRelativeX(e.clientX);
@@ -131,13 +131,11 @@ export const Slider: React.FC<SliderProps> = ({
           updateValue(e.clientX, thumbToDrag);
         }}
       >
-        {/* Track fill */}
         <div
           className="absolute h-full bg-primary rounded-full"
           style={{ left: `${leftPercent}%`, right: `${100 - rightPercent}%` }}
         />
 
-        {/* Left thumb */}
         <div
           role="slider"
           aria-valuemin={min}
@@ -155,7 +153,6 @@ export const Slider: React.FC<SliderProps> = ({
             if (!disabled) setDraggingThumb(0);
           }}
         />
-        {/* Right thumb */}
         <div
           role="slider"
           aria-valuemin={min}

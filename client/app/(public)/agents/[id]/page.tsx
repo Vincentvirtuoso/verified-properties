@@ -13,12 +13,11 @@ import {
   FaHome,
   FaBuilding,
 } from "react-icons/fa";
-import { FiCheckCircle, FiUser } from "react-icons/fi";
+import { FiCheckCircle } from "react-icons/fi";
 import { formatPrice } from "@/lib/formatters";
-import { imageLoader } from "@/components/cards/helpers";
+import { imageLoader } from "@/utils/helpers";
 import { PropertyCard } from "@/components/cards/PropertyCard";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
-import { LuHouse } from "react-icons/lu";
 
 const defaultAgentImage = "/placeholder_agent.png";
 
@@ -26,8 +25,6 @@ export default function AgentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const agentId = params.id as string;
-
-  const [imgAgentSrc, setImgAgentSrc] = useState(defaultAgentImage);
 
   const agentData = useMemo(() => {
     const agentProperties = properties.filter((p) => p.agent?.id === agentId);
@@ -37,18 +34,15 @@ export default function AgentProfilePage() {
   }, [agentId]);
 
   const { agent, agentProperties } = agentData;
+  const [imgAgentSrc, setImgAgentSrc] = useState(
+    agent?.image || defaultAgentImage,
+  );
 
   useEffect(() => {
     if (!agent) {
       router.push("/properties");
     }
   }, [agent, router]);
-
-  useEffect(() => {
-    if (agent?.image) {
-      setImgAgentSrc(agent.image);
-    }
-  }, [agent]);
 
   if (!agent) {
     return (
@@ -79,12 +73,10 @@ export default function AgentProfilePage() {
     {
       label: "Properties",
       href: "/properties",
-      icon: <LuHouse className="w-3.5 h-3.5" />,
     },
     {
       label: "Agents",
       href: "/agents",
-      icon: <FiUser className="w-3.5 h-3.5" />,
     },
     {
       label: agent.company || "Agent",
@@ -254,7 +246,7 @@ export default function AgentProfilePage() {
                 No Properties Yet
               </h3>
               <p className="text-gray-600">
-                This agent hasn't listed any properties yet.
+                This agent hasn&apos;t listed any properties yet.
               </p>
             </div>
           )}

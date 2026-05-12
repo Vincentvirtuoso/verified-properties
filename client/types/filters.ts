@@ -11,4 +11,5 @@ export interface PropertyFilterState {
   minArea: number;
   maxArea: number;
   agent: string;
+  documents: string[];
 }

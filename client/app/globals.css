@@ -13,7 +13,6 @@
   --primary-900: #4c1d95;
   --primary-950: #2e1065;
 
-  /* Switched to Neutral Palette */
   --neutral-50: #fafafa;
   --neutral-100: #f5f5f5;
   --neutral-200: #e5e5e5;
@@ -130,7 +129,6 @@
   --color-primary-900: var(--primary-900);
   --color-primary-950: var(--primary-950);
 
-  /* Map neutral palette for utility use */
   --color-neutral-50: var(--neutral-50);
   --color-neutral-100: var(--neutral-100);
   --color-neutral-200: var(--neutral-200);
@@ -180,7 +178,7 @@
   --font-sans: var(--font-lato-sans);
   --font-mono: var(--font-geist-mono);
 
-  --animate-shimmer: shimmer 3s infinite;
+  --animate-shimmer: shimmer 4s infinite;
 
   @keyframes shimmer {
     0% {
@@ -231,11 +229,27 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.05) 20%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.05) 80%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.15) 80%,
     transparent
   );
+}
+
+@utility custom-scrollbar {
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
 }
 
 .card {
