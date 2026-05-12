@@ -20,14 +20,13 @@ import {
 } from "@/utils/constants";
 import { PropertyFilterState } from "@/types";
 import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
-import { FilterType, SortOption, useProperty } from "@/hooks/useProperty";
+import { FilterType, SortOption, useProperty, FILTER_OPTIONS } from "@/hooks/useProperty";
 import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const {
-    FILTER_OPTIONS,
     SORT_OPTIONS,
     LOCATIONS,
     ALL_PROPERTY_TYPES,
