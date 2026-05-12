@@ -73,25 +73,23 @@ export function AdvancedFilters({
     );
   }, [allDocuments, docSearchTerm]);
 
-  const toggleDocumentType = (docType: string, checked: boolean) => {
-    const newDocs = checked
-      ? [...filters.documents, docType]
-      : filters.documents.filter((t) => t !== docType);
-    onFilterChange({ documents: newDocs });
-  };
+const toggleDocumentType = (docType: PropertyDocument["type"], checked: boolean) => {
+  const newDocs = checked
+    ? [...filters.documents, docType]
+    : filters.documents.filter((t) => t !== docType);
+  onFilterChange({ documents: newDocs });
+};
 
   const selectAllVisibleDocs = (checked: boolean) => {
-    const visibleTypes = filteredDocuments.map((doc) => doc.type);
-    const newDocs = checked
-      ? [
-          ...(new Set([
-            ...filters.documents,
-            ...visibleTypes,
-          ]) as unknown as PropertyDocument["type"][]),
-        ]
-      : filters.documents.filter((t) => !visibleTypes.includes(t));
-    onFilterChange({ documents: newDocs });
-  };
+ 
+  const visibleTypes: PropertyDocument["type"][] = filteredDocuments.map((doc) => doc.type);
+  
+  const newDocs = checked
+    ? Array.from(new Set([...filters.documents, ...visibleTypes]))
+    : filters.documents.filter((t) => !visibleTypes.includes(t));
+    
+  onFilterChange({ documents: newDocs });
+};
 
   const clearAllDocs = () => {
     onFilterChange({ documents: [] });
