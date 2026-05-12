@@ -13,14 +13,15 @@ import {
 export type FilterType = "all" | "deals" | ListingType;
 
 export type SortOption = "newest" | "price-low" | "price-high";
-export function useProperty() {
-  const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
+export const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
     { value: "all", label: "All Properties" },
     { value: "sale", label: "For Sale" },
     { value: "rent", label: "For Rent" },
     { value: "deals", label: "Deals" },
   ];
 
+export function useProperty() {
+  
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: "newest", label: "Newest First" },
     { value: "price-low", label: "Price: Low to High" },
@@ -63,7 +64,6 @@ export function useProperty() {
     documents: [],
   };
   return {
-    FILTER_OPTIONS,
     SORT_OPTIONS,
     LOCATIONS,
     ALL_PROPERTY_TYPES,
