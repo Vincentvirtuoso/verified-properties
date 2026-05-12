@@ -1,4 +1,4 @@
-import { PropertyCategory, PropertyFeature, PropertyType } from "./property";
+import { PropertyCategory, PropertyFeature, PropertyType, PropertyDocument } from "./property";
 
 export interface PropertyFilterState {
   priceRange: [number, number];
@@ -11,5 +11,5 @@ export interface PropertyFilterState {
   minArea: number;
   maxArea: number;
   agent: string;
-  documents: string[];
+  documents: PropertyDocument["type"][];
 }
