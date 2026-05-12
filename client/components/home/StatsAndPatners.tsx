@@ -1,10 +1,7 @@
-import React from "react";
-import { motion } from "framer-motion";
 import { FaHome, FaCity, FaBuilding, FaStar } from "react-icons/fa";
 import { DashboardStats } from "@/types";
 import Image from "next/image";
 import { StatCard, StatItem } from "../cards/StatCard";
-import { imageLoader } from "@/utils/helpers";
 
 interface Partner {
   name: string;
@@ -13,8 +10,7 @@ interface Partner {
 
 const PARTNERS: Partner[] = [
   { name: "Zillow", logo: "/logos/zillow.svg" },
-  { name: "Realtor", logo: "/logos/realtor.svg" },
-  { name: "Redfin", logo: "/logos/redfin.svg" },
+  { name: "Realtor", logo: "/logos/amazon.svg" },
   { name: "Airbnb", logo: "/logos/airbnb.svg" },
 ];
 
@@ -59,7 +55,7 @@ const StatsAndPartners = ({
   return (
     <section className="py-20 bg-background overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-2  lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {isLoading
             ? Array(4)
                 .fill(0)
@@ -79,16 +75,21 @@ const StatsAndPartners = ({
             Trusted by Industry Leaders
           </p>
 
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 hover:opacity-100 transition-all duration-500">
             {PARTNERS.map((partner) => (
-              <Image
-                fill
+              <div
                 key={partner.name}
-                src={partner.logo}
-                alt={partner.name}
-                className="h-8 md:h-10 w-auto object-contain"
-                loader={imageLoader}
-              />
+                className="relative h-8 md:h-10 w-auto min-w-20"
+              >
+                <Image
+                  src={partner.logo}
+                  alt={partner.name}
+                  width={120}
+                  height={40}
+                  className="object-contain w-auto h-full"
+                  priority={false}
+                />
+              </div>
             ))}
           </div>
         </div>

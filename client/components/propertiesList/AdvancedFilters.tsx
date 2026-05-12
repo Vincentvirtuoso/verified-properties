@@ -83,7 +83,12 @@ export function AdvancedFilters({
   const selectAllVisibleDocs = (checked: boolean) => {
     const visibleTypes = filteredDocuments.map((doc) => doc.type);
     const newDocs = checked
-      ? [...new Set([...filters.documents, ...visibleTypes])]
+      ? [
+          ...(new Set([
+            ...filters.documents,
+            ...visibleTypes,
+          ]) as unknown as PropertyDocument["type"][]),
+        ]
       : filters.documents.filter((t) => !visibleTypes.includes(t));
     onFilterChange({ documents: newDocs });
   };
