@@ -81,10 +81,10 @@ const toggleDocumentType = (docType: PropertyDocument["type"], checked: boolean)
 };
 
   const selectAllVisibleDocs = (checked: boolean) => {
-  const visibleTypes: PropertyDocument["type"][] = filteredDocuments.map((doc) => doc.type);
+  const visibleTypes = filteredDocuments.map((doc) => doc.type);
 
   const newDocs = checked
-    ? Array.from(new Set([...filters.documents, ...visibleTypes] as PropertyDocument["type"][]))
+    ? Array.from(new Set([...filters.documents, ...visibleTypes]))
     : filters.documents.filter((t) => !visibleTypes.includes(t));
 
   onFilterChange({ documents: newDocs });
