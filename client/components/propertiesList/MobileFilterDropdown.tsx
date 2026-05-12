@@ -15,7 +15,8 @@ export function MobileFilterDrawer({
   onClose,
 }: any) {
   const { bannerHeight } = useBannerHeightContext();
-  const { ALL_CATEGORIES, ALL_FEATURES } = useProperty();
+  const { ALL_CATEGORIES, ALL_FEATURES, ALL_DOCUMENTS } = useProperty();
+
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <div
@@ -37,6 +38,7 @@ export function MobileFilterDrawer({
             <LuX className="w-5 h-5" />
           </button>
         </div>
+
         <div
           className="p-4 overflow-y-auto transition-all duration-300"
           style={{ height: `calc(100vh - ${bannerHeight + 64}px)` }}
@@ -49,9 +51,9 @@ export function MobileFilterDrawer({
             agents={agents}
             priceRange={priceRange}
             areaRange={areaRange}
-            onClearAll={onClearAll}
             allCategories={ALL_CATEGORIES}
             allFeatures={ALL_FEATURES}
+            allDocuments={ALL_DOCUMENTS || []} 
           />
         </div>
       </div>
