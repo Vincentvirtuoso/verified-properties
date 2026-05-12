@@ -10,15 +10,8 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { properties } from "@/data/properties";
 import { PropertyCard } from "@/components/cards/PropertyCard";
-import { AdvancedFilters } from "@/components/properties/AdvancedFilters";
 import { LuFilter, LuX, LuSearch } from "react-icons/lu";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import {
-  PropertyType,
-  PropertyCategory,
-  PropertyFeature,
-} from "@/types/property";
 import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
@@ -26,57 +19,26 @@ import {
 } from "@/utils/constants";
 import { PropertyFilterState } from "@/types";
 import { FilterSidebar } from "@/components/properties/FilterSidebar";
-
-type ListingType = "all" | "rent" | "sale";
-type SortOption = "newest" | "price-low" | "price-high";
-
-const FILTER_OPTIONS: { value: ListingType; label: string }[] = [
-  { value: "all", label: "All Properties" },
-  { value: "sale", label: "For Sale" },
-  { value: "rent", label: "For Rent" },
-];
-
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "newest", label: "Newest First" },
-  { value: "price-low", label: "Price: Low to High" },
-  { value: "price-high", label: "Price: High to Low" },
-];
-
-const LOCATIONS = [...new Set(properties.map((p) => p.location))].sort();
-
-const ALL_PROPERTY_TYPES = [...new Set(properties.map((p) => p.type))].sort();
-const ALL_CATEGORIES = [
-  ...new Set(properties.map((p) => p.category)),
-] as PropertyCategory[];
-const ALL_FEATURES = [
-  ...new Set(properties.flatMap((p) => p.features ?? [])),
-] as PropertyFeature[];
-
-const AGENTS = [
-  ...new Set(properties.map((p) => p.agent?.name).filter(Boolean)),
-].sort() as string[];
-
-const PRICE_MIN = Math.min(...properties.map((p) => p.price || 0));
-const PRICE_MAX = Math.max(...properties.map((p) => p.price || 0));
-const AREA_MIN = Math.min(...properties.map((p) => p.area || 0));
-const AREA_MAX = Math.max(...properties.map((p) => p.area || 0));
-
-const DEFAULT_FILTERS: PropertyFilterState = {
-  priceRange: [PRICE_MIN, PRICE_MAX],
-  bedrooms: "any",
-  bathrooms: "any",
-  category: "all",
-  type: [],
-  features: [],
-  location: "all",
-  minArea: AREA_MIN,
-  maxArea: AREA_MAX,
-  agent: "all",
-};
+import { ListingType, SortOption, useProperty } from "@/hooks/useProperty";
+import { MobileFilterDrawer } from "@/components/properties/MobileFilterDropdown";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const {
+    FILTER_OPTIONS,
+    SORT_OPTIONS,
+    LOCATIONS,
+    ALL_PROPERTY_TYPES,
+    ALL_CATEGORIES,
+    ALL_FEATURES,
+    AGENTS,
+    PRICE_MIN,
+    PRICE_MAX,
+    AREA_MIN,
+    AREA_MAX,
+    DEFAULT_FILTERS,
+  } = useProperty();
   const [isPending, startTransition] = useTransition();
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -466,23 +428,27 @@ export default function PropertiesPage() {
             <div className="bg-card rounded-2xl p-4 shadow-sm border border-border mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <p
-                    className="text-muted-foreground"
-                    aria-live="polite"
-                    aria-atomic="true"
-                  >
-                    <span className="font-semibold text-foreground text-lg">
-                      {sortedProperties.length}
-                    </span>{" "}
-                    {sortedProperties.length === 1 ? "property" : "properties"}{" "}
-                    found
-                    {debouncedSearchQuery && (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        for "{debouncedSearchQuery}"
-                      </span>
-                    )}
-                  </p>
+                  {activeFiltersCount > 0 && (
+                    <p
+                      className="text-muted-foreground"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      <span className="font-semibold text-foreground text-lg">
+                        {sortedProperties.length}
+                      </span>{" "}
+                      {sortedProperties.length === 1
+                        ? "property"
+                        : "properties"}{" "}
+                      found
+                      {debouncedSearchQuery && (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          for "{debouncedSearchQuery}"
+                        </span>
+                      )}
+                    </p>
+                  )}
 
                   <button
                     onClick={() => setShowMobileFilters(true)}
@@ -717,55 +683,6 @@ function PropertyCardSkeleton() {
             </div>
             <div className="h-4 bg-muted rounded w-16" />
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MobileFilterDrawer({
-  filters,
-  onFilterChange,
-  locations,
-  propertyTypes,
-  agents,
-  priceRange,
-  areaRange,
-  onClearAll,
-  onClose,
-}: any) {
-  const { bannerHeight } = useBannerHeightContext();
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden" style={{ top: bannerHeight }}>
-      <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-background shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            Apply filters
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground"
-          >
-            <LuX className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-4 overflow-y-auto h-[calc(100vh-64px)]">
-          <AdvancedFilters
-            filters={filters}
-            onFilterChange={onFilterChange}
-            locations={locations}
-            propertyTypes={propertyTypes}
-            agents={agents}
-            priceRange={priceRange}
-            areaRange={areaRange}
-            onClearAll={onClearAll}
-            allCategories={ALL_CATEGORIES}
-            allFeatures={ALL_FEATURES}
-          />
         </div>
       </div>
     </div>

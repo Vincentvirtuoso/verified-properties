@@ -28,7 +28,7 @@ const LayoutWithBanner = ({ children }: { children: React.ReactNode }) => {
     toggleIsCollapsed,
   } = useSidebar();
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const sidebarWidth = isDesktop
     ? isSidebarCollapsed

@@ -46,11 +46,9 @@ export function HeroCarousel() {
     setLoadedImages((prev) => ({ ...prev, [index]: true }));
   };
 
-  // Dynamic height calculation to account for the banner
-  // We use a fallback of 0px if bannerHeight isn't available yet
   const dynamicHeightStyle = {
     height: `calc(75vh - ${bannerHeight || 0}px)`,
-    minHeight: `calc(500px - ${bannerHeight || 0}px)`, // Ensure it doesn't get too small
+    minHeight: `calc(500px - ${bannerHeight || 0}px)`,
   };
 
   return (
@@ -96,11 +94,11 @@ export function HeroCarousel() {
             <div className="relative z-10 h-full flex items-center">
               <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="max-w-3xl space-y-4 sm:space-y-6">
-                  <span className="inline-block px-3 py-1 rounded-full bg-primary-500/20 border border-primary-500/30 text-primary-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest animate-fade-in">
+                  <span className="inline-block px-4 py-2 rounded-full bg-primary-500 text-primary-100 text-[10px] sm:text-xs font-bold uppercase tracking-widest animate-fade-in">
                     {slide.tag}
                   </span>
 
-                  <h2 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight">
+                  <h2 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight">
                     {slide.title}
                   </h2>
 
@@ -123,7 +121,7 @@ export function HeroCarousel() {
                       <Button
                         variant="outline"
                         size="lg"
-                        className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border-white/20 h-12 sm:h-14 px-6 sm:px-8 rounded-xl"
+                        className="backdrop-blur-md border-white/20 h-12 sm:h-14 px-6 sm:px-8 rounded-xl"
                       >
                         Book a Tour
                       </Button>

@@ -315,30 +315,23 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+/* ::-webkit-scrollbar-track {
   background: var(--neutral-500);
   border-radius: 9999px;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: var(--neutral-900);
-}
+  padding: 9px;
+} */
 
 ::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 9999px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: var(--neutral-600);
-}
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neutral-500);
+  background: var(--primary-400);
 }
 
 @media (max-width: 768px) {

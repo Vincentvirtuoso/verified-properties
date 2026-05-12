@@ -43,13 +43,13 @@ export const FilterSidebar = ({
       aria-label="Filter sidebar"
     >
       <div
-        className="sticky overflow-y-auto p-4 bg-card rounded-l-2xl border border-border"
+        className="sticky p-4 pr-2 bg-card rounded-2xl border border-border overflow-hidden"
         style={{
-          top: `var(--sticky-filter-top, 120px)`,
-          maxHeight: `calc(100dvh - var(--sticky-filter-top, 120px) - 32px)`,
+          top: `calc(var(--sticky-filter-top, 120px) + 25px)`,
+          maxHeight: `calc(100dvh - var(--sticky-filter-top, 120px) - 30px)`,
         }}
       >
-        <div className="flex items-center justify-between mb-5 px-1">
+        <div className="flex items-center justify-between mb-5 border-b pb-3 border-border">
           <h2 className="text-lg font-semibold text-foreground">Filters</h2>
           <button
             onClick={clearAllFilters}
@@ -59,19 +59,25 @@ export const FilterSidebar = ({
             Clear All
           </button>
         </div>
-
-        <AdvancedFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          locations={locations}
-          propertyTypes={propertyTypes}
-          agents={agents}
-          priceRange={priceRange}
-          areaRange={areaRange}
-          onClearAll={clearAllFilters}
-          allCategories={allCategories}
-          allFeatures={allFeatures}
-        />
+        <div
+          className="px-2 overflow-y-auto"
+          style={{
+            height: `calc(100dvh - var(--sticky-filter-top, 120px) - 120px)`,
+          }}
+        >
+          <AdvancedFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            locations={locations}
+            propertyTypes={propertyTypes}
+            agents={agents}
+            priceRange={priceRange}
+            areaRange={areaRange}
+            onClearAll={clearAllFilters}
+            allCategories={allCategories}
+            allFeatures={allFeatures}
+          />
+        </div>
       </div>
     </aside>
   );

@@ -13,6 +13,8 @@ import {
   PropertyFeature,
 } from "@/types/property";
 import { PropertyFilterState } from "@/types";
+import { Checkbox } from "../ui/Checkbox";
+import { Slider } from "../ui/Slider";
 
 interface AdvancedFiltersProps {
   filters: PropertyFilterState;
@@ -67,72 +69,20 @@ export function AdvancedFilters({
           expanded={expandedSections.price}
           onToggle={() => toggleSection("price")}
         >
-          <div className="space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Min
-                </label>
-                <input
-                  type="number"
-                  value={filters.priceRange[0]}
-                  onChange={(e) =>
-                    onFilterChange({
-                      priceRange: [
-                        Number(e.target.value),
-                        filters.priceRange[1],
-                      ],
-                    })
-                  }
-                  min={globalMinPrice}
-                  max={filters.priceRange[1]}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Max
-                </label>
-                <input
-                  type="number"
-                  value={filters.priceRange[1]}
-                  onChange={(e) =>
-                    onFilterChange({
-                      priceRange: [
-                        filters.priceRange[0],
-                        Number(e.target.value),
-                      ],
-                    })
-                  }
-                  min={filters.priceRange[0]}
-                  max={globalMaxPrice}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div className="px-1">
-              <input
-                type="range"
-                min={globalMinPrice}
-                max={globalMaxPrice}
-                step={Math.floor((globalMaxPrice - globalMinPrice) / 100)}
-                value={filters.priceRange[1]}
-                onChange={(e) =>
-                  onFilterChange({
-                    priceRange: [filters.priceRange[0], Number(e.target.value)],
-                  })
-                }
-                className="w-full accent-primary"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>{formatPrice(globalMinPrice)}</span>
-                <span>{formatPrice(globalMaxPrice)}</span>
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground text-center">
-              Selected: {formatPrice(filters.priceRange[0])} -{" "}
-              {formatPrice(filters.priceRange[1])}
-            </div>
+          <Slider
+            min={globalMinPrice}
+            max={globalMaxPrice}
+            step={Math.floor((globalMaxPrice - globalMinPrice) / 100)}
+            value={filters.priceRange}
+            onChange={(value) =>
+              onFilterChange({
+                priceRange: value,
+              })
+            }
+          />
+          <div className="text-sm text-muted-foreground text-center mt-4">
+            Selected: {formatPrice(filters.priceRange[0])} -{" "}
+            {formatPrice(filters.priceRange[1])}
           </div>
         </FilterSection>
 
@@ -185,23 +135,17 @@ export function AdvancedFilters({
         >
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {propertyTypes.map((typeKey) => (
-              <label
+              <Checkbox
                 key={typeKey}
-                className="flex items-center gap-2 cursor-pointer text-sm text-foreground"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.type.includes(typeKey)}
-                  onChange={(e) => {
-                    const newTypes = e.target.checked
-                      ? [...filters.type, typeKey]
-                      : filters.type.filter((t) => t !== typeKey);
-                    onFilterChange({ type: newTypes });
-                  }}
-                  className="rounded border-border text-primary focus:ring-ring"
-                />
-                <span>{PROPERTY_TYPE_LABELS[typeKey]}</span>
-              </label>
+                label={PROPERTY_TYPE_LABELS[typeKey]}
+                checked={filters.type.includes(typeKey)}
+                onChange={(e) => {
+                  const newTypes = e.target.checked
+                    ? [...filters.type, typeKey]
+                    : filters.type.filter((t) => t !== typeKey);
+                  onFilterChange({ type: newTypes });
+                }}
+              />
             ))}
           </div>
         </FilterSection>
@@ -213,23 +157,18 @@ export function AdvancedFilters({
         >
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {allFeatures.map((feat) => (
-              <label
+              <Checkbox
+                label={PROPERTY_FEATURE_LABELS[feat]}
                 key={feat}
-                className="flex items-center gap-2 cursor-pointer text-sm text-foreground"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.features.includes(feat)}
-                  onChange={(e) => {
-                    const newFeats = e.target.checked
-                      ? [...filters.features, feat]
-                      : filters.features.filter((f) => f !== feat);
-                    onFilterChange({ features: newFeats });
-                  }}
-                  className="rounded border-border text-primary focus:ring-ring"
-                />
-                <span>{PROPERTY_FEATURE_LABELS[feat]}</span>
-              </label>
+                checked={filters.features.includes(feat)}
+                onChange={(e) => {
+                  const newFeats = e.target.checked
+                    ? [...filters.features, feat]
+                    : filters.features.filter((f) => f !== feat);
+                  onFilterChange({ features: newFeats });
+                }}
+                className="rounded border-border text-primary focus:ring-ring"
+              />
             ))}
           </div>
         </FilterSection>
@@ -330,25 +269,6 @@ export function AdvancedFilters({
             value={filters.agent}
             onChange={(e) => onFilterChange({ agent: e.target.value })}
             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-          >
-            <option value="all">All Agents</option>
-            {agents.map((agent) => (
-              <option key={agent} value={agent}>
-                {agent}
-              </option>
-            ))}
-          </select>
-        </FilterSection>
-
-        <FilterSection
-          title="Listed By"
-          expanded={expandedSections.agent}
-          onToggle={() => toggleSection("agent")}
-        >
-          <select
-            value={filters.agent}
-            onChange={(e) => onFilterChange({ agent: e.target.value })}
-            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
           >
             <option value="all">All Agents</option>
             {agents.map((agent) => (

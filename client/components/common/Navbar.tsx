@@ -12,17 +12,17 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 const navLinks = [
   { href: "/properties?type=sale", label: "Buy" },
   { href: "/properties?type=rent", label: "Rent" },
-  { href: "/distress", label: "Distress Sale" },
-  { href: "/brokers", label: "Find Broker" },
-  { href: "/news", label: "News & Insight" },
+  { href: "/brokers", label: "JV Insist Pro" },
+  { href: "/learn-real-estate", label: "Learn Real Estate" },
+  { href: "/agent/properties/new", label: "Sell & Let" },
 ];
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const { bannerHeight } = useBannerHeightContext();
-  const { toggleOpen } = useSidebar();
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { toggleOpen, isCollapsed } = useSidebar();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,7 +47,7 @@ export function Navbar() {
         transitionProperty: "top, background-color, border-color, box-shadow",
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           <div className="flex items-center gap-4">
             {!isDesktop && (
@@ -59,24 +59,26 @@ export function Navbar() {
                 <LuMenu className="w-6 h-6" />
               </button>
             )}
-
-            <Link
-              href="/"
-              className="flex items-center group"
-              aria-label="VerifiedProperties Home"
-            >
-              <span className="text-xl md:text-2xl font-extrabold tracking-tight">
-                <span className="text-primary group-hover:text-primary/90 transition-colors">
-                  Verified
-                </span>
-                <span className="text-orange-500 group-hover:text-orange-600 transition-colors">
-                  Properties
-                </span>
-              </span>
-            </Link>
+            {!isDesktop ||
+              (isCollapsed && (
+                <Link
+                  href="/"
+                  className="flex items-center group"
+                  aria-label="VerifiedProperties Home"
+                >
+                  <span className="text-xl md:text-2xl font-extrabold tracking-tight">
+                    <span className="text-primary group-hover:text-primary/90 transition-colors">
+                      Verified
+                    </span>
+                    <span className="text-orange-500 group-hover:text-orange-600 transition-colors">
+                      Properties
+                    </span>
+                  </span>
+                </Link>
+              ))}
           </div>
 
-          <div className="hidden md:flex items-center bg-muted/50 rounded-full px-1 py-1 border border-foreground">
+          <div className="hidden lg:flex items-center bg-muted/50 rounded-full px-1 py-1 border border-foreground">
             {navLinks.map(({ href, label }) => {
               const isActive = pathname === href;
               return (
