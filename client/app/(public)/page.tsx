@@ -140,7 +140,7 @@ export default function HomePage() {
                 aria-label="Property search"
               />
               <Button type="submit" size="lg" disabled={!searchQuery.trim()}>
-                Search
+                <FaSearch />
               </Button>
             </div>
           </form>
