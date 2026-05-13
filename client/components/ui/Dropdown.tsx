@@ -32,7 +32,6 @@ const useDropdownContext = () => {
   return context;
 };
 
-// Main Dropdown Component
 interface DropdownProps {
   children: React.ReactNode;
   className?: string;
@@ -64,7 +63,6 @@ export function Dropdown({
     [onOpenChange],
   );
 
-  // Handle click outside
   useEffect(() => {
     if (!isOpen) return;
 
@@ -98,7 +96,6 @@ export function Dropdown({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleOpenChange]);
 
-  // Calculate position
   const getPosition = useCallback(() => {
     if (!triggerRef.current || !contentRef.current) return {};
 
@@ -110,7 +107,6 @@ export function Dropdown({
     let top = 0;
     let left = 0;
 
-    // Vertical positioning
     if (placement.startsWith("bottom")) {
       top = triggerRect.bottom + offset;
       if (top + contentRect.height > viewportHeight) {
@@ -123,7 +119,6 @@ export function Dropdown({
       }
     }
 
-    // Horizontal positioning
     if (placement.endsWith("start")) {
       left = triggerRect.left;
       if (left + contentRect.width > viewportWidth) {
@@ -136,7 +131,6 @@ export function Dropdown({
       }
     }
 
-    // Ensure within viewport
     left = Math.max(
       offset,
       Math.min(left, viewportWidth - contentRect.width - offset),
@@ -165,7 +159,6 @@ export function Dropdown({
   );
 }
 
-// Trigger Component
 interface DropdownTriggerProps {
   children: React.ReactNode;
   className?: string;
@@ -226,7 +219,6 @@ export function DropdownTrigger({
   );
 }
 
-// Content Component
 interface DropdownContentProps {
   children: React.ReactNode;
   className?: string;
@@ -258,7 +250,6 @@ export function DropdownContent({
             ? triggerRect.left
             : triggerRect.right - contentRect.width;
 
-        // Flip if out of viewport
         if (top + contentRect.height > viewportHeight) {
           top = triggerRect.top - contentRect.height - 8;
         }
@@ -318,7 +309,6 @@ export function DropdownContent({
   );
 }
 
-// Item Component
 interface DropdownItemProps {
   children: React.ReactNode;
   className?: string;
@@ -383,7 +373,6 @@ export function DropdownItem({
   );
 }
 
-// Separator Component
 interface DropdownSeparatorProps {
   className?: string;
 }
@@ -394,7 +383,6 @@ export function DropdownSeparator({ className }: DropdownSeparatorProps) {
   );
 }
 
-// Label Component
 interface DropdownLabelProps {
   children: React.ReactNode;
   className?: string;
@@ -413,7 +401,6 @@ export function DropdownLabel({ children, className }: DropdownLabelProps) {
   );
 }
 
-// Submenu Component
 interface DropdownSubmenuProps {
   children: React.ReactNode;
   label: React.ReactNode;
