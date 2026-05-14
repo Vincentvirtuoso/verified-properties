@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "../ui/Button";
 import { FiHome } from "react-icons/fi";
 import SectionLabel from "../ui/SectionLabel";
-import { BrandMark } from "../common/BrandMark";
+import BrandMark from "../common/BrandMark";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
