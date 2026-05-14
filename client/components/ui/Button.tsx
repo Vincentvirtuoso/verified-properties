@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ButtonHTMLAttributes, forwardRef, ReactNode } from "react";
+import { ButtonHTMLAttributes, forwardRef, ReactNode, RefObject } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
@@ -65,7 +65,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (asChild) {
       return (
-        <span className={baseStyles} ref={ref as any} {...props}>
+        <span
+          className={baseStyles}
+          ref={ref as RefObject<HTMLElement>}
+          {...props}
+        >
           {children}
         </span>
       );

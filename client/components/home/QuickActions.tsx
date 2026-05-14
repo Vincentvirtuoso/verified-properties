@@ -10,6 +10,7 @@ import {
 import { IconType } from "react-icons";
 import Link from "next/link";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
+import { FaHandshake } from "react-icons/fa";
 
 const ActionLink = ({
   title,
@@ -76,11 +77,11 @@ const QuickActions = () => {
                 href="/whatsapp-search"
               />
               <ActionLink
-                title="Property Listing Pro"
-                desc="Advanced CRM and featured placement for top-tier real estate professionals."
-                icon={FaRocket}
-                color="bg-blue-600"
-                href="/pro-tools"
+                title="Developer’s Pro JV"
+                desc="Partner with us on high-yield residential projects. Exclusive joint venture access for scale-ready developers."
+                icon={FaHandshake}
+                color="bg-emerald-700"
+                href="/jv-opportunity"
               />
               <ActionLink
                 title="Real Estate Podcast"

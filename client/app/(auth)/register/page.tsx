@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import {
-  FaUser,
-  FaEnvelope,
-  FaPhone,
-  FaLock,
-  FaUserTag,
-  FaIdCardAlt,
-} from "react-icons/fa";
 import Link from "next/link";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Field } from "@/components/ui/Field";
 import { AuthForm } from "@/components/forms/AuthForm";
-import { FiLock, FiMail, FiPhone, FiUser } from "react-icons/fi";
 import { PhoneField } from "@/components/ui/PhoneField";
+import { User, Role, PersonalPlan } from "@/types";
+import { FiAtSign, FiLock, FiMail, FiUser } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { useRouter } from "next/navigation";
+
+const accountTypeToRole: Record<string, Role> = {
+  seeker: Role.Buyer,
+  broker: Role.Agent,
+  company: Role.Company,
+  developer: Role.Developer,
+  landlord: Role.Landlord,
+};
 
 const accountTypes = [
   {
@@ -45,6 +49,8 @@ const accountTypes = [
 ];
 
 export default function RegisterPage() {
+  const { register, authLoading } = useAuth();
+  const router = useRouter();
   const [accountType, setAccountType] = useState("seeker");
   const [formData, setFormData] = useState({
     email: "",
@@ -56,23 +62,20 @@ export default function RegisterPage() {
     repeatPassword: "",
     agreeToTerms: false,
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -80,26 +83,66 @@ export default function RegisterPage() {
       newErrors.firstName = "First name is required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Please enter a valid email";
-    }
     if (!formData.username.trim()) newErrors.username = "Username is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6) {
+    else if (formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
-    }
-    if (formData.password !== formData.repeatPassword) {
+    if (formData.password !== formData.repeatPassword)
       newErrors.repeatPassword = "Passwords do not match";
-    }
-    if (!formData.agreeToTerms) {
+    if (!formData.agreeToTerms)
       newErrors.agreeToTerms = "You must agree to the Terms & Conditions";
-    }
 
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log("Registration Data:", { accountType, ...formData });
+    const role = accountTypeToRole[accountType];
+    const now = new Date();
+
+    const newUser: User = {
+      _id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      passwordHash: "hashed_" + formData.password,
+      currentPersonalPlan: PersonalPlan.Free,
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      avatar: undefined,
+      isEmailVerified: false,
+      roles: [role],
+      activeRole: role,
+
+      agentProfile:
+        role === Role.Agent
+          ? {
+              licenseNumber: "",
+              brokerage: "",
+              verified: false,
+              freeListingsUsed: 0,
+              maxFreeListings: 3,
+            }
+          : undefined,
+
+      buyerProfile:
+        role === Role.Buyer
+          ? {
+              savedSearchIds: [],
+              preferredLocations: [],
+            }
+          : undefined,
+
+      personalPartnership: undefined,
+      companyId: undefined,
+      companyRole: undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      await register(newUser);
+      router.replace("/");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -114,6 +157,7 @@ export default function RegisterPage() {
       footerHref="/login"
       showSocialLogins={false}
       className="max-w-3xl"
+      loading={authLoading}
     >
       <RadioGroup
         label="Account Type"
@@ -170,7 +214,7 @@ export default function RegisterPage() {
         value={formData.username}
         onChange={handleInputChange}
         error={errors.username}
-        icon={FaIdCardAlt}
+        icon={FiAtSign}
         required
       />
 
@@ -215,31 +259,29 @@ export default function RegisterPage() {
       </div>
 
       <div className="pt-4">
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <input
-            type="checkbox"
-            name="agreeToTerms"
-            checked={formData.agreeToTerms}
-            onChange={handleInputChange}
-            className="mt-1 w-5 h-5 accent-violet-600 rounded border-gray-300 focus:ring-violet-500 cursor-pointer"
-          />
-          <span className="text-sm text-gray-600 leading-relaxed">
-            I agree to the{" "}
-            <Link
-              href="/terms"
-              className="text-violet-600 hover:underline font-medium"
-            >
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/privacy"
-              className="text-violet-600 hover:underline font-medium"
-            >
-              Privacy Policy
-            </Link>
-          </span>
-        </label>
+        <Checkbox
+          label={
+            <span className="text-sm text-gray-600 leading-relaxed">
+              I agree to the{" "}
+              <Link
+                href="/terms"
+                className="text-violet-600 hover:underline font-medium"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                className="text-violet-600 hover:underline font-medium"
+              >
+                Privacy Policy
+              </Link>
+            </span>
+          }
+          name="agreeToTerms"
+          checked={formData.agreeToTerms}
+          onChange={handleInputChange}
+        />
 
         {errors.agreeToTerms && (
           <p className="text-red-500 text-xs mt-1.5 ml-8">

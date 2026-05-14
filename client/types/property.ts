@@ -87,7 +87,8 @@ export type PropertyDocumentType =
   | "probateLetterOfAdministration"
   | "landPurchaseAgreement"
   | "taxClearanceCertificate"
-  | "certificateOfStatutoryRightOfOccupancy";
+  | "certificateOfStatutoryRightOfOccupancy"
+  | "registeredSurveyPlan";
 
 export type PropertyDocument = {
   id?: string;
@@ -107,22 +108,36 @@ export type Property = {
   category: PropertyCategory;
   type: PropertyType;
   features?: PropertyFeature[];
+
+  listedByUserId: string;
+  listedUnder: {
+    type: "personal" | "company";
+    companyId?: string;
+  };
+
   listingType: ListingType;
   status?: PropertyStatus;
   bedrooms: number;
   bathrooms: number;
   area?: number;
-  image?: string;
-  gallery?: PropertyImage[];
+
   agent?: Agent;
+
   isFeatured?: boolean;
   sponsored?: boolean;
+
   discount?: {
     amount?: number;
     percentage?: number;
   };
+
+  image?: string;
+  gallery?: PropertyImage[];
   videoLinks?: string[];
   documents?: PropertyDocument[];
+
+  packageTier: "free" | "partnership";
+
   createdAt?: string;
   updatedAt?: string;
 };
@@ -150,6 +165,7 @@ export const documentTypeLabels: Record<PropertyDocumentType, string> = {
   probateLetterOfAdministration: "Probate / Letter of Administration",
   landPurchaseAgreement: "Land Purchase Agreement",
   taxClearanceCertificate: "Tax Clearance Certificate",
+  registeredSurveyPlan: "Registered Survey Plan",
   certificateOfStatutoryRightOfOccupancy:
     "Certificate of Statutory Right of Occupancy",
 };

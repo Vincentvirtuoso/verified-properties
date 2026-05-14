@@ -22,9 +22,9 @@ export const StatCard = ({
     viewport={{ once: true }}
     transition={{ delay: index * 0.1 }}
     whileHover={{ y: -5 }}
-    className={`flex items-center gap-5 p-6 rounded-2xl border border-border/50 bg-card hover:shadow-lg hover:shadow-primary/5 transition-all duration-300`}
+    className={`flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-card hover:shadow-lg hover:shadow-primary/5 transition-all duration-300`}
   >
-    <div className={`p-4 rounded-xl ${stat.colorClass}`}>
+    <div className={`p-3 rounded-xl ${stat.colorClass}`}>
       <stat.icon className="text-2xl" />
     </div>
     <div>

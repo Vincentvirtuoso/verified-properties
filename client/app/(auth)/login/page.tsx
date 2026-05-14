@@ -3,43 +3,39 @@
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Field } from "@/components/ui/Field";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FiLock, FiMail } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage = () => {
+  const router = useRouter();
+  const { login, authLoading, authError, clearError, isAuthenticated, user } =
+    useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const roleRoutes: Record<string, string> = {
+        buyer: "/",
+        agent: "/dashboard",
+        landlord: "/dashboard",
+        developer: "/dashboard",
+        company: "/company",
+      };
+      const redirectTo = roleRoutes[user.activeRole] || "/";
+      router.push(redirectTo);
     }
-
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      console.log("Logging in with:", formData);
-    }
-  };
+  }, [isAuthenticated, user, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -47,6 +43,32 @@ const LoginPage = () => {
 
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+    if (authError) clearError();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    try {
+      await login({ email: formData.email, password: formData.password });
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -59,7 +81,14 @@ const LoginPage = () => {
       footerText="Don't have an account?"
       footerLinkText="Create one"
       footerHref="/register"
+      loading={authLoading}
     >
+      {authError && (
+        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+          {authError}
+        </div>
+      )}
+
       <Field
         label="Email Address"
         name="email"

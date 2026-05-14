@@ -1,22 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "../ui/Button";
-import { LuMenu, LuUser } from "react-icons/lu";
+import { LuMenu } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Brandmark } from "./BrandMark";
+import { UserMenu } from "./UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
+import { Role } from "@/types";
 
-const navLinks = [
-  { href: "/properties?type=sale", label: "Buy" },
-  { href: "/properties?type=rent", label: "Rent" },
-  { href: "/brokers", label: "JV Insist Pro" },
-  { href: "/academy", label: "Learn Real Estate" },
-  { href: "/agent/properties/new", label: "Sell & Let" },
-];
+function getNavLinks(
+  role: Role | undefined,
+  isAuthenticated: boolean,
+): { href: string; label: string }[] {
+  if (!isAuthenticated) {
+    return [
+      { href: "/properties?type=sale", label: "Buy" },
+      { href: "/properties?type=rent", label: "Rent" },
+      { href: "/academy", label: "Learn Real Estate" },
+    ];
+  }
+
+  // Common links for everyone
+  const common = [
+    { href: "/properties?type=sale", label: "Buy" },
+    { href: "/properties?type=rent", label: "Rent" },
+  ];
+
+  switch (role) {
+    case Role.Buyer:
+      return [...common, { href: "/academy", label: "Learn Real Estate" }];
+
+    case Role.Agent:
+      return [
+        ...common,
+        { href: "/brokers", label: "JV Insist Pro" },
+        { href: "/academy", label: "Learn Real Estate" },
+        { href: "/agent/properties/new", label: "Sell & Let" },
+      ];
+
+    case Role.Landlord:
+    case Role.Developer:
+      return [
+        ...common,
+        { href: "/my-listings", label: "Manage Properties" },
+        { href: "/academy", label: "Learn Real Estate" },
+      ];
+
+    case Role.Company:
+      return [
+        ...common,
+        { href: "/company/listings", label: "Properties" },
+        { href: "/company/team", label: "Team" },
+        { href: "/academy", label: "Learn Real Estate" },
+      ];
+
+    default:
+      return [...common, { href: "/academy", label: "Learn Real Estate" }];
+  }
+}
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,6 +69,12 @@ export function Navbar() {
   const { bannerHeight } = useBannerHeightContext();
   const { toggleOpen, isCollapsed } = useSidebar();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const { user, isAuthenticated } = useAuth();
+
+  const activeNavLinks = useMemo(
+    () => getNavLinks(user?.activeRole, isAuthenticated),
+    [user?.activeRole, isAuthenticated],
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,7 +115,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden lg:flex items-center bg-muted/50 rounded-full px-1 py-1 border border-foreground">
-            {navLinks.map(({ href, label }) => {
+            {activeNavLinks.map(({ href, label }) => {
               const isActive = pathname === href;
               return (
                 <Link
@@ -85,34 +136,7 @@ export function Navbar() {
             })}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-3">
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="font-semibold text-navbar-foreground hover:text-primary"
-                >
-                  Log in
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button
-                  size="sm"
-                  className="font-semibold px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
-                >
-                  List Property
-                </Button>
-              </Link>
-            </div>
-
-            <Link
-              href="/login"
-              className="md:hidden p-2 rounded-full hover:bg-sidebar-hover-bg text-navbar-foreground"
-            >
-              <LuUser className="w-6 h-6" />
-            </Link>
-          </div>
+          <UserMenu isAuthenticated={isAuthenticated} user={user} />
         </div>
       </div>
     </nav>

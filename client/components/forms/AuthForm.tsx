@@ -6,6 +6,7 @@ import { Button } from "../ui/Button";
 import { FiHome } from "react-icons/fi";
 import SectionLabel from "../ui/SectionLabel";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type AuthFormProps = {
   title: string;
@@ -18,6 +19,7 @@ type AuthFormProps = {
   footerHref: string;
   showSocialLogins?: boolean;
   className?: string;
+  loading?: boolean;
 };
 
 export function AuthForm({
@@ -31,32 +33,41 @@ export function AuthForm({
   footerHref,
   showSocialLogins = true,
   className,
+  loading,
 }: AuthFormProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6">
-      <div className={cn("w-full max-w-md", className)}>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-200">
+      <div className={cn("w-full max-w-md animate-fade-in", className)}>
+        {/* Header Block */}
         <div className="text-center mb-10">
-          <div className="mx-auto mb-6 w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center">
-            <span className="text-white text-3xl font-bold tracking-tighter">
+          <div className="mx-auto mb-6 w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-md">
+            <span className="text-primary-foreground text-3xl font-bold tracking-tighter">
               <FiHome />
             </span>
           </div>
-          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-gray-600 mt-3 text-[15px] max-w-xs mx-auto">
+            <p className="text-neutral-500 dark:text-neutral-400 mt-3 text-[15px] max-w-xs mx-auto leading-relaxed">
               {subtitle}
             </p>
           )}
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/70 p-8 md:p-10">
+        {/* Form Container Card */}
+        <div className="bg-card text-card-foreground rounded-3xl border border-border shadow-xl p-8 md:p-10 transition-all">
           <form onSubmit={onSubmit} className="space-y-6">
             {children}
 
             {submitText && (
-              <Button size="lg" fullWidth type="submit" className="mt-2">
+              <Button
+                size="lg"
+                fullWidth
+                type="submit"
+                className="mt-2"
+                isLoading={loading}
+              >
                 {submitText}
               </Button>
             )}
@@ -67,24 +78,28 @@ export function AuthForm({
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-3 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 py-3.5 rounded-2xl transition-all text-sm font-medium"
+                    className="flex items-center justify-center gap-3 border border-border bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 py-3.5 rounded-2xl transition-all text-sm font-medium text-foreground cursor-pointer"
                   >
-                    <img
+                    <Image
                       src="https://www.google.com/favicon.ico"
                       alt="Google"
-                      className="w-5 h-5"
+                      className="w-5 h-5 grayscale-20 dark:grayscale-0"
+                      width={80}
+                      height={80}
                     />
                     Google
                   </button>
 
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-3 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 py-3.5 rounded-2xl transition-all text-sm font-medium"
+                    className="flex items-center justify-center gap-3 border border-border bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 py-3.5 rounded-2xl transition-all text-sm font-medium text-foreground cursor-pointer"
                   >
-                    <img
+                    <Image
                       src="https://www.facebook.com/favicon.ico"
                       alt="Facebook"
                       className="w-5 h-5"
+                      width={80}
+                      height={80}
                     />
                     Facebook
                   </button>
@@ -92,11 +107,12 @@ export function AuthForm({
               </>
             )}
 
-            <p className="text-center text-sm text-gray-600 pt-4">
+            {/* Footer Navigation */}
+            <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 pt-4">
               {footerText}{" "}
               <Link
                 href={footerHref}
-                className="text-violet-600 font-semibold hover:underline transition-colors"
+                className="text-primary font-semibold hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
                 {footerLinkText}
               </Link>
@@ -104,7 +120,8 @@ export function AuthForm({
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-500 mt-8">
+        {/* Disclaimer Node */}
+        <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 mt-8">
           Your information is safe and secure
         </p>
       </div>

@@ -126,16 +126,16 @@ export default function HomePage() {
     <>
       <HeroCarousel />
 
-      <div className="relative z-20 -mt-8 px-4 sm:px-6 lg:px-8 mb-12">
+      <div className="relative z-20 -mt-6 px-4 sm:px-6 lg:px-8 mb-12">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSearch}>
-            <div className="bg-card rounded-2xl shadow-xl p-2 flex items-center border border-border">
+            <div className="bg-card rounded-2xl shadow-xl px-2 flex items-center border border-border">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search properties, locations..."
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-lg py-3"
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-lg py-3 px-4"
                 aria-label="Property search"
               />
               <Button type="submit" size="lg" disabled={!searchQuery.trim()}>

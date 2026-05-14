@@ -333,12 +333,6 @@ body {
   height: 8px;
 }
 
-/* ::-webkit-scrollbar-track {
-  background: var(--neutral-500);
-  border-radius: 9999px;
-  padding: 9px;
-} */
-
 ::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 9999px;
@@ -346,6 +340,12 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-400);
+}
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+  -webkit-text-fill-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 @media (max-width: 768px) {

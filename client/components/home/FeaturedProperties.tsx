@@ -67,7 +67,7 @@ export const FeaturedProperties = ({
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
             >
               {properties.slice(0, 4).map((property) => (
                 <PropertyCard key={property._id} {...property} />

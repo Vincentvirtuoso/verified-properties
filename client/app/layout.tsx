@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const lato = Lato({
   variable: "--font-lato-sans",
@@ -28,7 +29,9 @@ export default function RootLayout({
       lang="en"
       className={`${lato.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

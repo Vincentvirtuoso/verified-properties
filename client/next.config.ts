@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i.pravatar.cc",
       },
+      {
+        protocol: "https",
+        hostname: "www.facebook.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.google.com",
+      },
     ],
   },
 };
