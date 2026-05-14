@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "../ui/Button";
 import { FiHome } from "react-icons/fi";
 import SectionLabel from "../ui/SectionLabel";
+import { BrandMark } from "../common/BrandMark";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -38,13 +39,8 @@ export function AuthForm({
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-200">
       <div className={cn("w-full max-w-md animate-fade-in", className)}>
-        {/* Header Block */}
         <div className="text-center mb-10">
-          <div className="mx-auto mb-6 w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-md">
-            <span className="text-primary-foreground text-3xl font-bold tracking-tighter">
-              <FiHome />
-            </span>
-          </div>
+          <BrandMark size={50} logo only />
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             {title}
           </h1>
