@@ -32,7 +32,6 @@ export default function PropertyGallery({
     ...gallery,
   ];
 
-  // Placeholder images for fallback
   const placeholderImages: PropertyImage[] = Array.from(
     { length: 5 },
     (_, i) => ({
@@ -66,7 +65,6 @@ export default function PropertyGallery({
     setActiveIndex((i) => (i + 1) % images.length);
   }, [images.length]);
 
-  // Handle Keyboard Navigation and Body Scroll Lock
   useEffect(() => {
     if (!lightboxOpen) return;
 
@@ -81,7 +79,6 @@ export default function PropertyGallery({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      // Unlock body scroll and cleanup
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -93,7 +90,7 @@ export default function PropertyGallery({
 
   return (
     <>
-      <div className="grid grid-cols-4 grid-rows-2 gap-2 h-120 md:h-140 rounded-2xl overflow-hidden">
+      <div className="grid grid-cols-4 grid-rows-2 gap-2 h-120 md:h-140 rounded-2xl overflow-hidden relative">
         <motion.button
           className="col-span-4 md:col-span-2 row-span-2 relative cursor-pointer group w-full h-full text-left focus:outline-hidden focus-visible:ring-4 focus-visible:ring-violet-500"
           initial={{ opacity: 0, scale: 0.98 }}
