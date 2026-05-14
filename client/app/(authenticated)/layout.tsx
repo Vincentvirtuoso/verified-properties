@@ -1,6 +1,6 @@
 import ShellLayout from "@/components/layouts/ShellLayout";
 
-export default function PublicLayout({
+export default function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
