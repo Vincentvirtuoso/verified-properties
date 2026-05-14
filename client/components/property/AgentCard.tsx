@@ -78,11 +78,11 @@ export default function AgentCard({ agent }: AgentCardProps) {
           </div>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="flex items-center gap-2.5">
           {agent.phone && (
             <a
               href={`tel:${agent.phone}`}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-all duration-200 group"
+              className="flex items-center gap-3 flex-1 px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-all duration-200 group"
             >
               <RiPhoneLine size={16} className="shrink-0" />
               <span className="truncate">{agent.phone}</span>
@@ -94,10 +94,9 @@ export default function AgentCard({ agent }: AgentCardProps) {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all duration-200"
             >
               <RiWhatsappLine size={16} className="shrink-0" />
-              WhatsApp Agent
             </a>
           )}
 
