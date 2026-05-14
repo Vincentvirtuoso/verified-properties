@@ -100,6 +100,8 @@ export default function AgentCard({ agent }: AgentCardProps) {
             </a>
           )}
 
+          
+        </div>
           {agent.email && (
             <a
               href={`mailto:${agent.email}`}
@@ -109,7 +111,6 @@ export default function AgentCard({ agent }: AgentCardProps) {
               <span className="truncate">{agent.email}</span>
             </a>
           )}
-        </div>
         <Link
           href={`/agents/${agent.id}`}
           className="ml-auto bg-primary text-white py-2 px-4 text-[13px] rounded-xl hover:bg-primary/80 mt-4"
