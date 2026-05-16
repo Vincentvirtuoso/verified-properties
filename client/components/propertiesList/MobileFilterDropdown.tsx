@@ -2,18 +2,35 @@ import { LuX } from "react-icons/lu";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useProperty } from "@/hooks/useProperty";
+import {
+  PropertyCategory,
+  PropertyDocument,
+  PropertyFeature,
+  PropertyFilterState,
+  PropertyLocation,
+  PropertyType,
+} from "@/types";
 
 export function MobileFilterDrawer({
   filters,
   onFilterChange,
   locations,
   propertyTypes,
-  agents,
   priceRange,
   areaRange,
-  onClearAll,
   onClose,
-}: any) {
+}: {
+  filters: PropertyFilterState;
+  onFilterChange: (filters: Partial<PropertyFilterState>) => void;
+  locations: PropertyLocation[];
+  propertyTypes: PropertyType[];
+  allCategories: PropertyCategory[];
+  allFeatures: PropertyFeature[];
+  allDocuments: PropertyDocument[];
+  onClose: () => void;
+  priceRange: [number, number];
+  areaRange: [number, number];
+}) {
   const { bannerHeight } = useBannerHeightContext();
   const { ALL_CATEGORIES, ALL_FEATURES, ALL_DOCUMENTS } = useProperty();
 
@@ -48,12 +65,11 @@ export function MobileFilterDrawer({
             onFilterChange={onFilterChange}
             locations={locations}
             propertyTypes={propertyTypes}
-            agents={agents}
             priceRange={priceRange}
             areaRange={areaRange}
             allCategories={ALL_CATEGORIES}
             allFeatures={ALL_FEATURES}
-            allDocuments={ALL_DOCUMENTS || []} 
+            allDocuments={ALL_DOCUMENTS || []}
           />
         </div>
       </div>

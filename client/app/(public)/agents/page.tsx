@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { properties } from "@/data/properties";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,13 +9,11 @@ import {
   LuX,
   LuMapPin,
   LuPhone,
-  LuMail,
   LuBuilding,
   LuCircleCheck,
   LuList,
   LuChevronDown,
   LuFilter,
-  LuAward,
   LuHouse,
 } from "react-icons/lu";
 import { FiGrid } from "react-icons/fi";
@@ -30,42 +27,70 @@ import {
   DropdownItem,
 } from "@/components/ui/Dropdown";
 
-const defaultAgentImage = "/placeholder_agent.png";
-
-const getAllAgents = () => {
-  const agentsMap = new Map();
-
-  properties.forEach((property) => {
-    if (property.agent && !agentsMap.has(property.agent.id)) {
-      const agentProperties = properties.filter(
-        (p) => p.agent?.id === property.agent?.id,
-      );
-      const totalValue = agentProperties.reduce((sum, p) => sum + p.price, 0);
-      const activeListings = agentProperties.filter(
-        (p) => p.status === "available",
-      ).length;
-
-      agentsMap.set(property.agent.id, {
-        ...property.agent,
-        totalListings: agentProperties.length,
-        activeListings,
-        totalValue,
-        properties: agentProperties,
-        locations: [
-          ...new Set(agentProperties.map((p) => p.location.split(",")[0])),
-        ],
-        propertyTypes: [...new Set(agentProperties.map((p) => p.type))],
-      });
-    }
-  });
-
-  return Array.from(agentsMap.values());
+export type Agent = {
+  id: string;
+  name: string;
+  image?: string;
+  company?: string;
+  phone?: string;
+  verified: boolean;
+  locations: string[];
+  propertyTypes: string[];
+  activeListings: number;
+  totalListings: number;
+  totalValue: number; // in NGN
 };
 
-const agents = getAllAgents();
-const locations = [...new Set(agents.flatMap((a) => a.locations))].sort();
-const specializations = [
-  ...new Set(agents.flatMap((a) => a.propertyTypes)),
+const mockAgents: Agent[] = [
+  {
+    id: "a1",
+    name: "Amina Okafor",
+    image: "/agents/amina.jpg",
+    company: "Okafor Realty",
+    phone: "+234 800 000 0001",
+    verified: true,
+    locations: ["Lagos", "Abuja"],
+    propertyTypes: ["Apartment", "Detached Duplex"],
+    activeListings: 12,
+    totalListings: 45,
+    totalValue: 520_000_000,
+  },
+  {
+    id: "a2",
+    name: "Chidi Eze",
+    image: undefined,
+    company: "Eze & Partners",
+    phone: "+234 800 000 0002",
+    verified: true,
+    locations: ["Enugu", "Port Harcourt"],
+    propertyTypes: ["Land", "Commercial"],
+    activeListings: 7,
+    totalListings: 30,
+    totalValue: 340_000_000,
+  },
+  {
+    id: "a3",
+    name: "Folake Adesina",
+    image: "/agents/folake.jpg",
+    phone: "+234 800 000 0003",
+    verified: false,
+    locations: ["Lagos"],
+    propertyTypes: ["Shortlet"],
+    activeListings: 3,
+    totalListings: 15,
+    totalValue: 85_000_000,
+  },
+  // … add more mock agents as needed
+];
+
+const defaultAgentImage = "/placeholder_avatar.png";
+
+// Pre‑compute filter options
+const allLocations = [
+  ...new Set(mockAgents.flatMap((a) => a.locations)),
+].sort();
+const allSpecializations = [
+  ...new Set(mockAgents.flatMap((a) => a.propertyTypes)),
 ].sort();
 
 type SortOption = "name" | "listings" | "experience" | "value";
@@ -87,24 +112,21 @@ export default function AgentsPage() {
     if (selectedSpecialization !== "all") count++;
     if (verifiedOnly) count++;
     if (searchQuery) count++;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveFiltersCount(count);
   }, [selectedLocation, selectedSpecialization, verifiedOnly, searchQuery]);
 
   const filteredAgents = useMemo(() => {
-    let filtered = agents;
+    let filtered = mockAgents;
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (agent) =>
-          agent.name.toLowerCase().includes(query) ||
-          agent.company?.toLowerCase().includes(query) ||
-          agent.locations.some((loc: any) =>
-            loc.toLowerCase().includes(query),
-          ) ||
-          agent.propertyTypes.some((type: any) =>
-            type.toLowerCase().includes(query),
-          ),
+          agent.name.toLowerCase().includes(q) ||
+          agent.company?.toLowerCase().includes(q) ||
+          agent.locations.some((loc) => loc.toLowerCase().includes(q)) ||
+          agent.propertyTypes.some((type) => type.toLowerCase().includes(q)),
       );
     }
 
@@ -161,8 +183,9 @@ export default function AgentsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-background">
+      {/* Breadcrumbs */}
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <Breadcrumbs
             items={breadcrumbItems}
@@ -175,55 +198,59 @@ export default function AgentsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
             Our Agents
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground text-lg">
             Connect with experienced real estate professionals across Nigeria
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6">
+        {/* Search & Controls */}
+        <div className="bg-card rounded-2xl border border-border p-4 mb-6">
           <div className="relative mb-4">
-            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search agents by name, company, location, or specialization..."
-              className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base
-                       focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-transparent
-                       transition-all"
+              className="w-full pl-12 pr-12 py-3 bg-background border border-border rounded-xl text-base
+                         focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                         transition-all text-foreground placeholder:text-muted-foreground"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors"
               >
-                <LuX className="w-4 h-4 text-gray-400" />
+                <LuX className="w-4 h-4 text-muted-foreground" />
               </button>
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <div className="flex flex-wrap gap-2">
+              {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowMobileFilters(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 bg-violet-50 text-violet-700 rounded-lg hover:bg-violet-100 transition-colors"
+                className="lg:hidden flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
               >
                 <LuFilter className="w-4 h-4" />
                 <span>Filters</span>
                 {activeFiltersCount > 0 && (
-                  <span className="bg-violet-600 text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
                     {activeFiltersCount}
                   </span>
                 )}
               </button>
 
+              {/* Desktop Filters */}
               <div className="hidden lg:flex gap-2">
                 <Dropdown>
-                  <DropdownTrigger className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+                  <DropdownTrigger className="px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors flex items-center gap-2 text-sm text-foreground">
                     <LuMapPin className="w-4 h-4" />
                     {selectedLocation === "all"
                       ? "All Locations"
@@ -234,19 +261,19 @@ export default function AgentsPage() {
                     <DropdownItem onClick={() => setSelectedLocation("all")}>
                       All Locations
                     </DropdownItem>
-                    {locations.map((location) => (
+                    {allLocations.map((loc) => (
                       <DropdownItem
-                        key={location}
-                        onClick={() => setSelectedLocation(location)}
+                        key={loc}
+                        onClick={() => setSelectedLocation(loc)}
                       >
-                        {location}
+                        {loc}
                       </DropdownItem>
                     ))}
                   </DropdownContent>
                 </Dropdown>
 
                 <Dropdown>
-                  <DropdownTrigger className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+                  <DropdownTrigger className="px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors flex items-center gap-2 text-sm text-foreground">
                     <LuBuilding className="w-4 h-4" />
                     {selectedSpecialization === "all"
                       ? "All Types"
@@ -259,7 +286,7 @@ export default function AgentsPage() {
                     >
                       All Property Types
                     </DropdownItem>
-                    {specializations.map((spec) => (
+                    {allSpecializations.map((spec) => (
                       <DropdownItem
                         key={spec}
                         onClick={() => setSelectedSpecialization(spec)}
@@ -275,8 +302,8 @@ export default function AgentsPage() {
                   className={cn(
                     "px-4 py-2 border rounded-lg transition-colors flex items-center gap-2 text-sm",
                     verifiedOnly
-                      ? "bg-violet-600 text-white border-violet-600"
-                      : "border-gray-200 hover:bg-gray-50",
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border hover:bg-secondary text-foreground",
                   )}
                 >
                   <LuCircleCheck className="w-4 h-4" />
@@ -287,7 +314,7 @@ export default function AgentsPage() {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={clearAllFilters}
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                  className="text-sm text-primary hover:text-primary/80 font-medium"
                 >
                   Clear All
                 </button>
@@ -296,7 +323,7 @@ export default function AgentsPage() {
 
             <div className="flex items-center gap-2">
               <Dropdown>
-                <DropdownTrigger className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+                <DropdownTrigger className="px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors flex items-center gap-2 text-sm text-foreground">
                   Sort:{" "}
                   {sortBy === "name"
                     ? "Name"
@@ -323,14 +350,14 @@ export default function AgentsPage() {
                 </DropdownContent>
               </Dropdown>
 
-              <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+              <div className="flex border border-border rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={cn(
                     "p-2 transition-colors",
                     viewMode === "grid"
-                      ? "bg-violet-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50",
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-secondary",
                   )}
                 >
                   <FiGrid className="w-4 h-4" />
@@ -340,8 +367,8 @@ export default function AgentsPage() {
                   className={cn(
                     "p-2 transition-colors",
                     viewMode === "list"
-                      ? "bg-violet-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50",
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-secondary",
                   )}
                 >
                   <LuList className="w-4 h-4" />
@@ -351,17 +378,19 @@ export default function AgentsPage() {
           </div>
         </div>
 
+        {/* Result Count */}
         <div className="mb-6">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Showing{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-foreground">
               {filteredAgents.length}
             </span>{" "}
             {filteredAgents.length === 1 ? "agent" : "agents"}
-            {searchQuery && <span> for "{searchQuery}"</span>}
+            {searchQuery && <span> for &quot;{searchQuery}&quot;</span>}
           </p>
         </div>
 
+        {/* Agent List */}
         {filteredAgents.length > 0 ? (
           <div
             className={cn(
@@ -386,17 +415,17 @@ export default function AgentsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <LuSearch className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="text-center py-16 bg-card rounded-2xl border border-border">
+            <LuSearch className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               No agents found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Try adjusting your filters or search criteria
             </p>
             <button
               onClick={clearAllFilters}
-              className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Clear All Filters
             </button>
@@ -404,6 +433,7 @@ export default function AgentsPage() {
         )}
       </div>
 
+      {/* Mobile Filter Drawer */}
       <AnimatePresence>
         {showMobileFilters && (
           <MobileFilterDrawer
@@ -413,8 +443,8 @@ export default function AgentsPage() {
             setSelectedSpecialization={setSelectedSpecialization}
             verifiedOnly={verifiedOnly}
             setVerifiedOnly={setVerifiedOnly}
-            locations={locations}
-            specializations={specializations}
+            locations={allLocations}
+            specializations={allSpecializations}
             onClose={() => setShowMobileFilters(false)}
             onClear={clearAllFilters}
           />
@@ -424,14 +454,13 @@ export default function AgentsPage() {
   );
 }
 
-// Grid Agent Card
-function AgentCardGrid({ agent }: { agent: any }) {
+function AgentCardGrid({ agent }: { agent: Agent }) {
   const [imgSrc, setImgSrc] = useState(agent.image || defaultAgentImage);
 
   return (
     <Link href={`/agents/${agent.id}`}>
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group h-full flex flex-col">
-        <div className="relative h-48 bg-linear-to-br from-violet-500 to-purple-600">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col">
+        <div className="relative h-48 bg-linear-to-br from-primary to-primary/80">
           <Image
             src={imgSrc}
             alt={agent.name}
@@ -441,7 +470,7 @@ function AgentCardGrid({ agent }: { agent: any }) {
             onError={() => setImgSrc(defaultAgentImage)}
           />
           {agent.verified && (
-            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-violet-600 flex items-center gap-1">
+            <div className="absolute top-3 right-3 bg-card/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-primary flex items-center gap-1">
               <LuCircleCheck className="w-3 h-3" />
               Verified
             </div>
@@ -449,11 +478,11 @@ function AgentCardGrid({ agent }: { agent: any }) {
         </div>
 
         <div className="p-5 flex-1 flex flex-col">
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-violet-600 transition-colors">
+          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
             {agent.name}
           </h3>
           {agent.company && (
-            <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <LuBuilding className="w-3 h-3" />
               {agent.company}
             </p>
@@ -461,27 +490,27 @@ function AgentCardGrid({ agent }: { agent: any }) {
 
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Listings:</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Active Listings:</span>
+              <span className="font-semibold text-foreground">
                 {agent.activeListings}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Properties Sold/Rented:</span>
-              <span className="font-semibold text-gray-900">
-                {agent.totalListings - agent.activeListings}
+              <span className="text-muted-foreground">Total Deals:</span>
+              <span className="font-semibold text-foreground">
+                {agent.totalListings}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Specializations:</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Specializations:</span>
+              <span className="font-semibold text-foreground">
                 {agent.propertyTypes.length}
               </span>
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <LuMapPin className="w-3 h-3 shrink-0" />
               <span className="line-clamp-1">
                 {agent.locations.slice(0, 2).join(", ")}
@@ -491,11 +520,11 @@ function AgentCardGrid({ agent }: { agent: any }) {
 
           <div className="mt-4 flex gap-2">
             {agent.phone && (
-              <button className="flex-1 py-2 bg-violet-50 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-100 transition-colors">
+              <button className="flex-1 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors">
                 Contact
               </button>
             )}
-            <button className="flex-1 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            <button className="flex-1 py-2 border border-border text-foreground rounded-lg text-sm font-medium hover:bg-secondary transition-colors">
               View Profile
             </button>
           </div>
@@ -505,13 +534,12 @@ function AgentCardGrid({ agent }: { agent: any }) {
   );
 }
 
-// List Agent Card
-function AgentCardList({ agent }: { agent: any }) {
+function AgentCardList({ agent }: { agent: Agent }) {
   const [imgSrc, setImgSrc] = useState(agent.image || defaultAgentImage);
 
   return (
     <Link href={`/agents/${agent.id}`}>
-      <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-all group">
+      <div className="bg-card rounded-xl border border-border p-4 hover:shadow-lg transition-all group">
         <div className="flex items-start gap-4">
           <div className="relative w-20 h-20 rounded-full overflow-hidden shrink-0">
             <Image
@@ -527,35 +555,37 @@ function AgentCardList({ agent }: { agent: any }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-violet-600 transition-colors flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
                   {agent.name}
                   {agent.verified && (
-                    <LuCircleCheck className="w-4 h-4 text-violet-600" />
+                    <LuCircleCheck className="w-4 h-4 text-primary" />
                   )}
                 </h3>
                 {agent.company && (
-                  <p className="text-sm text-gray-600">{agent.company}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {agent.company}
+                  </p>
                 )}
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">Listings</p>
-                <p className="text-xl font-bold text-violet-600">
+                <p className="text-sm text-muted-foreground">Listings</p>
+                <p className="text-xl font-bold text-primary">
                   {agent.activeListings}
                 </p>
               </div>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-4">
-              <div className="flex items-center gap-1 text-sm text-gray-600">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <LuMapPin className="w-4 h-4" />
                 <span>{agent.locations.slice(0, 2).join(", ")}</span>
               </div>
-              <div className="flex items-center gap-1 text-sm text-gray-600">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <LuHouse className="w-4 h-4" />
                 <span>{agent.propertyTypes.slice(0, 3).join(", ")}</span>
               </div>
               {agent.phone && (
-                <div className="flex items-center gap-1 text-sm text-gray-600">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <LuPhone className="w-4 h-4" />
                   <span>{agent.phone}</span>
                 </div>
@@ -568,7 +598,6 @@ function AgentCardList({ agent }: { agent: any }) {
   );
 }
 
-// Mobile Filter Drawer
 function MobileFilterDrawer({
   selectedLocation,
   setSelectedLocation,
@@ -580,7 +609,18 @@ function MobileFilterDrawer({
   specializations,
   onClose,
   onClear,
-}: any) {
+}: {
+  selectedLocation: string;
+  setSelectedLocation: (v: string) => void;
+  selectedSpecialization: string;
+  setSelectedSpecialization: (v: string) => void;
+  verifiedOnly: boolean;
+  setVerifiedOnly: (v: boolean) => void;
+  locations: string[];
+  specializations: string[];
+  onClose: () => void;
+  onClear: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -594,13 +634,13 @@ function MobileFilterDrawer({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30 }}
-        className="absolute right-0 top-0 h-full w-full max-w-xs bg-white shadow-xl"
+        className="absolute right-0 top-0 h-full w-full max-w-xs bg-card shadow-xl"
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-lg font-semibold text-foreground">Filters</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-secondary rounded-lg transition-colors"
           >
             <LuX className="w-5 h-5" />
           </button>
@@ -608,16 +648,16 @@ function MobileFilterDrawer({
 
         <div className="p-4 overflow-y-auto h-[calc(100vh-64px)]">
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Location
             </label>
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+              className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">All Locations</option>
-              {locations.map((loc: string) => (
+              {locations.map((loc) => (
                 <option key={loc} value={loc}>
                   {loc}
                 </option>
@@ -626,16 +666,16 @@ function MobileFilterDrawer({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Property Type
             </label>
             <select
               value={selectedSpecialization}
               onChange={(e) => setSelectedSpecialization(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+              className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">All Types</option>
-              {specializations.map((spec: string) => (
+              {specializations.map((spec) => (
                 <option key={spec} value={spec}>
                   {spec}
                 </option>
@@ -645,14 +685,14 @@ function MobileFilterDrawer({
 
           <div className="mb-6">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-foreground">
                 Verified Agents Only
               </span>
               <button
                 onClick={() => setVerifiedOnly(!verifiedOnly)}
                 className={cn(
                   "relative w-11 h-6 rounded-full transition-colors",
-                  verifiedOnly ? "bg-violet-600" : "bg-gray-200",
+                  verifiedOnly ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
@@ -668,13 +708,13 @@ function MobileFilterDrawer({
           <div className="flex gap-3 mt-8">
             <button
               onClick={onClear}
-              className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-border text-foreground rounded-lg hover:bg-secondary transition-colors"
             >
               Clear All
             </button>
             <button
               onClick={onClose}
-              className="flex-1 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+              className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Apply Filters
             </button>

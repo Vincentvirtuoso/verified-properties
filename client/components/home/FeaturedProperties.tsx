@@ -2,14 +2,14 @@ import { motion } from "framer-motion";
 import { LuArrowRight, LuTag } from "react-icons/lu";
 import Countdown from "../ui/Countdown";
 import { Button } from "../ui/Button";
-import { PropertyCard } from "../cards/PropertyCard";
-import { Property } from "@/types";
+import { PropertyCard } from "../property/PropertyCard";
+import { PopulatedProperty } from "@/types";
 import Link from "next/link";
 
 interface FeaturedPropertiesProps {
   isLoading: boolean;
   propertyError: string | null;
-  properties: Property[];
+  properties: PopulatedProperty[];
 }
 
 export const FeaturedProperties = ({

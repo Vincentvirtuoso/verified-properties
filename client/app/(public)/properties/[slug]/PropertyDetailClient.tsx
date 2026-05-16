@@ -8,7 +8,7 @@ import {
   RiRefreshLine,
   RiHome4Line,
 } from "react-icons/ri";
-import { Property } from "@/types/property";
+import { PopulatedProperty } from "@/types/property";
 
 import PropertyGallery from "@/components/property/PropertyGallery";
 import PropertyHeader from "@/components/property/PropertyHeader";
@@ -16,14 +16,14 @@ import PropertyStats from "@/components/property/PropertyStats";
 import PropertyDescription from "@/components/property/PropertyDescription";
 import PropertyDocuments from "@/components/property/PropertyDocuments";
 import PropertyVideos from "@/components/property/PropertyVideos";
-import AgentCard from "@/components/property/AgentCard";
 import ContactForm from "@/components/property/ContactForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useEffect, useState } from "react";
 import { LocationPlaceholder } from "@/components/property/PropertyLocation";
+import AgentCard from "@/components/property/AgentCard";
 
 interface PropertyDetailClientProps {
-  property: Property;
+  property: PopulatedProperty;
 }
 
 const fadeUp = {
@@ -51,13 +51,14 @@ export default function PropertyDetailClient({
     window.addEventListener("resize", updateTop);
     return () => window.removeEventListener("resize", updateTop);
   }, [bannerHeight]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="container max-w-7xl py-3 flex items-center justify-between gap-4">
           <Link
             href="/properties"
-            className="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary transition-colors"
           >
             <RiArrowLeftLine size={16} />
             Back to listings
@@ -66,7 +67,7 @@ export default function PropertyDetailClient({
           <nav className="hidden md:flex items-center gap-2 text-xs text-neutral-400 dark:text-neutral-500">
             <Link
               href="/"
-              className="hover:text-violet-500 transition-colors flex items-center gap-1"
+              className="hover:text-primary transition-colors flex items-center gap-1"
             >
               <RiHome4Line size={13} />
               Home
@@ -74,7 +75,7 @@ export default function PropertyDetailClient({
             <span>/</span>
             <Link
               href="/properties"
-              className="hover:text-violet-500 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Properties
             </Link>
@@ -105,15 +106,16 @@ export default function PropertyDetailClient({
               <PropertyStats property={property} />
             </motion.div>
 
-            {property.description && <div className="border-t border-border" />}
-
             {property.description && (
-              <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
-                <PropertyDescription
-                  description={property.description}
-                  title={property.title}
-                />
-              </motion.div>
+              <>
+                <div className="border-t border-border" />
+                <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
+                  <PropertyDescription
+                    description={property.description}
+                    title={property.title}
+                  />
+                </motion.div>
+              </>
             )}
 
             {property.videoLinks && property.videoLinks.length > 0 && (
@@ -165,7 +167,12 @@ export default function PropertyDetailClient({
 
           <div className="lg:col-span-1">
             <div className="lg:sticky space-y-4" style={{ top: stickyTop }}>
-              {property.agent && <AgentCard agent={property.agent} />}
+              {typeof property.ownerId !== "string" && (
+                <AgentCard
+                  owner={property.ownerId}
+                  ownerType={property.ownerType}
+                />
+              )}
               <ContactForm propertyTitle={property.title} />
             </div>
           </div>

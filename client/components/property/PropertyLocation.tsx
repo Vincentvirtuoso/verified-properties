@@ -3,9 +3,10 @@
 import { LuMapPin, LuExternalLink } from "react-icons/lu";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { PropertyLocation } from "@/types/property";
 
 interface LocationPlaceholderProps {
-  location: string;
+  location: PropertyLocation;
   showMap?: boolean;
   className?: string;
   zoom?: number;
@@ -25,7 +26,17 @@ export function LocationPlaceholder({
   useGoogleMaps = false,
   googleMapsApiKey,
 }: LocationPlaceholderProps) {
-  const encodedLocation = encodeURIComponent(location);
+  // Format display string: "address, city, state, country"
+  const displayLocation = [
+    location.address,
+    location.city,
+    location.state,
+    location.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const encodedLocation = encodeURIComponent(displayLocation);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
 
   const staticMapUrl =
@@ -44,7 +55,9 @@ export function LocationPlaceholder({
         <LuMapPin className="mt-0.5 h-5 w-5 text-primary shrink-0" />
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">Location</h3>
-          <p className="text-sm text-muted-foreground mt-1">{location}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {displayLocation}
+          </p>
           <a
             href={googleMapsUrl}
             target="_blank"
@@ -64,7 +77,7 @@ export function LocationPlaceholder({
           >
             <Image
               src={staticMapUrl}
-              alt={`Map of ${location}`}
+              alt={`Map of ${displayLocation}`}
               fill
               className="object-cover"
               unoptimized

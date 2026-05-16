@@ -1,24 +1,27 @@
 "use client";
 
-import { Property } from "@/types/property";
-import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaBed, FaBath, FaExpand, FaAward, FaFile } from "react-icons/fa";
-import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
-import { formatPrice, formatRelativeTime } from "@/lib/formatters";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { FaBed, FaBath, FaExpand, FaFire } from "react-icons/fa";
+import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
 import { RiHeartLine, RiHeartFill } from "react-icons/ri";
 import { LuFileText, LuImage, LuMapPin, LuVideo } from "react-icons/lu";
-import { imageLoader } from "../../utils/helpers";
-import VerifiedBadge from "../icons/VerifiedBadge";
+
+import { Badge } from "@/components/ui";
+import VerifiedBadge from "@/components/icons/VerifiedBadge";
+import { LISTING_PURPOSE_LABELS } from "@/utils/constants";
+import { formatPrice, formatRelativeTime } from "@/lib/formatters";
+import { imageLoader } from "@/utils/helpers";
+import { Role } from "@/types";
+import { PopulatedProperty } from "@/types/property";
+import { PopulatedUser } from "@/types";
+import { cn } from "@/lib/utils";
 
 const defaultImage = "/placeholder-property.png";
-const defaultAgentImage = "/placeholder_agent.png";
 
 export function PropertyCard({
-  // _id,
   slug,
   title,
   location,
@@ -27,52 +30,96 @@ export function PropertyCard({
   bathrooms,
   area = 0,
   image,
-  listingType,
-  sponsored = false,
-  isFeatured,
-  agent,
+  listingPurpose,
+  tier,
   discount,
   createdAt,
   documents,
   videoLinks,
   gallery,
-}: Property) {
+  ownerType,
+  ownerId,
+  status,
+}: PopulatedProperty) {
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState(image || defaultImage);
-  const [imgAgentSrc, setImgAgentSrc] = useState(
-    agent?.image || defaultAgentImage,
-  );
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
-  const discountedPrice = discount?.percentage
-    ? price - (price * discount.percentage) / 100
-    : discount?.amount
-      ? price - discount.amount
-      : price;
+  const discountedPrice = useMemo(() => {
+    if (discount?.percentage)
+      return price - (price * discount.percentage) / 100;
+    if (discount?.amount) return price - discount.amount;
+    return price;
+  }, [price, discount]);
 
-  const hasDiscount = discount && (discount.percentage || discount.amount);
-  const hasDocuments = documents && documents?.length > 0;
-  const hasVideoLinks = videoLinks && videoLinks?.length > 0;
-  const savingsAmount = price - discountedPrice;
-  const savingsPercentage =
-    discount?.percentage || Math.round((savingsAmount / price) * 100);
+  const savingsAmount = useMemo(
+    () => price - discountedPrice,
+    [price, discountedPrice],
+  );
+  const savingsPercentage = useMemo(
+    () => discount?.percentage ?? Math.round((savingsAmount / price) * 100),
+    [discount, savingsAmount, price],
+  );
+  const hasDiscount = !!(discount?.percentage || discount?.amount);
+  const hasDocuments = !!documents?.length;
+  const hasVideoLinks = !!videoLinks?.length;
+  const hasGallery = !!(gallery && gallery.length > 0);
+
+  const defaultOwnerImage = "/placeholder_avatar.png";
+
+  const locationString = location ? `${location.city}, ${location.state}` : "";
+
+  const isCompany = ownerType === "company";
+  const isLandlordOrAgent =
+    ownerType === Role.Landlord || ownerType === Role.Agent;
+
+  const ownerName = useMemo(() => {
+    if (isCompany) return ownerId.companyId?.name || ownerId.name;
+    return ownerId.name;
+  }, [ownerId, isCompany]);
+
+  const ownerInitial = ownerName?.charAt(0);
+
+  const isVerified = useMemo(() => {
+    if (isCompany) return ownerId.companyId?.verificationStatus === "verified";
+    const user = ownerId as PopulatedUser;
+    return (
+      user.agentProfile?.verificationStatus === "verified" ||
+      user.landlordProfile?.verificationStatus === "verified"
+    );
+  }, [ownerId, isCompany]);
+
+  const ownerImg = useMemo(() => {
+    if (isCompany) return ownerId.companyId?.logo;
+
+    return ownerId.avatar;
+  }, [ownerId, isCompany]);
+
+  const [ownerImageSrc, setOwnerImageSrc] = useState(
+    ownerImg || defaultOwnerImage,
+  );
+
+  const ownerRoute = useMemo(() => {
+    if (isCompany) return `/companies/${ownerId.companyId?._id}`;
+    const user = ownerId as PopulatedUser;
+    const routePrefix =
+      user.activeRole === Role.Landlord ? "landlords" : "agents";
+    return `/${routePrefix}/${ownerId._id}`;
+  }, [ownerId, isCompany]);
 
   const handleCardClick = () => {
     router.push(`/properties/${slug}`);
   };
 
-  const handleAgentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (agent?.id) {
-      router.push(`/agents/${agent.id}`);
-    }
-  };
-
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    // toggleFavorite(_id);
+    setIsLiked((prev) => !prev);
+  };
+
+  const handleOwnerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(ownerRoute);
   };
 
   return (
@@ -85,24 +132,38 @@ export function PropertyCard({
       onClick={handleCardClick}
       className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 group cursor-pointer relative h-full flex flex-col"
     >
-      {hasDiscount && (
-        <div className="absolute -top-5 -left-1 w-32 h-32 overflow-hidden z-20 pointer-events-none">
-          <motion.div
-            initial={{ x: -100 }}
-            animate={{ x: 0 }}
-            transition={{ type: "spring", stiffness: 100, damping: 15 }}
-          >
-            <div className="bg-linear-to-r from-destructive to-destructive/80 text-destructive-foreground py-1.5 px-8 transform -rotate-45 translate-y-6 -translate-x-8 shadow-lg">
-              <div className="flex items-center gap-1">
-                <FiTrendingDown className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold tracking-wider max-w-5">
-                  {savingsPercentage}% OFF
-                </span>
-              </div>
+      {status === "active"
+        ? hasDiscount && (
+            <div className="absolute -top-2 -left-1 w-32 h-32 overflow-hidden z-20 pointer-events-none">
+              <motion.div
+                initial={{ x: -100 }}
+                animate={{ x: 0 }}
+                transition={{ type: "spring", stiffness: 100, damping: 15 }}
+              >
+                <div className="bg-linear-to-r from-destructive to-destructive/80 text-destructive-foreground py-1.5 px-8 transform -rotate-45 translate-y-6 -translate-x-8 shadow-lg">
+                  <div className="flex items-center gap-1">
+                    <FiTrendingDown className="w-3.5 h-3.5" />
+                    <span className="text-xs font-bold tracking-wider max-w-20">
+                      {savingsPercentage}% OFF
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </div>
-      )}
+          )
+        : (status === "rented" || status === "sold") && (
+            <div className="absolute -top-3.5 -left-1 w-32 h-32 overflow-hidden z-20 pointer-events-none">
+              <motion.div
+                initial={{ x: -100 }}
+                animate={{ x: 0 }}
+                transition={{ type: "spring", stiffness: 100, damping: 15 }}
+              >
+                <div className="bg-linear-to-r from-destructive to-destructive/80 text-destructive-foreground py-1.5 px-8 transform -rotate-45 translate-y-6 -translate-x-8 shadow-lg text-sm font-bold text-center">
+                  {status.toUpperCase()}
+                </div>
+              </motion.div>
+            </div>
+          )}
 
       <div className="relative h-64 overflow-hidden shrink-0">
         <Image
@@ -111,7 +172,7 @@ export function PropertyCard({
           loader={imageLoader}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={isFeatured}
+          priority={tier === "featured"}
           onError={() => {
             if (imgSrc !== defaultImage) setImgSrc(defaultImage);
           }}
@@ -124,30 +185,18 @@ export function PropertyCard({
 
         <div
           className={cn(
-            "absolute space-y-2 z-10 pointer-events-none",
-            hasDiscount ? "top-12 right-3" : "top-3 left-3",
+            "absolute top-3 z-10 pointer-events-none flex flex-wrap gap-2",
+            hasDiscount ? "right-3 top-12" : "left-3",
           )}
         >
-          {sponsored && (
+          {tier === "featured" && (
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-linear-to-r from-warning to-warning/80 text-warning-foreground text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg flex items-center gap-1"
+              className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg flex items-center gap-2"
             >
-              <FaAward />
-              Sponsored
-            </motion.div>
-          )}
-
-          {isFeatured && (
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg"
-            >
-              ✨ Featured
+              <FaFire className="text-red-600" /> Featured
             </motion.div>
           )}
         </div>
@@ -158,35 +207,33 @@ export function PropertyCard({
             animate={{ x: 0, opacity: 1 }}
             className="bg-background/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-foreground capitalize shadow-lg border border-border"
           >
-            For {listingType}
+            {LISTING_PURPOSE_LABELS[listingPurpose]}
           </motion.div>
         </div>
+
         <div className="absolute bottom-3 right-3 z-10 pointer-events-none flex flex-wrap gap-2">
           {hasDocuments && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
               className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
             >
-              <LuFileText size={18} /> {documents.length}
+              <LuFileText size={18} /> {documents!.length}
             </motion.div>
           )}
           {hasVideoLinks && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
               className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
             >
-              <LuVideo size={18} /> {videoLinks.length}
+              <LuVideo size={18} /> {videoLinks!.length}
             </motion.div>
           )}
-          {gallery && (
+          {hasGallery && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
               className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
             >
               <LuImage size={18} /> {gallery.length}
@@ -205,6 +252,9 @@ export function PropertyCard({
               <button
                 onClick={handleLikeClick}
                 className="bg-primary text-primary-foreground p-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-lg text-lg"
+                aria-label={
+                  isLiked ? "Remove from favourites" : "Add to favourites"
+                }
               >
                 {isLiked ? (
                   <RiHeartFill className="text-destructive" />
@@ -252,7 +302,7 @@ export function PropertyCard({
 
         <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1 shrink-0">
           <LuMapPin className="shrink-0" />
-          <span className="line-clamp-1">{location}</span>
+          <span className="line-clamp-1">{locationString}</span>
         </p>
 
         <div className="flex items-center gap-5 mt-auto pt-4 text-sm text-muted-foreground">
@@ -273,37 +323,44 @@ export function PropertyCard({
         </div>
 
         <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs">
-          {agent && (
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {agent.image ? (
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {ownerImageSrc ? (
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
                 <Image
+                  src={ownerImageSrc}
+                  alt={ownerName}
+                  sizes="25px"
+                  width={80}
+                  height={80}
                   loader={imageLoader}
-                  src={imgAgentSrc}
-                  alt={agent.name}
-                  width={28}
-                  height={28}
-                  onError={() => {
-                    if (imgAgentSrc !== defaultAgentImage)
-                      setImgAgentSrc(defaultAgentImage);
-                  }}
-                  className="rounded-full object-cover ring-2 ring-primary/20 shrink-0"
+                  onError={() => setOwnerImageSrc(defaultOwnerImage)}
+                  className="object-cover rounded-full"
                 />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-linear-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-xs font-bold shrink-0">
-                  {agent.name.charAt(0)}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <button
-                  onClick={handleAgentClick}
-                  className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left w-full"
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-linear-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-xs font-bold shrink-0">
+                {ownerInitial}
+              </div>
+            )}
+
+            <div className="min-w-0 flex-1">
+              <button
+                onClick={handleOwnerClick}
+                className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left w-full"
+              >
+                {ownerName}
+              </button>
+              <div className="flex items-center gap-1 mt-0.5">
+                {isVerified && <VerifiedBadge />}
+                <Badge
+                  className="text-xs capitalize"
+                  variant={isCompany ? "premium" : "secondary"}
                 >
-                  {agent.name}
-                </button>
-                {agent.verified && <VerifiedBadge />}
+                  {ownerType}
+                </Badge>
               </div>
             </div>
-          )}
+          </div>
 
           {createdAt && (
             <div className="flex items-center gap-1.5 text-muted-foreground/60 shrink-0 ml-2">

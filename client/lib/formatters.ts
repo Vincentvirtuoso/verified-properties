@@ -69,3 +69,26 @@ export function formatRelativeTime(timeAgo: Date | string | number): string {
 
   return "just now";
 }
+
+interface FormatPriceOptions {
+  currency?: string;
+  locale?: string;
+  decimals?: number;
+}
+
+export function formatCompactPrice(
+  price: number | null | undefined,
+  options: FormatPriceOptions = {},
+): string {
+  if (price === null || price === undefined || isNaN(price)) return "—";
+
+  const { currency = "NGN", locale = "en-NG", decimals = 1 } = options;
+
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    compactDisplay: "short",
+    style: "currency",
+    currency: currency,
+    maximumFractionDigits: decimals,
+  }).format(price);
+}

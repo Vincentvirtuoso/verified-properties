@@ -1,21 +1,21 @@
 import { properties } from "@/data/properties";
-import { Property, Stats, Testimonial } from "@/types";
+import { PopulatedProperty, Stats, Testimonial } from "@/types";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export async function fetchFeaturedProperties(): Promise<Property[]> {
+export async function fetchFeaturedProperties(): Promise<PopulatedProperty[]> {
   await delay(800);
-  return properties.filter((p) => p.isFeatured);
+  return properties.filter((p) => p.tier === "featured");
 }
 
 export async function fetchStats(): Promise<Stats> {
   await delay(600);
   return {
     totalProperties: properties.length,
-    cities: new Set(properties.map((p) => p.location.split(",")[0])).size,
-    agents: new Set(properties.filter((p) => p.agent).map((p) => p.agent!.id))
+    cities: new Set(properties.map((p) => p.location.address.split(",")[0]))
       .size,
     happyClients: 1200,
+    owners: new Set(properties.map((p) => p.ownerId)).size,
   };
 }
 

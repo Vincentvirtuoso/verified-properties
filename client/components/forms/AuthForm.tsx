@@ -3,7 +3,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "../ui/Button";
-import { FiHome } from "react-icons/fi";
 import SectionLabel from "../ui/SectionLabel";
 import { Brandmark } from "../common/BrandMark";
 import { cn } from "@/lib/utils";
@@ -51,7 +50,6 @@ export function AuthForm({
           )}
         </div>
 
-        {/* Form Container Card */}
         <div className="bg-card text-card-foreground rounded-3xl border border-border shadow-xl p-8 md:p-10 transition-all">
           <form onSubmit={onSubmit} className="space-y-6">
             {children}
@@ -103,7 +101,6 @@ export function AuthForm({
               </>
             )}
 
-            {/* Footer Navigation */}
             <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 pt-4">
               {footerText}{" "}
               <Link
@@ -116,7 +113,6 @@ export function AuthForm({
           </form>
         </div>
 
-        {/* Disclaimer Node */}
         <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 mt-8">
           Your information is safe and secure
         </p>

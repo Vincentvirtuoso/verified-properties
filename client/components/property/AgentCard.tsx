@@ -6,26 +6,72 @@ import {
   RiPhoneLine,
   RiMailLine,
   RiWhatsappLine,
-  RiVerifiedBadgeLine,
   RiBuildingLine,
 } from "react-icons/ri";
-import { Agent } from "@/types/property";
 import Link from "next/link";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
+import { PopulatedProperty, Company, Role, PropertyOwnerType } from "@/types";
+import VerifiedBadge from "../icons/VerifiedBadge";
 
-interface AgentCardProps {
-  agent: Agent;
+interface OwnerCardProps {
+  owner: PopulatedProperty["ownerId"];
+  ownerType: PropertyOwnerType;
 }
 
-export default function AgentCard({ agent }: AgentCardProps) {
-  const whatsappUrl = agent.phone
-    ? `https://wa.me/${agent.phone.replace(/\D/g, "")}`
+export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
+  const isCompany = ownerType === "company";
+  const name = isCompany ? owner.companyId?.name : owner.name;
+
+  const defaultAvatar = "/placeholder_avatar.png";
+  const defaultLogo = "/placeholder_company.png";
+
+  const imageSrc = isCompany
+    ? owner.companyId?.logo || defaultLogo
+    : owner.avatar || defaultAvatar;
+
+  const [imgSrc, setImgSrc] = useState(imageSrc);
+
+  const isVerified = isCompany
+    ? owner.companyId?.verificationStatus === "verified"
+    : owner.agentProfile?.verificationStatus === "verified" ||
+      owner.landlordProfile?.verificationStatus === "verified";
+
+  const email = isCompany ? owner.companyId?.contactEmail : owner.email;
+  const phone = isCompany ? owner.companyId?.contactPhone : owner.phone;
+  const whatsappNumber = isCompany
+    ? owner.companyId?.whatsappNumber
+    : owner.whatsappNumber;
+
+  const whatsappUrl = phone
+    ? `https://wa.me/${phone.replace(/\D/g, "")}`
     : null;
-  const defaultAgentImage = "/placeholder_agent.png";
-  const [agentImageSrc, setAgentImageSrc] = useState(
-    agent?.image || defaultAgentImage,
-  );
+
+  let profileHref = "#";
+  if (isCompany) {
+    profileHref = `/companies/${owner._id}`;
+  } else {
+    const user = owner;
+    profileHref =
+      user.activeRole === Role.Landlord
+        ? `/landlords/${user._id}`
+        : `/agents/${user._id}`;
+  }
+
+  const displayRoleLabel = isCompany
+    ? "Company"
+    : owner.activeRole
+      ? owner.activeRole.charAt(0).toUpperCase() + owner.activeRole.slice(1)
+      : "Listing Owner";
+
+  const companyObj = isCompany
+    ? null
+    : owner.companyId
+      ? typeof owner.companyId === "object"
+        ? (owner.companyId as Company)
+        : null
+      : null;
+  const affiliatedCompanyName = companyObj ? companyObj.name : undefined;
 
   return (
     <motion.div
@@ -36,56 +82,73 @@ export default function AgentCard({ agent }: AgentCardProps) {
     >
       <div className="h-2 bg-linear-to-r from-violet-500 to-violet-700" />
 
-      <div className="p-5 flex flex-col">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
-          Listed by
-        </p>
+      <div className="p-5 flex flex-col gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-3">
+            Listed by
+          </p>
 
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative w-14 h-14 rounded-full overflow-hidden bg-violet-100 dark:bg-violet-900/40 shrink-0 ring-2 ring-violet-100 dark:ring-violet-900">
-            <Image
-              src={agentImageSrc}
-              alt={agent.name}
-              fill
-              loader={imageLoader}
-              onError={() => setAgentImageSrc(defaultAgentImage)}
-              className="object-cover"
-            />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p className="font-bold text-neutral-900 dark:text-neutral-100 truncate">
-                {agent.name}
-              </p>
-              {agent.verified && (
-                <RiVerifiedBadgeLine
-                  size={16}
-                  className="text-violet-500 shrink-0"
-                />
-              )}
+          <div className="flex items-center gap-3">
+            <div
+              className={`relative w-14 h-14 ${
+                isCompany ? "rounded-xl" : "rounded-full"
+              } overflow-hidden bg-violet-100 dark:bg-violet-900/40 shrink-0 ring-2 ring-violet-100 dark:ring-violet-900`}
+            >
+              <Image
+                src={imgSrc}
+                alt={name || "Owner image"}
+                fill
+                sizes="56px"
+                loader={imageLoader}
+                onError={() =>
+                  setImgSrc(isCompany ? defaultLogo : defaultAvatar)
+                }
+                className="object-cover"
+              />
             </div>
-            {agent.company && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
-                <RiBuildingLine size={13} className="shrink-0" />
-                {agent.company}
-              </p>
-            )}
-            {agent.verified && (
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="font-bold text-neutral-900 dark:text-neutral-100 truncate">
+                  {name}
+                </p>
+                {isVerified && <VerifiedBadge size="sm" showText={false} />}
+              </div>
+
+              {affiliatedCompanyName && (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
+                  <RiBuildingLine size={13} className="shrink-0" />
+                  {affiliatedCompanyName}
+                </p>
+              )}
+
               <p className="text-xs text-violet-600 dark:text-violet-400 font-medium mt-0.5">
-                Verified Agent
+                {displayRoleLabel}
               </p>
-            )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          {agent.phone && (
+        <div className="flex flex-col gap-2">
+          {email && (
             <a
-              href={`tel:${agent.phone}`}
-              className="flex items-center gap-3 flex-1 px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-all duration-200 group"
+              href={`mailto:${email}`}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium transition-all duration-200"
             >
-              <RiPhoneLine size={16} className="shrink-0" />
-              <span className="truncate">{agent.phone}</span>
+              <RiMailLine size={14} className="shrink-0 text-violet-500" />
+              <span className="truncate">{email}</span>
+            </a>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 mt-1">
+          {phone && (
+            <a
+              href={`tel:${phone}`}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs transition-all duration-200 min-w-0 flex-1"
+            >
+              <RiPhoneLine size={14} className="shrink-0" />
+              <span className="truncate">{phone}</span>
             </a>
           )}
 
@@ -94,29 +157,20 @@ export default function AgentCard({ agent }: AgentCardProps) {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all duration-200"
+              className="flex items-center justify-center p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all duration-200 shrink-0"
+              title="Chat on WhatsApp"
             >
-              <RiWhatsappLine size={16} className="shrink-0" />
+              <RiWhatsappLine size={15} className="shrink-0" />
             </a>
           )}
 
-          
+          <Link
+            href={profileHref}
+            className="flex items-center justify-center border border-primary/30 text-primary dark:text-primary-foreground hover:bg-primary/5 py-2.5 px-3.5 text-xs font-bold rounded-xl transition-all duration-200 shrink-0"
+          >
+            View Profile
+          </Link>
         </div>
-          {agent.email && (
-            <a
-              href={`mailto:${agent.email}`}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium text-sm transition-all duration-200"
-            >
-              <RiMailLine size={16} className="shrink-0 text-violet-500" />
-              <span className="truncate">{agent.email}</span>
-            </a>
-          )}
-        <Link
-          href={`/agents/${agent.id}`}
-          className="ml-auto bg-primary text-white py-2 px-4 text-[13px] rounded-xl hover:bg-primary/80 mt-4"
-        >
-          View Details
-        </Link>
       </div>
     </motion.div>
   );

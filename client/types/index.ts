@@ -1,7 +1,7 @@
 export interface Stats {
   totalProperties: number;
   cities: number;
-  agents: number;
+  owners: number;
   happyClients: number;
 }
 
@@ -17,3 +17,6 @@ export * from "./property";
 export * from "./filters";
 export * from "./stats";
 export * from "./user";
+export * from "./inquiry";
+export * from "./transaction";
+export * from "./company";

@@ -9,8 +9,9 @@ import {
   RiHotelBedLine,
   RiServiceLine,
 } from "react-icons/ri";
-import { Property, featureLabels, PropertyFeature } from "@/types/property";
+import { PopulatedProperty, PropertyFeature } from "@/types/property";
 import { LuBath, LuBed } from "react-icons/lu";
+import { PROPERTY_FEATURE_LABELS } from "@/utils/constants";
 
 const featureIcons: Record<PropertyFeature, React.ReactNode> = {
   boysQuarters: <RiHome4Line size={14} />,
@@ -22,7 +23,7 @@ const featureIcons: Record<PropertyFeature, React.ReactNode> = {
 };
 
 interface PropertyStatsProps {
-  property: Property;
+  property: PopulatedProperty;
 }
 
 const StatCard = ({
@@ -114,7 +115,7 @@ export default function PropertyStats({ property }: PropertyStatsProps) {
                 className="flex items-center gap-1.5 text-sm font-medium bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900 px-3 py-1.5 rounded-full"
               >
                 {featureIcons[feature]}
-                {featureLabels[feature]}
+                {PROPERTY_FEATURE_LABELS[feature]}
               </span>
             ))}
           </div>

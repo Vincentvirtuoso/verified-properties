@@ -39,7 +39,7 @@ const StatsAndPartners = ({
     {
       id: "agents",
       label: "Verified Agents",
-      value: stats?.agents ?? 0,
+      value: stats?.owners ?? 0,
       icon: FaBuilding,
       colorClass: "bg-green-500/10 text-green-600",
     },

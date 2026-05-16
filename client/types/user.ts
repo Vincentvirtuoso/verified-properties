@@ -1,26 +1,54 @@
+import { Company } from "./company";
+
 export enum Role {
-  Buyer = "buyer",
+  Viewer = "viewer",
   Agent = "agent",
-  Landlord = "landlord", // individual acting as landlord
-  Developer = "developer", // individual acting as developer
-  Company = "company", // acting on behalf of a company
+  Landlord = "landlord",
+  Developer = "developer",
+  Company = "company",
 }
 
-export enum PersonalPlan {
-  Free = "free",
-  Partnership = "partnership",
+export const LOCKED_ROLES: Role[] = [Role.Developer, Role.Company];
+
+export const PARTNER_ROLES: Role[] = [
+  Role.Landlord,
+  Role.Developer,
+  Role.Company,
+];
+
+export interface User<Populated extends boolean = false> {
+  _id: string;
+  email: string;
+  phone?: string;
+  whatsappNumber?: string;
+  passwordHash: string;
+  name: string;
+  avatar?: string;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+
+  roles: Role[];
+  activeRole: Role;
+
+  viewerProfile?: ViewerProfile;
+  agentProfile?: AgentProfile;
+  landlordProfile?: LandlordProfile;
+
+  companyId?: Populated extends true ? Company : string;
+  companyRole?: "admin" | "member";
+
+  createdAt: Date;
+  updatedAt: Date;
+
+  metadata?: {
+    lastRoleSwitch?: Date | null;
+  };
 }
 
-export interface AgentProfile {
-  licenseNumber?: string;
-  brokerage?: string;
-  freeListingsUsed: number;
-  verified?: boolean;
-  maxFreeListings: number;
-}
+export type PopulatedUser = User<true>;
 
-export interface BuyerProfile {
-  savedSearchIds: string[];
+export interface ViewerProfile {
+  savedListingIds: string[];
   budgetRange?: {
     min: number;
     max: number;
@@ -29,45 +57,36 @@ export interface BuyerProfile {
   preferredLocations?: string[];
 }
 
-export interface PersonalPartnership {
-  plan: PersonalPlan;
-  status: "active" | "cancelled" | "past_due";
-  features: {
-    unlimitedListings: boolean;
-    whatsappBot: boolean;
-    prioritySupport: boolean;
-    accountManager: boolean;
-  };
-  listingQuota: number;
-  currentListings: number;
-  subscriptionExpiry?: Date;
-  autoRenew: boolean;
+export interface AgentProfile {
+  licenseNumber?: string;
+  brokerage?: string;
+  verificationStatus: "unverified" | "pending" | "verified";
+  activeListings: number;
+  activeBoostedListings: number;
 }
 
-export interface User {
-  _id: string;
-  email: string;
-  phone?: string;
-  passwordHash: string;
-  name: string;
-  avatar?: string;
-  isEmailVerified: boolean;
-  roles: Role[];
-  activeRole: Role;
-
-  agentProfile?: AgentProfile;
-  buyerProfile?: BuyerProfile;
-
-  currentPersonalPlan: PersonalPlan;
-  personalPartnership?: PersonalPartnership;
-
-  companyId?: string;
-  companyRole?: "admin" | "member";
-
-  createdAt: Date;
-  updatedAt: Date;
-
-  metadata?: {
-    lastRoleSwitch: Date | string | null;
+export interface LandlordProfile {
+  verificationStatus: "unverified" | "pending" | "verified";
+  activeListings: number;
+  remittanceDetails?: {
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
   };
+  totalRemitted: number;
+}
+
+export type BoostStatus = "active" | "expired" | "cancelled";
+
+export interface Boost {
+  _id: string;
+  listingId: string;
+  agentId: string;
+  amountPaid: number;
+  currency: string;
+  status: BoostStatus;
+  startDate: Date;
+  expiryDate: Date;
+  paymentReference: string;
+  createdAt: Date;
 }

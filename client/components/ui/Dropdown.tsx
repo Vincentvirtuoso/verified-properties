@@ -7,6 +7,7 @@ import React, {
   createContext,
   useContext,
   useCallback,
+  useLayoutEffect,
 } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +19,8 @@ interface DropdownContextType {
   setActiveIndex: (index: number) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
   contentRef: React.RefObject<HTMLDivElement | null>;
+  placement: DropdownProps["placement"];
+  offset: number;
 }
 
 const DropdownContext = createContext<DropdownContextType | undefined>(
@@ -81,7 +84,6 @@ export function Dropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, handleOpenChange]);
 
-  // Handle escape key
   useEffect(() => {
     if (!isOpen) return;
 
@@ -96,53 +98,6 @@ export function Dropdown({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleOpenChange]);
 
-  const getPosition = useCallback(() => {
-    if (!triggerRef.current || !contentRef.current) return {};
-
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const contentRect = contentRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-
-    let top = 0;
-    let left = 0;
-
-    if (placement.startsWith("bottom")) {
-      top = triggerRect.bottom + offset;
-      if (top + contentRect.height > viewportHeight) {
-        top = triggerRect.top - contentRect.height - offset;
-      }
-    } else {
-      top = triggerRect.top - contentRect.height - offset;
-      if (top < 0) {
-        top = triggerRect.bottom + offset;
-      }
-    }
-
-    if (placement.endsWith("start")) {
-      left = triggerRect.left;
-      if (left + contentRect.width > viewportWidth) {
-        left = triggerRect.right - contentRect.width;
-      }
-    } else {
-      left = triggerRect.right - contentRect.width;
-      if (left < 0) {
-        left = triggerRect.left;
-      }
-    }
-
-    left = Math.max(
-      offset,
-      Math.min(left, viewportWidth - contentRect.width - offset),
-    );
-    top = Math.max(
-      offset,
-      Math.min(top, viewportHeight - contentRect.height - offset),
-    );
-
-    return { top, left };
-  }, [placement, offset]);
-
   return (
     <DropdownContext.Provider
       value={{
@@ -152,6 +107,8 @@ export function Dropdown({
         setActiveIndex,
         triggerRef,
         contentRef,
+        placement,
+        offset,
       }}
     >
       <div className={cn("relative inline-block", className)}>{children}</div>
@@ -193,6 +150,7 @@ export function DropdownTrigger({
   };
 
   if (asChild && React.isValidElement(children)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
     return React.cloneElement(childElement, {
       ref: triggerRef,
@@ -222,80 +180,99 @@ export function DropdownTrigger({
 interface DropdownContentProps {
   children: React.ReactNode;
   className?: string;
-  align?: "start" | "end";
 }
 
-export function DropdownContent({
-  children,
-  className,
-  align = "start",
-}: DropdownContentProps) {
-  const { isOpen, contentRef, setActiveIndex } = useDropdownContext();
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+export function DropdownContent({ children, className }: DropdownContentProps) {
+  const { isOpen, contentRef, triggerRef, placement, offset, setActiveIndex } =
+    useDropdownContext();
 
-  useEffect(() => {
-    if (isOpen && contentRef.current) {
-      const updatePosition = () => {
-        const trigger = contentRef.current?.previousElementSibling;
-        if (!trigger || !contentRef.current) return;
+  // Track dynamic adjustments if menu hits screen boundaries
+  const [adjustedPlacement, setAdjustedPlacement] = useState(placement);
 
-        const triggerRect = trigger.getBoundingClientRect();
-        const contentRect = contentRef.current.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const viewportWidth = window.innerWidth;
+  useLayoutEffect(() => {
+    if (!isOpen || !triggerRef.current || !contentRef.current) return;
 
-        let top = triggerRect.bottom + 8;
-        let left =
-          align === "start"
-            ? triggerRect.left
-            : triggerRect.right - contentRect.width;
+    // Reset layout calculation alignment context
+    setAdjustedPlacement(placement);
 
-        if (top + contentRect.height > viewportHeight) {
-          top = triggerRect.top - contentRect.height - 8;
-        }
-        if (left + contentRect.width > viewportWidth) {
-          left = viewportWidth - contentRect.width - 8;
-        }
-        if (left < 8) {
-          left = 8;
-        }
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const contentRect = contentRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
 
-        setPosition({ top, left });
-      };
+    let currentVertical = placement?.startsWith("top") ? "top" : "bottom";
+    let currentHorizontal = placement?.endsWith("end") ? "end" : "start";
 
-      updatePosition();
-      window.addEventListener("scroll", updatePosition, true);
-      window.addEventListener("resize", updatePosition);
-
-      return () => {
-        window.removeEventListener("scroll", updatePosition, true);
-        window.removeEventListener("resize", updatePosition);
-      };
+    // Bottom collision detection -> Flip up
+    if (
+      currentVertical === "bottom" &&
+      triggerRect.bottom + contentRect.height > viewportHeight
+    ) {
+      if (triggerRect.top - contentRect.height > 0) {
+        currentVertical = "top";
+      }
     }
-  }, [isOpen, align, contentRef]);
+    // Top collision detection -> Flip down
+    else if (
+      currentVertical === "top" &&
+      triggerRect.top - contentRect.height < 0
+    ) {
+      if (triggerRect.bottom + contentRect.height < viewportHeight) {
+        currentVertical = "bottom";
+      }
+    }
 
-  const handleMouseEnter = () => {
-    setActiveIndex(-1);
-  };
+    // Right side window boundary safety checks
+    if (
+      currentHorizontal === "start" &&
+      triggerRect.left + contentRect.width > viewportWidth
+    ) {
+      currentHorizontal = "end";
+    } else if (
+      currentHorizontal === "end" &&
+      triggerRect.right - contentRect.width < 0
+    ) {
+      currentHorizontal = "start";
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setAdjustedPlacement(`${currentVertical}-${currentHorizontal}` as any);
+  }, [isOpen, placement, triggerRef, contentRef]);
+
+  const handleMouseEnter = () => setActiveIndex(-1);
+
+  const placementStyles = {
+    "bottom-start": { top: `calc(100% + ${offset}px)`, left: 0 },
+    "bottom-end": { top: `calc(100% + ${offset}px)`, right: 0 },
+    "top-start": { bottom: `calc(100% + ${offset}px)`, left: 0 },
+    "top-end": { bottom: `calc(100% + ${offset}px)`, right: 0 },
+  }[adjustedPlacement || "bottom-start"];
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           ref={contentRef}
-          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          initial={{
+            opacity: 0,
+            scale: 0.95,
+            y: placement?.startsWith("top") ? 10 : -10,
+          }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-          transition={{ duration: 0.15 }}
+          exit={{
+            opacity: 0,
+            scale: 0.95,
+            y: placement?.startsWith("top") ? 10 : -10,
+          }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
           style={{
-            position: "fixed",
-            top: position.top,
-            left: position.left,
+            position: "absolute",
             zIndex: 50,
+            ...placementStyles,
           }}
           onMouseEnter={handleMouseEnter}
           className={cn(
-            "min-w-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1",
+            "min-w-50 bg-card rounded-lg shadow-lg border border-border py-1",
             "focus:outline-none",
             className,
           )}
@@ -357,7 +334,7 @@ export function DropdownItem({
         disabled && "opacity-50 cursor-not-allowed",
         destructive
           ? "text-red-600 hover:bg-red-50 focus:bg-red-50"
-          : "text-gray-700 hover:bg-gray-100 focus:bg-gray-100",
+          : "text-foreground hover:text-primary hover:bg-card-foreground/10 focus:bg-card-foreground/20",
         className,
       )}
       aria-disabled={disabled}
@@ -379,13 +356,8 @@ interface DropdownSeparatorProps {
 
 export function DropdownSeparator({ className }: DropdownSeparatorProps) {
   return (
-    <div role="separator" className={cn("h-px bg-gray-200 my-1", className)} />
+    <div role="separator" className={cn("h-px bg-border my-1", className)} />
   );
-}
-
-interface DropdownLabelProps {
-  children: React.ReactNode;
-  className?: string;
 }
 
 export function DropdownLabel({ children, className }: DropdownLabelProps) {
@@ -399,6 +371,11 @@ export function DropdownLabel({ children, className }: DropdownLabelProps) {
       {children}
     </div>
   );
+}
+
+interface DropdownLabelProps {
+  children: React.ReactNode;
+  className?: string;
 }
 
 interface DropdownSubmenuProps {

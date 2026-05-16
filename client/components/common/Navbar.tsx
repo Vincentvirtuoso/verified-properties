@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LuMenu } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -24,14 +24,13 @@ function getNavLinks(
     ];
   }
 
-  // Common links for everyone
   const common = [
     { href: "/properties?type=sale", label: "Buy" },
     { href: "/properties?type=rent", label: "Rent" },
   ];
 
   switch (role) {
-    case Role.Buyer:
+    case Role.Viewer:
       return [...common, { href: "/academy", label: "Learn Real Estate" }];
 
     case Role.Agent:
@@ -69,7 +68,13 @@ export function Navbar() {
   const { bannerHeight } = useBannerHeightContext();
   const { toggleOpen, isCollapsed } = useSidebar();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   const activeNavLinks = useMemo(
     () => getNavLinks(user?.activeRole, isAuthenticated),
@@ -136,7 +141,11 @@ export function Navbar() {
             })}
           </div>
 
-          <UserMenu isAuthenticated={isAuthenticated} user={user} />
+          <UserMenu
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onLogout={handleLogout}
+          />
         </div>
       </div>
     </nav>

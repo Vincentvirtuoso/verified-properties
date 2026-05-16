@@ -7,6 +7,7 @@ import {
   PropertyDocument,
   PropertyFeature,
   PropertyFilterState,
+  PropertyLocation,
   PropertyType,
 } from "@/types";
 
@@ -15,7 +16,6 @@ export const FilterSidebar = ({
   handleFilterChange,
   locations,
   propertyTypes,
-  agents,
   priceRange,
   areaRange,
   clearAllFilters,
@@ -25,9 +25,8 @@ export const FilterSidebar = ({
 }: {
   filters: PropertyFilterState;
   handleFilterChange: (newFilters: Partial<PropertyFilterState>) => void;
-  locations: string[];
+  locations: PropertyLocation[];
   propertyTypes: PropertyType[];
-  agents: string[];
   priceRange: [number, number];
   areaRange: [number, number];
   clearAllFilters: () => void;
@@ -90,7 +89,6 @@ export const FilterSidebar = ({
             onFilterChange={handleFilterChange}
             locations={locations}
             propertyTypes={propertyTypes}
-            agents={agents}
             priceRange={priceRange}
             areaRange={areaRange}
             allCategories={allCategories}

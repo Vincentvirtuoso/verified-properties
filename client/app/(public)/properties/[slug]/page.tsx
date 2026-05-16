@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import PropertyDetailClient from "./PropertyDetailClient";
-import { Property } from "@/types/property";
+import { PopulatedProperty } from "@/types/property";
 import { properties } from "@/data/properties";
 
-async function getProperty(slug: string): Promise<Property | null> {
+async function getProperty(slug: string): Promise<PopulatedProperty | null> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const property = properties.find(
     (p) => p.slug.toLowerCase() === slug.toLowerCase(),
@@ -27,7 +27,7 @@ export async function generateMetadata({
     title: `${property.title} | ${property.location}`,
     description:
       property.description?.slice(0, 160) ??
-      `${property.title} for ${property.listingType} in ${property.location}`,
+      `${property.title} for ${property.listingPurpose} in ${property.location}`,
     openGraph: {
       title: property.title,
       description: property.description?.slice(0, 160),

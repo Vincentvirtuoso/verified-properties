@@ -9,19 +9,25 @@ import {
   useCallback,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { properties } from "@/data/properties";
-import { PropertyCard } from "@/components/cards/PropertyCard";
+import { properties } from "@/data/properties"; // now typed as Property[]
+import { PropertyCard } from "@/components/property/PropertyCard";
 import { LuFilter, LuX, LuSearch } from "react-icons/lu";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
-} from "@/utils/constants";
+} from "@/utils/constants"; // unchanged, labels match new types
 import { PropertyFilterState } from "@/types";
 import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
-import { FilterType, SortOption, useProperty, FILTER_OPTIONS } from "@/hooks/useProperty";
+import {
+  FilterType,
+  SortOption,
+  useProperty,
+  FILTER_OPTIONS,
+} from "@/hooks/useProperty";
 import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";
+import { Badge } from "@/components/ui";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -32,7 +38,6 @@ export default function PropertiesPage() {
     ALL_PROPERTY_TYPES,
     ALL_CATEGORIES,
     ALL_FEATURES,
-    AGENTS,
     PRICE_MIN,
     PRICE_MAX,
     AREA_MIN,
@@ -54,43 +59,48 @@ export default function PropertiesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
+  // Sync search param with local state
   useEffect(() => {
     if (searchParam && !searchQuery) {
       setSearchQuery(searchParam);
     }
   }, [searchParam, searchQuery]);
 
+  // Search suggestions (now only using title, description, location fields,
+  // category/type/feature labels — no agent data)
   useEffect(() => {
     if (debouncedSearchQuery.length >= 2) {
       const suggestions = new Set<string>();
+      const q = debouncedSearchQuery.toLowerCase();
 
       properties.forEach((property) => {
-        const searchLower = debouncedSearchQuery.toLowerCase();
-
-        if (property.title.toLowerCase().includes(searchLower))
+        if (property.title.toLowerCase().includes(q))
           suggestions.add(property.title);
-        if (property.location.toLowerCase().includes(searchLower))
-          suggestions.add(property.location);
+        if (property.description?.toLowerCase().includes(q))
+          suggestions.add(property.description);
+
+        // Location object
+        if (property.location.city.toLowerCase().includes(q))
+          suggestions.add(property.location.city);
+        if (property.location.state.toLowerCase().includes(q))
+          suggestions.add(property.location.state);
+        if (property.location.address.toLowerCase().includes(q))
+          suggestions.add(property.location.address);
 
         const typeLabel = PROPERTY_TYPE_LABELS[property.type].toLowerCase();
-        if (typeLabel.includes(searchLower))
+        if (typeLabel.includes(q))
           suggestions.add(PROPERTY_TYPE_LABELS[property.type]);
 
         const catLabel =
           PROPERTY_CATEGORY_LABELS[property.category].toLowerCase();
-        if (catLabel.includes(searchLower))
+        if (catLabel.includes(q))
           suggestions.add(PROPERTY_CATEGORY_LABELS[property.category]);
 
         property.features?.forEach((f) => {
           const featLabel = PROPERTY_FEATURE_LABELS[f].toLowerCase();
-          if (featLabel.includes(searchLower))
+          if (featLabel.includes(q))
             suggestions.add(PROPERTY_FEATURE_LABELS[f]);
         });
-
-        if (property.agent?.name?.toLowerCase().includes(searchLower))
-          suggestions.add(property.agent.name);
-        if (property.agent?.company?.toLowerCase().includes(searchLower))
-          suggestions.add(property.agent.company);
       });
 
       setSearchSuggestions(Array.from(suggestions).slice(0, 5));
@@ -101,10 +111,10 @@ export default function PropertiesPage() {
     }
   }, [debouncedSearchQuery]);
 
+  // Update URL search param
   const updateSearchParams = useCallback(
     (query: string) => {
       const params = new URLSearchParams(searchParams.toString());
-
       startTransition(() => {
         if (query) {
           params.set("search", query);
@@ -140,6 +150,7 @@ export default function PropertiesPage() {
     setSearchSuggestions([]);
   }, [updateSearchParams]);
 
+  // Count active filters
   useEffect(() => {
     let count = 0;
     if (
@@ -159,7 +170,7 @@ export default function PropertiesPage() {
       filters.maxArea < DEFAULT_FILTERS.maxArea
     )
       count++;
-    if (filters.agent !== "all") count++;
+    // Agent filter removed
     if (searchQuery) count++;
     setActiveFiltersCount(count);
   }, [
@@ -170,51 +181,48 @@ export default function PropertiesPage() {
     searchQuery,
   ]);
 
+  // Filter and sort properties
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
+      // Search query
       if (debouncedSearchQuery) {
-        const searchLower = debouncedSearchQuery.toLowerCase();
-        const searchableParts = [
+        const q = debouncedSearchQuery.toLowerCase();
+        const searchable = [
           property.title,
-          property.location,
           property.description,
-          property.agent?.name,
-          property.agent?.company,
+          property.location.city,
+          property.location.state,
+          property.location.address,
           PROPERTY_TYPE_LABELS[property.type],
           PROPERTY_CATEGORY_LABELS[property.category],
           ...(property.features ?? []).map((f) => PROPERTY_FEATURE_LABELS[f]),
         ].filter(Boolean);
-
-        if (
-          !searchableParts.some((part) =>
-            part?.toLowerCase().includes(searchLower),
-          )
-        ) {
-          return false;
-        }
+        if (!searchable.some((s) => s?.toLowerCase().includes(q))) return false;
       }
 
+      // Tab filter (all / rent / sale / deals)
       if (currentType === "deals") {
         if (
           !property.discount ||
           (property.discount.amount == null &&
             property.discount.percentage == null)
-        ) {
+        )
           return false;
-        }
       } else if (
         currentType !== "all" &&
-        property.listingType !== currentType
+        property.listingPurpose !== currentType
       ) {
         return false;
       }
 
+      // Price range
       if (
         property.price < filters.priceRange[0] ||
         property.price > filters.priceRange[1]
       )
         return false;
 
+      // Bedrooms
       if (filters.bedrooms !== "any") {
         const num = parseInt(filters.bedrooms);
         if (filters.bedrooms === "5+") {
@@ -222,6 +230,7 @@ export default function PropertiesPage() {
         } else if (property.bedrooms !== num) return false;
       }
 
+      // Bathrooms
       if (filters.bathrooms !== "any") {
         const num = parseInt(filters.bathrooms);
         if (filters.bathrooms === "5+") {
@@ -229,35 +238,45 @@ export default function PropertiesPage() {
         } else if (property.bathrooms !== num) return false;
       }
 
+      // Category
       if (filters.category !== "all" && property.category !== filters.category)
         return false;
 
+      // Type
       if (filters.type.length > 0 && !filters.type.includes(property.type))
         return false;
 
+      // Documents
       if (
         filters.documents.length > 0 &&
         !property.documents?.some((doc) => filters.documents.includes(doc.type))
       )
         return false;
 
+      // Features
       if (filters.features.length > 0) {
         const propertyFeats = property.features ?? [];
         if (!filters.features.every((f) => propertyFeats.includes(f)))
           return false;
       }
 
-      if (filters.location !== "all" && property.location !== filters.location)
-        return false;
+      // Location – now checking city, state, address
+      if (filters.location !== "all") {
+        const locStr = filters.location.toLowerCase();
+        const locationMatch =
+          property.location.city.toLowerCase().includes(locStr) ||
+          property.location.state.toLowerCase().includes(locStr) ||
+          property.location.address.toLowerCase().includes(locStr);
+        if (!locationMatch) return false;
+      }
 
+      // Area
       if (property.area) {
         if (property.area < filters.minArea || property.area > filters.maxArea)
           return false;
       }
 
-      if (filters.agent !== "all" && property.agent?.name !== filters.agent)
-        return false;
-
+      // Agent filter removed entirely
       return true;
     });
 
@@ -278,9 +297,9 @@ export default function PropertiesPage() {
     return { filteredProperties: filtered, sortedProperties: sorted };
   }, [currentType, sortBy, filters, debouncedSearchQuery]);
 
+  // Tab switching (type filter)
   const handleTypeChange = (type: FilterType) => {
     const params = new URLSearchParams(searchParams.toString());
-
     startTransition(() => {
       if (type === "all") {
         params.delete("type");
@@ -321,9 +340,9 @@ export default function PropertiesPage() {
     [DEFAULT_FILTERS, clearSearch],
   );
 
+  // Highlight matched text in search suggestions
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
-
     const parts = text.split(new RegExp(`(${query})`, "gi"));
     return parts.map((part, i) =>
       part.toLowerCase() === query.toLowerCase() ? (
@@ -391,7 +410,7 @@ export default function PropertiesPage() {
                   onFocus={() =>
                     searchSuggestions.length > 0 && setShowSuggestions(true)
                   }
-                  placeholder="Search by location, property type, or keywords..."
+                  placeholder="Search by city, address, property type..."
                   className="w-full pl-12 pr-12 py-3 bg-background border border-border rounded-2xl text-base
                            focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
                            shadow-sm transition-all text-foreground placeholder:text-muted-foreground"
@@ -443,7 +462,6 @@ export default function PropertiesPage() {
             handleFilterChange={handleFilterChange}
             locations={LOCATIONS}
             propertyTypes={ALL_PROPERTY_TYPES}
-            agents={AGENTS}
             priceRange={[PRICE_MIN, PRICE_MAX]}
             areaRange={[AREA_MIN, AREA_MAX]}
             clearAllFilters={clearAllFilters}
@@ -455,27 +473,19 @@ export default function PropertiesPage() {
             <div className="bg-card rounded-2xl p-4 shadow-sm border border-border mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-wrap">
-                  {activeFiltersCount > 0 && (
-                    <p
-                      className="text-muted-foreground"
-                      aria-live="polite"
-                      aria-atomic="true"
-                    >
-                      <span className="font-semibold text-foreground text-lg">
-                        {sortedProperties.length}
-                      </span>{" "}
-                      {sortedProperties.length === 1
-                        ? "property"
-                        : "properties"}{" "}
-                      found
-                      {debouncedSearchQuery && (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          for &quot;{debouncedSearchQuery}&quot;
-                        </span>
-                      )}
-                    </p>
-                  )}
+                  <p className="text-muted-foreground" aria-live="polite">
+                    <span className="font-semibold text-foreground text-lg">
+                      {sortedProperties.length}
+                    </span>{" "}
+                    {sortedProperties.length === 1 ? "property" : "properties"}{" "}
+                    found
+                    {debouncedSearchQuery && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        for &quot;{debouncedSearchQuery}&quot;
+                      </span>
+                    )}
+                  </p>
 
                   <button
                     onClick={() => setShowMobileFilters(true)}
@@ -484,9 +494,9 @@ export default function PropertiesPage() {
                     <LuFilter className="w-4 h-4" />
                     <span>Filters</span>
                     {activeFiltersCount > 0 && (
-                      <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                      <Badge variant="info" className="px-2 py-0 text-[10px]">
                         {activeFiltersCount}
-                      </span>
+                      </Badge>
                     )}
                   </button>
                 </div>
@@ -538,10 +548,16 @@ export default function PropertiesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {searchQuery && (
-                      <FilterTag
-                        label={`Search: ${searchQuery}`}
-                        onRemove={() => removeFilter("search")}
-                      />
+                      <Badge variant="info" className="cursor-pointer gap-1.5">
+                        Search: {searchQuery}
+                        <button
+                          onClick={() => removeFilter("search")}
+                          className="hover:bg-primary/20 rounded-full p-0.5"
+                          aria-label="Remove search filter"
+                        >
+                          <LuX className="w-3 h-3" />
+                        </button>
+                      </Badge>
                     )}
                     {filters.category !== "all" && (
                       <FilterTag
@@ -557,7 +573,7 @@ export default function PropertiesPage() {
                     )}
                     {filters.documents.length > 0 && (
                       <FilterTag
-                        label={`Documents: ${filters.documents.length} types selected`}
+                        label={`Documents: ${filters.documents.length} types`}
                         onRemove={() => removeFilter("documents")}
                       />
                     )}
@@ -569,7 +585,7 @@ export default function PropertiesPage() {
                     )}
                     {filters.location !== "all" && (
                       <FilterTag
-                        label={`Location: ${filters.location.split(",")[0]}`}
+                        label={`Location: ${filters.location}`}
                         onRemove={() => removeFilter("location")}
                       />
                     )}
@@ -583,12 +599,6 @@ export default function PropertiesPage() {
                       <FilterTag
                         label={`${filters.bathrooms} ${filters.bathrooms === "1" ? "Bath" : "Baths"}`}
                         onRemove={() => removeFilter("bathrooms")}
-                      />
-                    )}
-                    {filters.agent !== "all" && (
-                      <FilterTag
-                        label={`Agent: ${filters.agent}`}
-                        onRemove={() => removeFilter("agent")}
                       />
                     )}
                     {(filters.priceRange[0] > DEFAULT_FILTERS.priceRange[0] ||
@@ -605,10 +615,7 @@ export default function PropertiesPage() {
             </div>
 
             {isPending ? (
-              <div
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-                aria-label="Loading properties"
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <PropertyCardSkeleton key={i} />
                 ))}
@@ -617,8 +624,6 @@ export default function PropertiesPage() {
               <>
                 <div
                   id="property-list"
-                  role="region"
-                  aria-label={`${sortedProperties.length} properties found`}
                   className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
                 >
                   {sortedProperties.map((property) => (
@@ -627,14 +632,8 @@ export default function PropertiesPage() {
                 </div>
 
                 {sortedProperties.length === 0 && (
-                  <div
-                    className="text-center py-16 bg-card rounded-2xl"
-                    role="status"
-                    aria-label="No properties found"
-                  >
-                    <div className="text-6xl mb-6" aria-hidden="true">
-                      🔍
-                    </div>
+                  <div className="text-center py-16 bg-card rounded-2xl">
+                    <div className="text-6xl mb-6">🔍</div>
                     <h3 className="text-2xl font-semibold text-foreground">
                       No properties found
                     </h3>
@@ -663,10 +662,11 @@ export default function PropertiesPage() {
           onFilterChange={handleFilterChange}
           locations={LOCATIONS}
           propertyTypes={ALL_PROPERTY_TYPES}
-          agents={AGENTS}
           priceRange={[PRICE_MIN, PRICE_MAX]}
           areaRange={[AREA_MIN, AREA_MAX]}
-          onClearAll={clearAllFilters}
+          allCategories={ALL_CATEGORIES}
+          allDocuments={ALL_DOCUMENTS}
+          allFeatures={ALL_FEATURES}
           onClose={() => setShowMobileFilters(false)}
         />
       )}
@@ -674,6 +674,7 @@ export default function PropertiesPage() {
   );
 }
 
+// Reusable FilterTag – uses improved Badge component
 function FilterTag({
   label,
   onRemove,
@@ -682,7 +683,7 @@ function FilterTag({
   onRemove: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-sm rounded-lg">
+    <Badge variant="info" className="cursor-pointer gap-1.5">
       {label}
       <button
         onClick={onRemove}
@@ -691,10 +692,11 @@ function FilterTag({
       >
         <LuX className="w-3.5 h-3.5" />
       </button>
-    </span>
+    </Badge>
   );
 }
 
+// Skeleton unchanged
 function PropertyCardSkeleton() {
   return (
     <div className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border animate-pulse">

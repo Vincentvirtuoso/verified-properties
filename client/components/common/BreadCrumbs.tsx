@@ -54,7 +54,7 @@ export function Breadcrumbs({
   homeHref = "/",
   className,
   itemClassName,
-  activeClassName = "text-gray-900 font-medium",
+  activeClassName = "text-foreground font-medium",
   maxItems = 5,
   truncate = true,
   variant = "default",
@@ -114,7 +114,7 @@ export function Breadcrumbs({
               <FiMoreHorizontal className="w-4 h-4 text-gray-500" />
             </button>
           </DropdownTrigger>
-          <DropdownContent align="start" className="w-64">
+          <DropdownContent className="w-64">
             {hiddenItems.map((hiddenItem, idx) => (
               <DropdownItem
                 key={idx}
@@ -152,7 +152,7 @@ export function Breadcrumbs({
         <Link
           href={item.href}
           className={cn(
-            "text-gray-500 hover:text-violet-600 transition-colors",
+            "text-gray-500 hover:text-primary transition-colors",
             itemClassName,
           )}
           onClick={() => handleItemClick(item, index)}
@@ -177,7 +177,7 @@ export function Breadcrumbs({
           <li className="flex items-center">
             <Link
               href={homeHref}
-              className="text-gray-500 hover:text-violet-600 transition-colors"
+              className="text-gray-500 hover:text-primary transition-colors"
               aria-label="Home"
               title="Go to homepage"
             >

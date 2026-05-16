@@ -10,7 +10,7 @@ import {
   fetchTestimonials,
 } from "@/lib/api";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { Property, Stats, Testimonial } from "@/types";
+import { PopulatedProperty, Stats, Testimonial } from "@/types";
 import StatsAndPartners from "@/components/home/StatsAndPatners";
 import QuickActions from "@/components/home/QuickActions";
 import { FeaturedProperties } from "@/components/home/FeaturedProperties";
@@ -18,7 +18,9 @@ import { FeaturedProperties } from "@/components/home/FeaturedProperties";
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
+  const [featuredProperties, setFeaturedProperties] = useState<
+    PopulatedProperty[]
+  >([]);
   const [isLoadingProperties, setIsLoadingProperties] = useState(true);
   const [propertyError, setPropertyError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);

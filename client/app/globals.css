@@ -212,6 +212,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button {
+  cursor: pointer;
+}
+
 @utility container {
   margin-left: auto;
   margin-right: auto;

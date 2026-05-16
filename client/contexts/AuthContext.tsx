@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@/types";
+import { Company, PopulatedUser } from "@/types";
 import { dummyUsers } from "@/data/users";
 import React, {
   createContext,
@@ -9,17 +9,28 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { mockCompanies } from "@/data/companies";
 
 interface AuthContextType {
-  user: User | null;
+  user: PopulatedUser | null;
+  companies: Company[] | [];
   isAuthenticated: boolean;
   isLoading: boolean;
   authLoading: boolean;
   authError: string | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (newUser: User) => Promise<void>;
+  register: (newUser: PopulatedUser, company?: Company) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  updateUserRole: (
+    userId: string,
+    updates: Partial<PopulatedUser>,
+  ) => Promise<PopulatedUser>;
+  completeRegistration: (
+    userId: string,
+    updates: Partial<PopulatedUser>,
+    company?: Company,
+  ) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,8 +54,10 @@ function setSessionCookie(active: boolean) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<User[]>(dummyUsers);
-  const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<PopulatedUser[]>(dummyUsers);
+  const [companies, setCompanies] = useState<Company[]>(mockCompanies);
+
+  const [user, setUser] = useState<PopulatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -105,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const register = useCallback(
-    async (newUser: User) => {
+    async (newUser: PopulatedUser, company?: Company) => {
       setAuthLoading(true);
       setAuthError(null);
       try {
@@ -116,6 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUsers((prev) => [...prev, newUser]);
+        if (company) {
+          setCompanies((prev) => [...prev, company]);
+        }
 
         setUser(newUser);
         localStorage.setItem("dummy_user", JSON.stringify(newUser));
@@ -131,6 +147,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [users],
   );
 
+  const updateUserRole = async (
+    userId: string,
+    updates: Partial<PopulatedUser>,
+  ) => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      await fakeDelay();
+      if (user && user._id === userId) {
+        const updatedUser: PopulatedUser = {
+          ...user,
+          ...updates,
+          agentProfile: updates.agentProfile
+            ? { ...user.agentProfile, ...updates.agentProfile }
+            : user.agentProfile,
+          landlordProfile: updates.landlordProfile
+            ? { ...user.landlordProfile, ...updates.landlordProfile }
+            : user.landlordProfile,
+          roles: updates.roles
+            ? [...new Set([...user.roles, ...updates.roles])]
+            : user.roles,
+          updatedAt: new Date(),
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        return updatedUser;
+      }
+
+      throw new Error("User not found");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // After updateUserRole...
+
+  const completeRegistration = useCallback(
+    async (
+      userId: string,
+      updates: Partial<PopulatedUser>,
+      company?: Company,
+    ) => {
+      setAuthLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (user && user._id === userId) {
+          const updatedUser: PopulatedUser = {
+            ...user,
+            ...updates,
+            agentProfile: updates.agentProfile
+              ? { ...user.agentProfile, ...updates.agentProfile }
+              : user.agentProfile,
+            landlordProfile: updates.landlordProfile
+              ? { ...user.landlordProfile, ...updates.landlordProfile }
+              : user.landlordProfile,
+            roles: updates.roles ?? user.roles,
+            activeRole: updates.activeRole ?? user.activeRole,
+            updatedAt: new Date(),
+          };
+
+          if (company) {
+            updatedUser.companyId = company;
+            updatedUser.companyRole = "admin";
+
+            const existingCompanies = JSON.parse(
+              localStorage.getItem("companies") || "[]",
+            );
+            existingCompanies.push(company);
+            localStorage.setItem(
+              "companies",
+              JSON.stringify(existingCompanies),
+            );
+          }
+
+          setUser(updatedUser);
+          localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        }
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [user],
+  );
+
   const logout = useCallback(async () => {
     setAuthLoading(true);
     try {
@@ -140,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("dummy_user");
     } catch (error) {
       setAuthError("Logout failed. Please try again.");
+      console.log(error);
     } finally {
       setAuthLoading(false);
     }
@@ -157,6 +260,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         clearError,
+        companies,
+        updateUserRole,
+        completeRegistration,
       }}
     >
       {children}

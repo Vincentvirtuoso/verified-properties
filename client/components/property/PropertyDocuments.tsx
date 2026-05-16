@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { RiFileLine, RiDownloadLine, RiShieldCheckLine } from "react-icons/ri";
-import { PropertyDocument, documentTypeLabels } from "@/types/property";
+import { PropertyDocument } from "@/types/property";
+import { DOCUMENT_TYPE_LABELS } from "@/utils/constants";
 
 interface PropertyDocumentsProps {
   documents: PropertyDocument[];
@@ -49,11 +50,11 @@ export default function PropertyDocuments({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                {doc.title || documentTypeLabels[doc.type]}
+                {doc.title || DOCUMENT_TYPE_LABELS[doc.type]}
               </p>
-              {doc.title && doc.title !== documentTypeLabels[doc.type] && (
+              {doc.title && doc.title !== DOCUMENT_TYPE_LABELS[doc.type] && (
                 <p className="text-xs text-neutral-400 dark:text-neutral-500 truncate mt-0.5">
-                  {documentTypeLabels[doc.type]}
+                  {DOCUMENT_TYPE_LABELS[doc.type]}
                 </p>
               )}
               {doc.uploadedAt && (

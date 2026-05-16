@@ -77,11 +77,11 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
   ];
 
   switch (role) {
-    case Role.Buyer:
+    case Role.Viewer:
       return [
         ...commonExplore,
         {
-          href: "/favorites",
+          href: "/saved-properties",
           label: "Saved Homes",
           icon: <LuHeart />,
           category: "Management",
@@ -106,7 +106,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           category: "Management",
         },
         {
-          href: "/favorites",
+          href: "/saved-properties",
           label: "Saved Homes",
           icon: <LuHeart />,
           category: "Management",

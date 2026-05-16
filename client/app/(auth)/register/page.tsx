@@ -6,14 +6,14 @@ import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Field } from "@/components/ui/Field";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { PhoneField } from "@/components/ui/PhoneField";
-import { User, Role, PersonalPlan } from "@/types";
+import { Role, PopulatedUser } from "@/types";
 import { FiAtSign, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { useRouter } from "next/navigation";
 
 const accountTypeToRole: Record<string, Role> = {
-  seeker: Role.Buyer,
+  seeker: Role.Viewer,
   broker: Role.Agent,
   company: Role.Company,
   developer: Role.Developer,
@@ -28,7 +28,7 @@ const accountTypes = [
   },
   {
     value: "broker",
-    label: "Broker Account",
+    label: "Agent/Broker Account",
     description: "For Those Offering Real-Estate Services",
   },
   {
@@ -101,46 +101,34 @@ export default function RegisterPage() {
     const role = accountTypeToRole[accountType];
     const now = new Date();
 
-    const newUser: User = {
+    const newUser: PopulatedUser = {
       _id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       email: formData.email.trim(),
       phone: formData.phone.trim(),
+      whatsappNumber: formData.phone.trim(),
       passwordHash: "hashed_" + formData.password,
-      currentPersonalPlan: PersonalPlan.Free,
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       avatar: undefined,
       isEmailVerified: false,
+      isPhoneVerified: false,
       roles: [role],
       activeRole: role,
-
-      agentProfile:
-        role === Role.Agent
-          ? {
-              licenseNumber: "",
-              brokerage: "",
-              verified: false,
-              freeListingsUsed: 0,
-              maxFreeListings: 3,
-            }
-          : undefined,
-
-      buyerProfile:
-        role === Role.Buyer
-          ? {
-              savedSearchIds: [],
-              preferredLocations: [],
-            }
-          : undefined,
-
-      personalPartnership: undefined,
+      viewerProfile: role === Role.Viewer ? { savedListingIds: [] } : undefined,
+      agentProfile: undefined,
+      landlordProfile: undefined,
       companyId: undefined,
       companyRole: undefined,
       createdAt: now,
       updatedAt: now,
     };
+
     try {
       await register(newUser);
-      router.replace("/");
+      if (role === Role.Viewer) {
+        router.replace("/");
+      } else {
+        router.replace(`/complete-registration?role=${role}`);
+      }
     } catch (error) {
       console.log(error);
     }

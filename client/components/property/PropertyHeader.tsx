@@ -7,14 +7,17 @@ import {
   RiHeartLine,
   RiHeartFill,
   RiStarLine,
-  RiFireLine,
 } from "react-icons/ri";
 import { useState } from "react";
-import { Property, propertyTypeLabels } from "@/types/property";
+import { PopulatedProperty, PropertyStatus } from "@/types/property";
+import { PROPERTY_TYPE_LABELS } from "@/utils/constants";
 
-const statusConfig = {
-  available: {
-    label: "Available",
+const statusConfig: Record<
+  PropertyStatus,
+  { label: string; className: string }
+> = {
+  active: {
+    label: "Active",
     className:
       "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
   },
@@ -28,15 +31,20 @@ const statusConfig = {
     className:
       "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
   },
-  pending: {
-    label: "Pending",
+  inactive: {
+    label: "Inactive",
+    className:
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+  },
+  draft: {
+    label: "Draft",
     className:
       "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
   },
 };
 
 interface PropertyHeaderProps {
-  property: Property;
+  property: PopulatedProperty;
 }
 
 export default function PropertyHeader({ property }: PropertyHeaderProps) {
@@ -68,18 +76,11 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
     >
-      {/* Badges row */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        {property.isFeatured && (
+        {property.tier === "featured" && (
           <span className="flex items-center gap-1 text-xs font-semibold bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800 px-2.5 py-1 rounded-full">
             <RiStarLine size={12} />
             Featured
-          </span>
-        )}
-        {property.sponsored && (
-          <span className="flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800 px-2.5 py-1 rounded-full">
-            <RiFireLine size={12} />
-            Sponsored
           </span>
         )}
         {status && (
@@ -90,32 +91,31 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
           </span>
         )}
         <span className="text-xs font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 px-2.5 py-1 rounded-full border border-neutral-200 dark:border-neutral-700">
-          For {property.listingType === "rent" ? "Rent" : "Sale"}
+          For {property.listingPurpose === "rent" ? "Rent" : "Sale"}
         </span>
         <span className="text-xs font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 px-2.5 py-1 rounded-full border border-neutral-200 dark:border-neutral-700">
-          {propertyTypeLabels[property.type]}
+          {PROPERTY_TYPE_LABELS[property.type]}
         </span>
       </div>
 
-      {/* Title */}
       <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-neutral-900 dark:text-neutral-50 leading-tight mb-3">
         {property.title}
       </h1>
 
-      {/* Location */}
       <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400 mb-5">
         <RiMapPinLine size={16} className="text-violet-500 shrink-0" />
-        <span className="text-sm md:text-base">{property.location}</span>
+        <span className="text-sm md:text-base">
+          {property.location.address}
+        </span>
       </div>
 
-      {/* Price + actions */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-baseline gap-3">
             <span className="text-3xl md:text-4xl font-bold text-violet-600 dark:text-violet-400">
               ₦{displayPrice.toLocaleString()}
             </span>
-            {property.listingType === "rent" && (
+            {property.listingPurpose === "rent" && (
               <span className="text-neutral-400 dark:text-neutral-500 text-sm font-medium">
                 / year
               </span>
@@ -135,7 +135,6 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleShare}

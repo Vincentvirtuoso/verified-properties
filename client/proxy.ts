@@ -7,7 +7,24 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/dashboard")) {
+  const protectedRoutes = [
+    "/dashboard",
+    "/complete-registration",
+    "/list-property",
+    "/profile",
+  ];
+
+  const authRoutes = ["/login", "/register", "/forgot-password", "/add-role"];
+
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  const isAuthRoute = authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (isProtectedRoute) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
@@ -16,11 +33,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/forgot-password")
-  ) {
+  if (isAuthRoute) {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
@@ -31,5 +44,15 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register", "/forgot-password"],
+  matcher: [
+    "/dashboard/:path*",
+    "/complete-registration/:path*",
+    "/list-property/:path*",
+    "/profile/:path*",
+
+    "/login/:path*",
+    "/register/:path*",
+    "/forgot-password/:path*",
+    "/add-role/:path*",
+  ],
 };

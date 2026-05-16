@@ -10,9 +10,9 @@ import { Button } from "./Button";
 interface FieldProps {
   label: string;
   name: string;
-  type?: "text" | "email" | "password" | "tel";
+  type?: "text" | "email" | "password" | "tel" | "number";
   placeholder?: string;
-  value?: string;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon?: IconType;
   required?: boolean;

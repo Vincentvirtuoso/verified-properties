@@ -2,26 +2,24 @@
 
 import { properties } from "@/data/properties";
 import {
-  ListingType,
-  Property,
+  ListingPurpose,
   PropertyCategory,
   PropertyDocument,
   PropertyFeature,
   PropertyFilterState,
 } from "@/types";
 
-export type FilterType = "all" | "deals" | ListingType;
+export type FilterType = "all" | "deals" | ListingPurpose;
 
 export type SortOption = "newest" | "price-low" | "price-high";
 export const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-    { value: "all", label: "All Properties" },
-    { value: "sale", label: "For Sale" },
-    { value: "rent", label: "For Rent" },
-    { value: "deals", label: "Deals" },
-  ];
+  { value: "all", label: "All Properties" },
+  { value: "sale", label: "For Sale" },
+  { value: "rent", label: "For Rent" },
+  { value: "deals", label: "Deals" },
+];
 
 export function useProperty() {
-  
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: "newest", label: "Newest First" },
     { value: "price-low", label: "Price: Low to High" },
@@ -40,10 +38,6 @@ export function useProperty() {
   const ALL_DOCUMENTS = [
     ...new Set(properties.flatMap((p) => p.documents ?? [])),
   ] as PropertyDocument[];
-
-  const AGENTS = [
-    ...new Set(properties.map((p) => p.agent?.name).filter(Boolean)),
-  ].sort() as string[];
 
   const PRICE_MIN = Math.min(...properties.map((p) => p.price || 0));
   const PRICE_MAX = Math.max(...properties.map((p) => p.price || 0));
@@ -69,7 +63,6 @@ export function useProperty() {
     ALL_PROPERTY_TYPES,
     ALL_CATEGORIES,
     ALL_FEATURES,
-    AGENTS,
     PRICE_MIN,
     PRICE_MAX,
     AREA_MIN,
