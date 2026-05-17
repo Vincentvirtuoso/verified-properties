@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react"; // 1. Imported Suspense
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthForm } from "@/components/forms/AuthForm";
@@ -21,8 +21,9 @@ const ALLOWED_TRANSITIONS: Record<string, Role[]> = {
   [Role.Landlord]: [Role.Viewer, Role.Agent],
 };
 
-export default function AddRolePage() {
-  const { user, updateUserRole, authLoading } = useAuth(); // you'll need an updateUserRole function
+// 2. Extracted the core logic into a separate sub-component
+function AddRoleFormContent() {
+  const { user, updateUserRole, authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromRole = searchParams.get("from") as Role | null;
@@ -128,7 +129,6 @@ export default function AddRolePage() {
 
     try {
       await updateUserRole(user!._id, updatedProfile);
-      // Redirect to appropriate onboarding
       router.push("/onboarding/become-an-agent-or-landlord");
     } catch (error) {
       console.error("Role upgrade failed", error);
@@ -219,5 +219,22 @@ export default function AddRolePage() {
         </div>
       )}
     </AuthForm>
+  );
+}
+
+// 3. Exposed the default Page component wrapped with Suspense boundary
+export default function AddRolePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
+          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
+            Loading upgrade options...
+          </div>
+        </div>
+      }
+    >
+      <AddRoleFormContent />
+    </Suspense>
   );
 }
