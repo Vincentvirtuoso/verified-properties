@@ -19,12 +19,14 @@ import { LuBuilding } from "react-icons/lu";
 
 const VALID_ROLES = [Role.Agent, Role.Landlord, Role.Company, Role.Developer];
 
-export default function CompleteRegistration() {
+// 1. All hooks, state, and form logic moved here
+function CompleteRegistrationForm() {
   const { user, completeRegistration, authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
   const role = roleParam ? (roleParam as Role) : null;
+  
   const [agentData, setAgentData] = useState({
     licenseNumber: "",
     brokerage: "",
@@ -198,15 +200,6 @@ export default function CompleteRegistration() {
   const subtitle = "Just a few more details to set up your account correctly.";
 
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
-          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
-            Loading upgrade options...
-          </div>
-        </div>
-      }
-    >
     <AuthForm
       title={title}
       subtitle={subtitle}
@@ -364,6 +357,22 @@ export default function CompleteRegistration() {
         </div>
       )}
     </AuthForm>
-</Suspense>
+  );
+}
+
+// 2. The main export now acts cleanly as the Suspense shell
+export default function CompleteRegistration() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
+          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
+            Loading form options...
+          </div>
+        </div>
+      }
+    >
+      <CompleteRegistrationForm />
+    </Suspense>
   );
 }
