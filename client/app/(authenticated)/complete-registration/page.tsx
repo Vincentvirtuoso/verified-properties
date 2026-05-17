@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@/components/ui/Field";
@@ -198,6 +198,15 @@ export default function CompleteRegistration() {
   const subtitle = "Just a few more details to set up your account correctly.";
 
   return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
+          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
+            Loading upgrade options...
+          </div>
+        </div>
+      }
+    >
     <AuthForm
       title={title}
       subtitle={subtitle}
@@ -355,5 +364,6 @@ export default function CompleteRegistration() {
         </div>
       )}
     </AuthForm>
+</Suspense>
   );
 }
