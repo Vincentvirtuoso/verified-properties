@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -14,7 +14,6 @@ import {
   LuHeart,
   LuWallet,
   LuBanknote,
-  LuLandmark,
   LuBuilding,
   LuUsers,
   LuAward,
@@ -34,10 +33,12 @@ import {
 } from "../../../components/ui";
 import { Role } from "../../../types";
 import VerifiedBadge from "../../../components/icons/VerifiedBadge";
-import { formatCompactPrice } from "../../../lib/formatters";
+import { formatCompactPrice, formatPhoneNumber } from "../../../lib/formatters";
 
 export default function UserProfilePage() {
   const { user } = useAuth();
+
+  const [imageError, setImageError] = useState(false);
   useEffect(() => {
     document.title = user ? `${user.name}'s Profile` : "Profile";
   }, [user]);
@@ -66,7 +67,7 @@ export default function UserProfilePage() {
 
         <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center relative z-10">
           <div className="relative h-24 w-24 shrink-0 shadow-lg rounded-full border-4 border-background overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-            {user.avatar ? (
+            {!imageError && user.avatar ? (
               <Image
                 src={user.avatar}
                 alt={user.name}
@@ -74,6 +75,7 @@ export default function UserProfilePage() {
                 sizes="96px"
                 className="object-cover transition-transform duration-300 hover:scale-105"
                 priority
+                onError={() => setImageError(true)}
               />
             ) : (
               <LuUser className="h-12 w-12 text-neutral-400" />
@@ -113,7 +115,7 @@ export default function UserProfilePage() {
               {user.phone && (
                 <span className="inline-flex items-center gap-2 hover:text-foreground transition-colors">
                   <LuPhone className="h-4 w-4 text-primary" />
-                  {user.phone}
+                  {formatPhoneNumber(user.phone)}
                   {user.isPhoneVerified ? (
                     <VerifiedBadge showText={false} />
                   ) : (
@@ -218,20 +220,24 @@ export default function UserProfilePage() {
               </div>
               <div className="bg-neutral-50/50 dark:bg-neutral-900/30 border border-border rounded-xl p-4 space-y-1.5 shadow-inner">
                 <InfoRow
+                  hideLabelOnMobile={false}
                   icon={LuAward}
                   label="Regulatory License Registration"
                   value={user.agentProfile.licenseNumber || "Not Registered"}
                 />
                 <InfoRow
+                  hideLabelOnMobile={false}
                   icon={LuBuilding}
                   label="Associated Brokerage Office"
                   value={user.agentProfile.brokerage || "Independent Practice"}
                 />
                 <InfoRow
+                  hideLabelOnMobile={false}
                   icon={LuBadgeCheck}
                   label="Verification Status Mapping"
                   value={user.agentProfile.verificationStatus}
                   badge
+                  badgeVariant="success"
                 />
               </div>
             </div>
@@ -267,33 +273,6 @@ export default function UserProfilePage() {
                   }
                 />
               </div>
-              {user.landlordProfile.remittanceDetails && (
-                <div className="bg-neutral-50/50 dark:bg-neutral-900/30 border border-border rounded-xl p-5 space-y-3 shadow-inner">
-                  <h4 className="text-xs font-semibold tracking-wider uppercase text-neutral-400 border-b border-border pb-2">
-                    Remittance Accounts (10% Split Remit Settlement)
-                  </h4>
-                  <div className="space-y-1">
-                    <InfoRow
-                      icon={LuLandmark}
-                      label="Designated Settlement Bank"
-                      value={user.landlordProfile.remittanceDetails.bankName}
-                    />
-                    <InfoRow
-                      icon={LuUser}
-                      label="Beneficiary Account Title"
-                      value={user.landlordProfile.remittanceDetails.accountName}
-                    />
-                    <InfoRow
-                      icon={LuWallet}
-                      label="Settlement Account Number"
-                      value={
-                        user.landlordProfile.remittanceDetails.accountNumber
-                      }
-                      mono
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </section>

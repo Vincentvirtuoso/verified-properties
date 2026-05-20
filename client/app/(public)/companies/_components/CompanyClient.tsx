@@ -73,7 +73,7 @@ export default function CompanyPage({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="bg-card rounded-2xl shadow-sm border p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-neutral-400 overflow-hidden relative">
               {company.logo ? (

@@ -6,10 +6,10 @@ import {
   LuUser,
   LuLayoutDashboard,
   LuChevronDown,
-  LuBuilding2,
   LuLogOut,
   LuUserCheck,
   LuCirclePlus,
+  LuChevronUp,
 } from "react-icons/lu";
 import { Button } from "../ui/Button";
 import { PopulatedUser, Role } from "@/types";
@@ -22,23 +22,43 @@ import {
 } from "../ui/Dropdown";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
+import { AiOutlineSwitcher } from "react-icons/ai";
+import { Badge } from "../ui";
+import RoleIcon from "../ui/RoleIcon";
+import { BsBuildingAdd, BsBuildings, BsClipboardData } from "react-icons/bs";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
   user?: PopulatedUser | null;
   onLogout?: () => void;
+  onSwitch: (role: Role, activeRole: Role) => void;
 }
 
 const ProfileMenu = ({
   user,
   onLogout,
+  onSwitch,
 }: {
   user: PopulatedUser;
   onLogout?: () => void;
+  onSwitch: (role: Role, activeRole: Role) => void;
 }) => {
+  const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
+  const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
+  const [userImageSrc, setUserImageSrc] = useState(
+    user?.avatar || "/placeholder_avatar.png",
+  );
+
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
   const isCompanyUser = user.activeRole === Role.Company;
+  const hasAgentOrLandlordRole = user.roles.some(
+    (role) => role === Role.Agent || role === Role.Landlord,
+  );
+  const hasAgentOrLandlordActiveRole =
+    user.activeRole === Role.Agent || user.activeRole === Role.Landlord;
+
+  const switchableRoles = user.roles.filter((role) => role !== user.activeRole);
 
   const navLinks = [
     {
@@ -48,39 +68,45 @@ const ProfileMenu = ({
     },
   ];
 
-  const defaultAvatar = "/placeholder_avatar.png";
-  const [userImageSrc, setUserImageSrc] = useState(
-    user?.avatar || defaultAvatar,
-  );
-
   const contextActions = [];
-
   if (isPureViewer) {
-    contextActions.push(
-      {
-        label: "List your Property",
-        href: "/onboarding/list-property",
-        icon: LuCirclePlus,
-      },
-      {
-        label: "Become an Agent/Landlord",
-        href: "/onboarding/become-an-agent-or-landlord",
-        icon: LuUserCheck,
-      },
-      {
-        label: "Register Company",
-        href: "/onboarding/company",
-        icon: LuBuilding2,
-      },
-    );
+    contextActions.push({
+      label: "Become an Agent/Landlord",
+      href: "/onboarding/become-an-agent-or-landlord",
+      icon: LuUserCheck,
+    });
+    contextActions.push({
+      label: "List your Property",
+      href: "/onboarding/list-property",
+      icon: LuCirclePlus,
+    });
+    contextActions.push({
+      label: "Register Company",
+      href: "/onboarding/company",
+      icon: BsClipboardData,
+    });
   } else {
     if (!user.companyId) {
       contextActions.push({
         label: "Register Company",
         href: "/onboarding/company",
-        icon: LuBuilding2,
+        icon: BsClipboardData,
       });
     }
+  }
+  if (hasAgentOrLandlordActiveRole) {
+    contextActions.push(
+      {
+        label: "List a New Property",
+        href: "/list-property",
+        icon: BsBuildingAdd,
+      },
+      {
+        label: "My Properties",
+        href: "/my-listings",
+        icon: BsBuildings,
+      },
+    );
   }
 
   return (
@@ -97,36 +123,42 @@ const ProfileMenu = ({
           fill
           sizes="36px"
           loader={imageLoader}
-          onError={() => setUserImageSrc(defaultAvatar)}
+          onError={() => setUserImageSrc("/placeholder_avatar.png")}
           priority
         />
       </Link>
 
-      <Dropdown>
+      <Dropdown onOpenChange={(open) => setIsMainDropdownOpen(open)}>
         <DropdownTrigger asChild>
-          <button className="p-1 rounded-md hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none">
-            <LuChevronDown className="w-4 h-4" />
+          <button
+            aria-label="Open user menu"
+            className="p-1 rounded-md hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+          >
+            {isMainDropdownOpen ? (
+              <LuChevronUp size={20} />
+            ) : (
+              <LuChevronDown size={20} />
+            )}
           </button>
         </DropdownTrigger>
 
         <DropdownContent className="w-60 mt-2 p-1.5">
-          <div className="px-2 py-1.5 mb-1 text-xs ">
+          <div className="px-2 py-1.5 mb-1 text-xs">
             <p className="font-semibold text-foreground truncate">
               {user.name}
+              <Badge className="ml-2">{user.activeRole}</Badge>
             </p>
-            <p className="text-muted-foreground truncate text-[11px]">
-              {user.email}
-            </p>
+            <p className="text-muted truncate text-[11px]">{user.email}</p>
           </div>
           <DropdownSeparator />
 
           {navLinks.map(({ href, icon: Icon, label }) => (
-            <DropdownItem key={href}>
+            <DropdownItem key={href} className="p-0">
               <Link
                 href={href}
-                className="flex items-center gap-2.5 w-full px-2 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                className="flex items-center gap-2.5 w-full px-2 py-2 text-sm rounded-md"
               >
-                <Icon className="w-4 h-4 text-muted-foreground" />
+                <Icon className="w-4 h-4" />
                 <span>{label}</span>
               </Link>
             </DropdownItem>
@@ -141,20 +173,61 @@ const ProfileMenu = ({
                     href={href}
                     className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted-foreground rounded-md transition-colors"
                   >
-                    <Icon className="w-4 h-4 text-primary/70" />
+                    <Icon className="w-4 h-4 text-primary/80" />
                     <span className="font-medium text-xs">{label}</span>
                   </Link>
                 </DropdownItem>
               ))}
             </>
           )}
+
+          {hasAgentOrLandlordRole && switchableRoles.length > 0 && (
+            <>
+              <DropdownSeparator />
+              <Dropdown
+                className="w-full"
+                placement="bottom-end"
+                offset={-3}
+                onOpenChange={(open) => setIsSubDropdownOpen(open)}
+              >
+                <DropdownTrigger asChild>
+                  <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
+                    <span>
+                      <AiOutlineSwitcher className="inline-flex mr-2 w-4 h-4 text-primary" />
+                      <span className="group-hover:text-primary">
+                        Switch Role to
+                      </span>
+                    </span>
+                    {isSubDropdownOpen ? (
+                      <LuChevronUp size={20} />
+                    ) : (
+                      <LuChevronDown size={20} />
+                    )}
+                  </button>
+                </DropdownTrigger>
+                <DropdownContent className="w-35 mr-1 bg-background">
+                  {switchableRoles.map((role) => (
+                    <DropdownItem
+                      className="text-xs capitalize py-1"
+                      key={role}
+                      icon={<RoleIcon role={role} />}
+                      onClick={() => onSwitch(role, user.activeRole)}
+                    >
+                      {role}
+                    </DropdownItem>
+                  ))}
+                </DropdownContent>
+              </Dropdown>
+            </>
+          )}
+
           {onLogout && (
             <>
               <DropdownSeparator />
               <DropdownItem
                 onClick={onLogout}
                 icon={<LuLogOut className="w-4 h-4" />}
-                className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50/50 cursor-pointer transition-colors"
+                className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-500/10 cursor-pointer transition-colors"
               >
                 <span>Log out</span>
               </DropdownItem>
@@ -166,11 +239,16 @@ const ProfileMenu = ({
   );
 };
 
-export function UserMenu({ isAuthenticated, user, onLogout }: UserMenuProps) {
+export function UserMenu({
+  isAuthenticated,
+  user,
+  onLogout,
+  onSwitch,
+}: UserMenuProps) {
   if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-3">
-        <ProfileMenu user={user} onLogout={onLogout} />
+        <ProfileMenu user={user} onLogout={onLogout} onSwitch={onSwitch} />
       </div>
     );
   }

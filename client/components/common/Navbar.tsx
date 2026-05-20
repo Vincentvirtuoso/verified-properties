@@ -38,7 +38,7 @@ function getNavLinks(
         ...common,
         { href: "/brokers", label: "JV Insist Pro" },
         { href: "/academy", label: "Learn Real Estate" },
-        { href: "/agent/properties/new", label: "Sell & Let" },
+        { href: "/list-property", label: "Sell & Let" },
       ];
 
     case Role.Landlord:
@@ -68,12 +68,15 @@ export function Navbar() {
   const { bannerHeight } = useBannerHeightContext();
   const { toggleOpen, isCollapsed } = useSidebar();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, switchRole } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
     router.push("/login");
+  };
+  const handleSwitchRole = async (role: Role, activeRole: Role) => {
+    await switchRole(role, activeRole);
   };
 
   const activeNavLinks = useMemo(
@@ -95,7 +98,7 @@ export function Navbar() {
         sticky z-40 w-full transition-all duration-500 ease-in-out border-b
         ${
           isScrolled
-            ? "bg-navbar-bg/80 backdrop-blur-md shadow-md border-border/50"
+            ? "bg-navbar-bg/85 backdrop-blur-md shadow-md border-border/50"
             : "bg-navbar-bg border-transparent"
         }
       `}
@@ -119,7 +122,7 @@ export function Navbar() {
             <Brandmark taglineOnly={isDesktop && !isCollapsed} />
           </div>
 
-          <div className="hidden lg:flex items-center bg-muted/50 rounded-full px-1 py-1 border border-foreground">
+          <div className="hidden lg:flex items-center bg-muted/10 rounded-full px-1 py-1 border border-border">
             {activeNavLinks.map(({ href, label }) => {
               const isActive = pathname === href;
               return (
@@ -131,7 +134,7 @@ export function Navbar() {
                     ${
                       isActive
                         ? "bg-background text-primary shadow-sm border border-border"
-                        : "text-navbar-foreground/70 hover:text-primary hover:bg-sidebar-hover-bg"
+                        : "text-navbar-foreground/70 hover:text-primary hover:bg-subtle/40"
                     }
                   `}
                 >
@@ -145,6 +148,7 @@ export function Navbar() {
             isAuthenticated={isAuthenticated}
             user={user}
             onLogout={handleLogout}
+            onSwitch={handleSwitchRole}
           />
         </div>
       </div>

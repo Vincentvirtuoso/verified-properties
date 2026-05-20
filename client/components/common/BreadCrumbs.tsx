@@ -108,7 +108,7 @@ export function Breadcrumbs({
         <Dropdown>
           <DropdownTrigger asChild>
             <button
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1 hover:bg-background rounded-md transition-colors"
               title="Show more"
             >
               <FiMoreHorizontal className="w-4 h-4 text-gray-500" />

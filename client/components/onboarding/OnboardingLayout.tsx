@@ -17,8 +17,9 @@ interface OnboardingLayoutProps {
   subtitle: string;
   steps?: Step[];
   storageKey: string;
-  nextRoute: string;
+  nextRoute?: string;
   children: ReactNode;
+  onContinue?: () => void;
 }
 
 export function OnboardingLayout({
@@ -29,6 +30,7 @@ export function OnboardingLayout({
   storageKey,
   nextRoute,
   children,
+  onContinue,
 }: OnboardingLayoutProps) {
   const router = useRouter();
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -37,7 +39,11 @@ export function OnboardingLayout({
     if (dontShowAgain) {
       localStorage.setItem(storageKey, "true");
     }
-    router.push(nextRoute);
+    if (onContinue) {
+      onContinue();
+    } else {
+      router.push(nextRoute || "");
+    }
   };
 
   return (

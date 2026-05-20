@@ -1,7 +1,7 @@
 "use client";
 
 import React, { forwardRef, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils"; // Assuming your cn helper path
+import { cn } from "@/lib/utils";
 
 export interface CheckboxProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,

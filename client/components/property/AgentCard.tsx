@@ -43,8 +43,8 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
     ? owner.companyId?.whatsappNumber
     : owner.whatsappNumber;
 
-  const whatsappUrl = phone
-    ? `https://wa.me/${phone.replace(/\D/g, "")}`
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`
     : null;
 
   let profileHref = "#";

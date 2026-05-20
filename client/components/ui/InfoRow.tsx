@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { LuChevronRight } from "react-icons/lu";
+import { cn } from "@/lib/utils";
 
 export type InfoRowBadgeVariant =
   | "default"
@@ -20,6 +21,7 @@ export type InfoRowProps = {
   badge?: boolean;
   badgeVariant?: InfoRowBadgeVariant;
   className?: string;
+  hideLabelOnMobile?: boolean;
 };
 
 const badgeVariantClasses: Record<InfoRowBadgeVariant, string> = {
@@ -39,6 +41,7 @@ export function InfoRow({
   badge,
   badgeVariant = "default",
   className = "",
+  hideLabelOnMobile = true,
 }: InfoRowProps) {
   if (value === null || value === undefined || value === "") return null;
 
@@ -52,12 +55,16 @@ export function InfoRow({
   const content = (
     <div
       className={`flex items-center justify-between py-2.5 px-3 rounded-lg transition-colors ${
-        isLink ? "hover:bg-muted/50 active:bg-muted" : ""
+        isLink ? "hover:bg-muted/10 active:bg-muted" : ""
       } ${className}`}
     >
       <div className="flex items-center gap-2.5 text-sm text-muted-foreground min-w-0">
         {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70" />}
-        <span className="truncate hidden sm:block">{label}</span>
+        <span
+          className={cn("truncate", hideLabelOnMobile && "hidden sm:block")}
+        >
+          {label}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 ml-4 shrink-0">

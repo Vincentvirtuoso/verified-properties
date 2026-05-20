@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, PopulatedUser, PopulatedProperty } from "@/types";
-import { mockCompanies } from "@/data/companies";
-import { dummyUsers } from "@/data/users";
 import { properties } from "@/data/properties";
 import {
   LuHeart,
@@ -15,14 +13,13 @@ import {
   LuBriefcase,
   LuArrowUpRight,
 } from "react-icons/lu";
-import { FiBarChart2 } from "react-icons/fi";
-
-// ==========================================
-// Sub-Dashboards per User Role
-// ==========================================
+import { FiBarChart2, FiZap } from "react-icons/fi";
+import { PropertyCard } from "@/components/property/PropertyCard";
+import VerifiedBadge from "@/components/icons/VerifiedBadge";
+import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
-  // Pull default recommendations from shared properties list
   const recommended = properties.slice(0, 2);
 
   return (
@@ -56,20 +53,19 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
 };
 
 const AgentDashboard = ({ user }: { user: PopulatedUser }) => {
-  // Filter global properties assigned to this specific agent
   const agentListings = properties.filter(
     (p) =>
       p.ownerType === "agent" &&
-      (typeof p.ownerId === "string" ? p.ownerId === user._id : p.ownerId._id === user._id)
+      (typeof p.ownerId === "string"
+        ? p.ownerId === user._id
+        : p.ownerId._id === user._id),
   );
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Agent Dashboard</h2>
-        <span className="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full capitalize">
-          Status: {user.agentProfile?.verificationStatus ?? "Unverified"}
-        </span>
+        {user.agentProfile?.verificationStatus && <VerifiedBadge size="md" />}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
@@ -79,7 +75,7 @@ const AgentDashboard = ({ user }: { user: PopulatedUser }) => {
           href="/my-listings"
         />
         <DashboardCard
-          icon={<FiBarChart2 />}
+          icon={<FiZap />}
           label="Boosted Listings"
           value={user.agentProfile?.activeBoostedListings ?? 0}
         />
@@ -98,7 +94,9 @@ const LandlordDashboard = ({ user }: { user: PopulatedUser }) => {
   const landlordListings = properties.filter(
     (p) =>
       p.ownerType === "landlord" &&
-      (typeof p.ownerId === "string" ? p.ownerId === user._id : p.ownerId._id === user._id)
+      (typeof p.ownerId === "string"
+        ? p.ownerId === user._id
+        : p.ownerId._id === user._id),
   );
 
   return (
@@ -108,7 +106,9 @@ const LandlordDashboard = ({ user }: { user: PopulatedUser }) => {
         <DashboardCard
           icon={<LuCirclePlus />}
           label="My Properties"
-          value={user.landlordProfile?.activeListings ?? landlordListings.length}
+          value={
+            user.landlordProfile?.activeListings ?? landlordListings.length
+          }
           href="/my-listings"
         />
         <DashboardCard
@@ -129,11 +129,13 @@ const LandlordDashboard = ({ user }: { user: PopulatedUser }) => {
 };
 
 const DeveloperDashboard = ({ user }: { user: PopulatedUser }) => {
-  const companyData = user.companyId; 
+  const companyData = user.companyId;
   const developerListings = properties.filter(
     (p) =>
       p.ownerType === "company" &&
-      (typeof p.ownerId === "string" ? p.ownerId === user._id : p.ownerId._id === user._id)
+      (typeof p.ownerId === "string"
+        ? p.ownerId === user._id
+        : p.ownerId._id === user._id),
   );
 
   return (
@@ -143,22 +145,37 @@ const DeveloperDashboard = ({ user }: { user: PopulatedUser }) => {
         <DashboardCard
           icon={<LuBriefcase />}
           label="Active Projects"
-          value={companyData && typeof companyData !== "string" ? companyData.activeListings : developerListings.length}
+          value={
+            companyData && typeof companyData !== "string"
+              ? companyData.activeListings
+              : developerListings.length
+          }
         />
         <DashboardCard
           icon={<LuUsers />}
           label="Team Infrastructure"
-          value={companyData && typeof companyData !== "string" ? companyData.team?.length ?? 0 : 0}
+          value={
+            companyData && typeof companyData !== "string"
+              ? (companyData.team?.length ?? 0)
+              : 0
+          }
           href="/company/team"
         />
         <DashboardCard
           icon={<LuCirclePlus />}
           label="Project Verification"
-          value={companyData && typeof companyData !== "string" ? companyData.verificationStatus : "Unverified"}
+          value={
+            companyData && typeof companyData !== "string"
+              ? companyData.verificationStatus
+              : "Unverified"
+          }
           className="capitalize"
         />
       </div>
-      <RecentListings title="Recent Managed Projects" listings={developerListings} />
+      <RecentListings
+        title="Recent Managed Projects"
+        listings={developerListings}
+      />
     </div>
   );
 };
@@ -168,7 +185,9 @@ const CompanyDashboard = ({ user }: { user: PopulatedUser }) => {
   const companyListings = properties.filter(
     (p) =>
       p.ownerType === "company" &&
-      (typeof p.ownerId === "string" ? p.ownerId === user._id : p.ownerId._id === user._id)
+      (typeof p.ownerId === "string"
+        ? p.ownerId === user._id
+        : p.ownerId._id === user._id),
   );
 
   return (
@@ -178,13 +197,21 @@ const CompanyDashboard = ({ user }: { user: PopulatedUser }) => {
         <DashboardCard
           icon={<LuCirclePlus />}
           label="Total Enterprise Listings"
-          value={companyData && typeof companyData !== "string" ? companyData.activeListings : companyListings.length}
+          value={
+            companyData && typeof companyData !== "string"
+              ? companyData.activeListings
+              : companyListings.length
+          }
           href="/company/listings"
         />
         <DashboardCard
           icon={<LuUsers />}
           label="Active Members"
-          value={companyData && typeof companyData !== "string" ? companyData.team?.length ?? 0 : 0}
+          value={
+            companyData && typeof companyData !== "string"
+              ? (companyData.team?.length ?? 0)
+              : 0
+          }
           href="/company/team"
         />
         <DashboardCard
@@ -197,10 +224,6 @@ const CompanyDashboard = ({ user }: { user: PopulatedUser }) => {
     </div>
   );
 };
-
-// ==========================================
-// Reusable Structural Components
-// ==========================================
 
 function DashboardCard({
   icon,
@@ -216,7 +239,7 @@ function DashboardCard({
   className?: string;
 }) {
   const Content = (
-    <div className="bg-white dark:bg-sidebar-bg border border-border rounded-2xl p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+    <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 hover:shadow-md transition-shadow h-full">
       <div className="p-3 bg-primary/10 rounded-xl text-primary text-2xl shrink-0">
         {icon}
       </div>
@@ -229,7 +252,7 @@ function DashboardCard({
 
   if (href) {
     return (
-      <a href={href} className="block">
+      <a href={href} className="block h-full">
         {Content}
       </a>
     );
@@ -247,46 +270,30 @@ function RecentListings({
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      {listings.length === 0 && (
-        <p className="text-muted-foreground">No property listings found to display.</p>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {listings.map((item) => (
-          <div
-            key={item._id}
-            className="flex items-center gap-4 bg-white dark:bg-sidebar-bg border border-border rounded-xl p-4 hover:shadow-sm"
-          >
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-16 h-16 bg-muted rounded-lg shrink-0 object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-muted rounded-lg shrink-0" />
-            )}
-            <div>
-              <p className="font-medium line-clamp-1">{item.title}</p>
-              <p className="text-sm text-muted-foreground">
-                {item.currency || "₦"}{item.price?.toLocaleString()}
-              </p>
-            </div>
+      {listings.length === 0 ? (
+        <p className="text-muted-foreground">
+          No property listings found to display.
+        </p>
+      ) : (
+        <div className="flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {listings.map((item) => (
+              <PropertyCard key={item._id} {...item} />
+            ))}
           </div>
-        ))}
-      </div>
+          <Link href="/my-listings" className="mx-auto">
+            <Button className="px-16">View all</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
 
-// ==========================================
-// Core Dashboard Orchestrator Route
-// ==========================================
-
 export default function DashboardPage() {
   const router = useRouter();
   const authContext = useAuth();
-  
-  // Explicit Type-casting to map incoming state safely directly to PopulatedUser architecture
+
   const user = authContext.user as PopulatedUser | null;
   const isAuthenticated = authContext.isAuthenticated;
   const isLoading = authContext.isLoading;
@@ -305,7 +312,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Dynamic dashboard selection strategy mapping cleanly across active types
   const roleComponent = {
     [Role.Viewer]: <ViewerDashboard user={user} />,
     [Role.Agent]: <AgentDashboard user={user} />,
@@ -321,7 +327,8 @@ export default function DashboardPage() {
           Hello, {user.name ? user.name.split(" ")[0] : "User"}
         </h1>
         <p className="text-muted-foreground mt-1">
-          {user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1)} space view
+          {user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1)}{" "}
+          space view
         </p>
       </div>
       {roleComponent}

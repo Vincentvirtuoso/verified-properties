@@ -38,22 +38,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       {
         "w-full": fullWidth,
 
-        // Primary: uses primary color with foreground
         "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow":
           variant === "primary",
-        // Secondary: uses secondary color from design system
-        "bg-secondary text-secondary-foreground hover:bg-secondary/80":
+        "bg-secondary text-secondary-foreground hover:bg-inverse":
           variant === "secondary",
-        // Outline: border, transparent bg, no hover fill
-        "border border-border hover:bg-secondary text-foreground bg-background":
+        "border border-border hover:bg-muted/20 text-foreground bg-background":
           variant === "outline",
-        // Ghost: transparent, subtle hover
         "hover:bg-secondary text-foreground": variant === "ghost",
-        // Danger: destructive color
         "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm":
           variant === "danger",
 
-        // Sizes
         "px-3 py-1.5 text-xs gap-1.5": size === "xs",
         "px-4 py-2 text-sm gap-2": size === "sm",
         "px-6 py-2.5 text-base gap-2": size === "md",

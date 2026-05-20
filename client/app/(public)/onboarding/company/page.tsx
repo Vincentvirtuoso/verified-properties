@@ -14,6 +14,8 @@ import {
   AccordionContent,
 } from "@/components/ui/Accordion";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { useConfirm } from "@/contexts/ConfirmDialog";
 
 const steps = [
   {
@@ -70,13 +72,34 @@ const steps = [
 ];
 
 export default function CompanyOnboarding() {
+  const { logout } = useAuth();
+  const { confirm } = useConfirm();
+
+  const handleContinue = async () => {
+    const confirmed = await confirm({
+      title: "You'll be logged out",
+      message:
+        "To register a company, you'll be logged out of your current session. All unsaved changes on this page will be lost. Continue?",
+      confirmLabel: "Log out & continue",
+      cancelLabel: "Stay here",
+      variant: "warning",
+      rememberKey: "hide_logout_warning_company",
+      rememberLabel: "Don't ask me again",
+    });
+
+    if (confirmed) {
+      await logout();
+      window.location.href = "/company/new";
+    }
+  };
   return (
     <OnboardingLayout
       title="Register your company 🏢"
       subtitle="Build your brand on our platform, manage a team, and list properties at scale. Here’s how to get started."
       steps={steps.map((s) => ({ icon: s.icon, title: s.title }))}
       storageKey="hide_company_onboarding"
-      nextRoute="/companies/new"
+      // nextRoute="/companies/new"
+      onContinue={handleContinue}
     >
       <Accordion>
         {steps.map((step) => (

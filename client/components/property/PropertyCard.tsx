@@ -325,16 +325,15 @@ export function PropertyCard({
         <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {ownerImageSrc ? (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
                 <Image
                   src={ownerImageSrc}
                   alt={ownerName}
-                  sizes="25px"
-                  width={80}
-                  height={80}
+                  width={100}
+                  height={100}
                   loader={imageLoader}
                   onError={() => setOwnerImageSrc(defaultOwnerImage)}
-                  className="object-cover rounded-full"
+                  className="object-cover"
                 />
               </div>
             ) : (

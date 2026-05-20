@@ -199,7 +199,7 @@ const NavItem = ({
     className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
       isActive
         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-        : "text-sidebar-foreground hover:bg-muted"
+        : "text-sidebar-foreground hover:bg-inverse"
     } ${collapsed ? "justify-center" : "justify-start"}`}
   >
     <span
@@ -285,7 +285,6 @@ const SidebarContent = ({
   );
 };
 
-// Main Sidebar component
 interface SidebarProps {
   links?: SidebarLink[];
   isOpen?: boolean;
@@ -333,7 +332,6 @@ export const Sidebar = ({
     }
   }, [isOpen, variant]);
 
-  // Persistent (desktop) variant
   if (variant !== "overlay") {
     return (
       <aside
@@ -346,7 +344,7 @@ export const Sidebar = ({
           {!collapsed && <Brandmark logoOnly logoSize={40} />}
           <button
             onClick={onCollapsedChange}
-            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+            className="p-2 rounded-lg hover:bg-inverse transition-colors text-muted-foreground"
           >
             {collapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
@@ -362,7 +360,6 @@ export const Sidebar = ({
     );
   }
 
-  // Mobile overlay variant
   return (
     <AnimatePresence>
       {isOpen && (
@@ -387,7 +384,7 @@ export const Sidebar = ({
               <Brandmark logoOnly logoSize={40} />
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-muted text-muted-foreground"
+                className="p-2 rounded-full hover:bg-inverse text-muted-foreground"
               >
                 <LuX className="w-6 h-6" />
               </button>

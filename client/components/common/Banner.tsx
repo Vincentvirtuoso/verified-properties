@@ -1,4 +1,5 @@
 import { Ad } from "@/data/ads";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { LuX } from "react-icons/lu";
 
@@ -24,7 +25,7 @@ export const Banner = ({ ads, autoRotateInterval = 5000 }: BannerProps) => {
   const currentAd = ads[currentIndex];
 
   return (
-    <div className="relative overflow-hidden w-full bg-linear-to-br from-primary-600 to-primary-800 text-white shadow-lg z-50">
+    <div className="relative overflow-hidden w-full bg-linear-to-br from-primary-600 to-primary-800 shadow-lg z-50 text-white">
       <div
         key={currentIndex}
         className="shimmer-effect animate-shimmer pointer-events-none"
@@ -33,10 +34,12 @@ export const Banner = ({ ads, autoRotateInterval = 5000 }: BannerProps) => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between relative z-10">
         <div className="flex items-center space-x-4 flex-1">
           {currentAd.imageUrl && (
-            <img
+            <Image
               src={currentAd.imageUrl}
               alt={currentAd.title}
               className="h-10 w-10 object-cover rounded shadow-sm"
+              width={500}
+              height={500}
             />
           )}
           <div className="flex-1">

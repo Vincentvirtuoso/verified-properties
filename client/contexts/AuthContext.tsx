@@ -1,6 +1,6 @@
 "use client";
 
-import { Company, PopulatedUser } from "@/types";
+import { Company, PopulatedUser, Role } from "@/types";
 import { dummyUsers } from "@/data/users";
 import React, {
   createContext,
@@ -22,6 +22,7 @@ interface AuthContextType {
   register: (newUser: PopulatedUser, company?: Company) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  switchRole: (role: Role, currentRole: Role) => Promise<void>;
   updateUserRole: (
     userId: string,
     updates: Partial<PopulatedUser>,
@@ -182,8 +183,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // After updateUserRole...
-
   const completeRegistration = useCallback(
     async (
       userId: string,
@@ -233,6 +232,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user],
   );
 
+  const switchRole = async (role: Role, currentRole: Role) => {
+    const ALLOWED_TRANSITIONS: Record<string, Role[]> = {
+      [Role.Viewer]: [Role.Agent, Role.Landlord],
+      [Role.Agent]: [Role.Viewer, Role.Landlord],
+      [Role.Landlord]: [Role.Viewer, Role.Agent],
+    };
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      await fakeDelay();
+
+      const isValidTransition =
+        currentRole &&
+        role &&
+        ALLOWED_TRANSITIONS[currentRole]?.includes(role) &&
+        user?.roles.includes(currentRole);
+      if (!isValidTransition) {
+        throw new Error("Cannot switch role.");
+      }
+      if (user) {
+        const updatedUser: PopulatedUser = {
+          ...user,
+          activeRole: role,
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const logout = useCallback(async () => {
     setAuthLoading(true);
     try {
@@ -262,6 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearError,
         companies,
         updateUserRole,
+        switchRole,
         completeRegistration,
       }}
     >

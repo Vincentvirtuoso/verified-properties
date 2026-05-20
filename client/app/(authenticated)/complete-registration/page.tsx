@@ -19,14 +19,13 @@ import { LuBuilding } from "react-icons/lu";
 
 const VALID_ROLES = [Role.Agent, Role.Landlord, Role.Company, Role.Developer];
 
-// 1. All hooks, state, and form logic moved here
 function CompleteRegistrationForm() {
   const { user, completeRegistration, authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
   const role = roleParam ? (roleParam as Role) : null;
-  
+
   const [agentData, setAgentData] = useState({
     licenseNumber: "",
     brokerage: "",
@@ -360,7 +359,6 @@ function CompleteRegistrationForm() {
   );
 }
 
-// 2. The main export now acts cleanly as the Suspense shell
 export default function CompleteRegistration() {
   return (
     <Suspense

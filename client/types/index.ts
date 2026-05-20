@@ -20,3 +20,5 @@ export * from "./user";
 export * from "./inquiry";
 export * from "./transaction";
 export * from "./company";
+export * from "./jv-property";
+export * from "./course";

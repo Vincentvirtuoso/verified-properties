@@ -92,3 +92,25 @@ export function formatCompactPrice(
     maximumFractionDigits: decimals,
   }).format(price);
 }
+
+export function formatPhoneNumber(phoneNumber: string): string {
+  let result: string = "";
+  if (phoneNumber.includes("+")) {
+    result =
+      phoneNumber.slice(0, 4) +
+      " " +
+      phoneNumber.slice(4, 7) +
+      " " +
+      phoneNumber.slice(7, 10) +
+      " " +
+      phoneNumber.slice(10);
+  } else {
+    result =
+      phoneNumber.slice(0, 4) +
+      " " +
+      phoneNumber.slice(4, 7) +
+      " " +
+      phoneNumber.slice(7);
+  }
+  return result;
+}

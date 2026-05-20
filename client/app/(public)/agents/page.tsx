@@ -26,6 +26,7 @@ import {
   DropdownContent,
   DropdownItem,
 } from "@/components/ui/Dropdown";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 export type Agent = {
   id: string;
@@ -684,25 +685,11 @@ function MobileFilterDrawer({
           </div>
 
           <div className="mb-6">
-            <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-medium text-foreground">
-                Verified Agents Only
-              </span>
-              <button
-                onClick={() => setVerifiedOnly(!verifiedOnly)}
-                className={cn(
-                  "relative w-11 h-6 rounded-full transition-colors",
-                  verifiedOnly ? "bg-primary" : "bg-muted",
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform",
-                    verifiedOnly ? "translate-x-5" : "translate-x-0.5",
-                  )}
-                />
-              </button>
-            </label>
+            <Checkbox
+              checked={verifiedOnly}
+              onChange={(e) => setVerifiedOnly(e.target.checked)}
+              label="Verified Agents Only"
+            />
           </div>
 
           <div className="flex gap-3 mt-8">

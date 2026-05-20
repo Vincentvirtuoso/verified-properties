@@ -14,7 +14,13 @@ export function proxy(request: NextRequest) {
     "/profile",
   ];
 
-  const authRoutes = ["/login", "/register", "/forgot-password", "/add-role"];
+  const authRoutes = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/add-role",
+    "/company/new",
+  ];
 
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -23,6 +29,8 @@ export function proxy(request: NextRequest) {
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
+
+  console.log(isAuthenticated);
 
   if (isProtectedRoute) {
     if (!isAuthenticated) {
@@ -54,5 +62,6 @@ export const config = {
     "/register/:path*",
     "/forgot-password/:path*",
     "/add-role/:path*",
+    "/company/new/:path*",
   ],
 };

@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Spinner } from "./Spinner";
 
 interface DropdownContextType {
   isOpen: boolean;
@@ -272,7 +273,7 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
           }}
           onMouseEnter={handleMouseEnter}
           className={cn(
-            "min-w-50 bg-card rounded-lg shadow-lg border border-border py-1",
+            "min-w-30 bg-card rounded-lg shadow-lg border border-border py-1",
             "focus:outline-none",
             className,
           )}
@@ -294,6 +295,7 @@ interface DropdownItemProps {
   icon?: React.ReactNode;
   shortcut?: string;
   destructive?: boolean;
+  loading?: boolean;
 }
 
 export function DropdownItem({
@@ -304,6 +306,7 @@ export function DropdownItem({
   icon,
   shortcut,
   destructive = false,
+  loading = false,
 }: DropdownItemProps) {
   const { setIsOpen } = useDropdownContext();
 
@@ -340,8 +343,9 @@ export function DropdownItem({
       aria-disabled={disabled}
     >
       <div className="flex items-center gap-2">
-        {icon && <span className="w-4 h-4 shrink-0">{icon}</span>}
-        <span className="text-sm">{children}</span>
+        {icon && !loading && <span className="w-4 h-4 shrink-0">{icon}</span>}
+        {loading && <Spinner size="sm" />}
+        <div className="text-sm">{children}</div>
       </div>
       {shortcut && (
         <span className="text-xs text-gray-400 ml-4">{shortcut}</span>

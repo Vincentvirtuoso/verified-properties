@@ -1,12 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  FaWhatsapp,
-  FaRocket,
-  FaPodcast,
-  FaArrowRight,
-  FaShield,
-} from "react-icons/fa6";
+import { FaWhatsapp, FaPodcast, FaArrowRight, FaShield } from "react-icons/fa6";
 import { IconType } from "react-icons";
 import Link from "next/link";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
@@ -30,7 +24,7 @@ const ActionLink = ({
     initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    className="group flex items-start gap-4 py-4 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-all rounded-lg px-2"
+    className="group flex items-start gap-4 py-4 border-b border-border/50 last:border-0 hover:bg-inverse transition-all rounded-lg px-2"
   >
     <div
       className={`mt-1 p-2 rounded-xl ${color} text-white shadow-md shadow-current/10`}
@@ -74,10 +68,10 @@ const QuickActions = () => {
                 desc="Chat with our AI bot to find listings and verify prices without leaving WhatsApp."
                 icon={FaWhatsapp}
                 color="bg-[#25D366]"
-                href="/whatsapp-search"
+                href="https://wa.me/+2347063935401"
               />
               <ActionLink
-                title="Developer’s Pro JV"
+                title="Developer’s Pro Joint Ventures"
                 desc="Partner with us on high-yield residential projects. Exclusive joint venture access for scale-ready developers."
                 icon={FaHandshake}
                 color="bg-emerald-700"
