@@ -121,7 +121,6 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       ];
 
     case Role.Landlord:
-    case Role.Developer:
       return [
         ...commonExplore,
         { href: "/dashboard", label: "Dashboard", icon: <LuLayoutDashboard /> },
@@ -140,11 +139,12 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
         ...commonAccount,
       ];
 
+    case Role.Developer:
     case Role.Company:
       return [
         ...commonExplore,
         {
-          href: "/company",
+          href: "/dashboard/company",
           label: "Company Dashboard",
           icon: <LuLayoutDashboard />,
         },
