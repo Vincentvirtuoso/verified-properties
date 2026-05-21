@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,15 +12,15 @@ import {
   LuShield,
   LuPhone,
   LuMail,
-  LuCircleMessage,
+  LuMessageCircle,
   LuChevronRight,
   LuCrown,
   LuHeadphones,
   LuUserCheck,
 } from "react-icons/lu";
-import { InfoRow } from "@/components/ui/InfoRow";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { InfoRow } from "@/components/InfoRow";
+import { Badge } from "@/components/Badge";
+import { Button } from "@/components/Button";
 import { Role, CompanyMember } from "@/types";
 import Image from "next/image";
 
@@ -189,7 +190,7 @@ export default function CompanyDashboardPage() {
               )}
               {company.whatsappNumber && (
                 <InfoRow
-                  icon={LuCircleMessage}
+                  icon={LuMessageCircle}
                   label="WhatsApp"
                   value={company.whatsappNumber}
                   mono
@@ -226,7 +227,7 @@ export default function CompanyDashboardPage() {
             <h2 className="mb-4 text-lg font-semibold">Enabled Features</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FeatureItem
-                icon={<LuCircleMessage />}
+                icon={<LuMessageCircle />}
                 label="WhatsApp Notifications"
                 active={company.features.whatsappNotifications}
               />
