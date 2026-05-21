@@ -27,7 +27,7 @@ const LoginPage = () => {
         agent: "/dashboard",
         landlord: "/dashboard",
         developer: "/dashboard",
-        company: "/company",
+        company: "/dashboard/company",
       };
       const redirectTo = roleRoutes[user.activeRole] || "/";
       router.push(redirectTo);
