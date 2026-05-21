@@ -16,6 +16,7 @@ import {
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConfirm } from "@/contexts/ConfirmDialog";
+import { useRouter } from "next/dist/client/components/navigation";
 
 const steps = [
   {
@@ -75,6 +76,15 @@ export default function CompanyOnboarding() {
   const { logout } = useAuth();
   const { confirm } = useConfirm();
 
+  const router = useRouter();
+  if (
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem("hide_company_onboarding")
+  ) {
+    router.push("/list-property");
+    return null;
+  }
+
   const handleContinue = async () => {
     const confirmed = await confirm({
       title: "You'll be logged out",
@@ -89,7 +99,7 @@ export default function CompanyOnboarding() {
 
     if (confirmed) {
       await logout();
-      window.location.href = "/company/new";
+      window.location.href = "/register/?accountType=company";
     }
   };
   return (
@@ -98,7 +108,6 @@ export default function CompanyOnboarding() {
       subtitle="Build your brand on our platform, manage a team, and list properties at scale. Here’s how to get started."
       steps={steps.map((s) => ({ icon: s.icon, title: s.title }))}
       storageKey="hide_company_onboarding"
-      // nextRoute="/companies/new"
       onContinue={handleContinue}
     >
       <Accordion>

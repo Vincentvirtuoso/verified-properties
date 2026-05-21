@@ -14,6 +14,7 @@ import {
   AccordionContent,
 } from "@/components/ui/Accordion";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
+import { useRouter } from "next/dist/client/components/navigation";
 
 const steps = [
   {
@@ -86,6 +87,14 @@ const steps = [
 ];
 
 export default function ListPropertyOnboarding() {
+  const router = useRouter();
+  if (
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem("hide_list_property_onboarding")
+  ) {
+    router.push("/list-property");
+    return null;
+  }
   return (
     <OnboardingLayout
       title="Ready to list your property? 🏡"

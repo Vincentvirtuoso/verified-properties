@@ -16,6 +16,7 @@ import {
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
+import { useRouter } from "next/dist/client/components/navigation";
 
 const steps = [
   {
@@ -78,6 +79,15 @@ export default function BecomeAgentLandlordOnboarding() {
     user?.roles.includes(Role.Agent) || user?.roles.includes(Role.Landlord)
       ? "/dashboard"
       : `/add-role?from=${user?.activeRole || Role.Viewer}&to=${Role.Agent}`;
+
+  const router = useRouter();
+  if (
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem("hide_agent_landlord_onboarding")
+  ) {
+    router.push("/list-property");
+    return null;
+  }
 
   return (
     <OnboardingLayout

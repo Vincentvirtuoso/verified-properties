@@ -36,6 +36,7 @@ export function PhoneField({
   useEffect(() => {
     const country = countries.find((c) => value.startsWith(c.code));
     if (country) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedCountry(country);
       const num = value.slice(country.code.length).trim();
       setLocalNumber(num);

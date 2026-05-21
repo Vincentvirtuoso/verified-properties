@@ -82,7 +82,7 @@ const QuickActions = () => {
                 desc="Weekly insights from legal experts and pro investors on the 'Learn & Grow' show."
                 icon={FaPodcast}
                 color="bg-purple-600"
-                href="/academy/podcast"
+                href="/academy/podcasts"
               />
             </div>
           </div>

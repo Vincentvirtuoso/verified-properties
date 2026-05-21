@@ -24,7 +24,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
   const name = isCompany ? owner.companyId?.name : owner.name;
 
   const defaultAvatar = "/placeholder_avatar.png";
-  const defaultLogo = "/placeholder_company.png";
+  const defaultLogo = "/placeholder_company.svg";
 
   const imageSrc = isCompany
     ? owner.companyId?.logo || defaultLogo
@@ -75,16 +75,16 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
 
   return (
     <motion.div
-      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm"
+      className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 }}
     >
-      <div className="h-2 bg-linear-to-r from-violet-500 to-violet-700" />
+      <div className="h-1.5 bg-linear-to-r from-violet-500 to-violet-700" />
 
       <div className="p-5 flex flex-col gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-subtle mb-3">
             Listed by
           </p>
 
@@ -92,7 +92,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
             <div
               className={`relative w-14 h-14 ${
                 isCompany ? "rounded-xl" : "rounded-full"
-              } overflow-hidden bg-violet-100 dark:bg-violet-900/40 shrink-0 ring-2 ring-violet-100 dark:ring-violet-900`}
+              } overflow-hidden bg-muted/10 shrink-0 ring-2 ring-violet-100 dark:ring-violet-900`}
             >
               <Image
                 src={imgSrc}

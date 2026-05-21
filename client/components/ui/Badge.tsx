@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Role } from "@/types";
 import { LuShield } from "react-icons/lu";
+import { Button } from "./Button";
 
 export type BadgeVariant =
   | "default"
@@ -15,15 +16,15 @@ export type BadgeVariant =
   | "neutral"
   | "secondary";
 
-export function Badge({
+const BadgeContent = ({
   children,
-  variant = "default",
+  variant,
   className,
 }: {
   children: React.ReactNode;
-  variant?: BadgeVariant;
+  variant: BadgeVariant;
   className?: string;
-}) {
+}) => {
   const variants: Record<BadgeVariant, string> = {
     default: "bg-primary/10 text-primary ring-primary/20",
     outline: "bg-transparent text-muted-foreground ring-border",
@@ -52,6 +53,34 @@ export function Badge({
     >
       {children}
     </span>
+  );
+};
+
+export function Badge({
+  children,
+  variant = "default",
+  className,
+  onClick = undefined,
+}: {
+  children: React.ReactNode;
+  variant?: BadgeVariant;
+  className?: string;
+  onClick?: () => void;
+}) {
+  if (onClick) {
+    return (
+      <button onClick={onClick}>
+        <BadgeContent className={className} variant={variant}>
+          {children}
+        </BadgeContent>
+      </button>
+    );
+  }
+
+  return (
+    <BadgeContent className={className} variant={variant}>
+      {children}
+    </BadgeContent>
   );
 }
 

@@ -14,10 +14,10 @@ const SIZE_CLASSES: Record<SpinnerSize, string> = {
 };
 
 const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
-  default: "border-[var(--color-green-200)] border-t-[var(--color-green-800)]",
-  gold: "border-[var(--color-gold-200)]  border-t-[var(--color-gold-500)]",
-  white: "border-white/20                 border-t-white",
-  muted: "border-[var(--border-base)]     border-t-[var(--fg-muted)]",
+  default: "border-primary-200 border-t-primary-800",
+  gold: "border-amber-200  border-t-amber-500",
+  white: "border-white/20 border-t-white",
+  muted: "border-border-border border-t-muted",
 };
 
 interface SpinnerProps {
@@ -48,18 +48,16 @@ export function Spinner({
   );
 }
 
-// export function PageSpinner({ label = "Loading…" }: { label?: string }) {
-//   return (
-//     <div className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm">
-//       <div className="flex flex-col items-center gap-4 rounded-2xl bg-[var(--bg-surface)] px-10 py-8 shadow-[var(--shadow-2xl)]">
-//         <Spinner size="lg" variant="gold" />
-//         <p className="font-sans text-sm font-medium text-[var(--fg-muted)]">
-//           {label}
-//         </p>
-//       </div>
-//     </div>
-//   );
-// }
+export function PageSpinner({ label = "Loading…" }: { label?: string }) {
+  return (
+    <div className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-background px-10 py-8 shadow-2xl border border-border animate-pulse">
+        <Spinner size="lg" />
+        <p className="font-sans text-sm font-medium text-muted">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 // export function InlineLoader({
 //   rows = 1,

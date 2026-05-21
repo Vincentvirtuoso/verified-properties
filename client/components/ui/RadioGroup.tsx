@@ -83,7 +83,7 @@ export function RadioGroup({
                       "w-5 h-5 rounded-full border-2 transition-all duration-200",
                       isSelected
                         ? "border-primary bg-background"
-                        : "border-border group-hover:border-muted-foreground/70",
+                        : "border-border group-hover:border-muted/70",
                     )}
                   >
                     {isSelected && (
@@ -100,7 +100,7 @@ export function RadioGroup({
                       "shrink-0 mt-0.5 transition-colors duration-200",
                       isSelected
                         ? "text-primary"
-                        : "text-muted-foreground group-hover:text-foreground",
+                        : "text-muted group-hover:text-foreground",
                     )}
                   >
                     {option.icon}
@@ -112,7 +112,7 @@ export function RadioGroup({
                     {option.label}
                   </span>
                   {option.description && (
-                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                    <p className="text-sm text-muted mt-1 leading-relaxed line-clamp-2">
                       {option.description}
                     </p>
                   )}

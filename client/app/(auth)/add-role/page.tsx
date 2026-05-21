@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, Suspense } from "react"; // 1. Imported Suspense
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@/components/ui/Field";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, AgentProfile, LandlordProfile, PopulatedUser } from "@/types";
-import {
-  FiBriefcase,
-  FiCreditCard,
-  FiHome,
-  FiGrid,
-  FiUser,
-} from "react-icons/fi";
+import { FiBriefcase, FiCreditCard, FiHome, FiUser } from "react-icons/fi";
+import { PageSpinner } from "@/components/ui/Spinner";
+import { AiFillBank } from "react-icons/ai";
 
 const ALLOWED_TRANSITIONS: Record<string, Role[]> = {
   [Role.Viewer]: [Role.Agent, Role.Landlord],
@@ -21,7 +17,6 @@ const ALLOWED_TRANSITIONS: Record<string, Role[]> = {
   [Role.Landlord]: [Role.Viewer, Role.Agent],
 };
 
-// 2. Extracted the core logic into a separate sub-component
 function AddRoleFormContent() {
   const { user, updateUserRole, authLoading } = useAuth();
   const router = useRouter();
@@ -29,14 +24,12 @@ function AddRoleFormContent() {
   const fromRole = searchParams.get("from") as Role | null;
   const toRole = searchParams.get("to") as Role | null;
 
-  // Validate transition
   const isValidTransition =
     fromRole &&
     toRole &&
     ALLOWED_TRANSITIONS[fromRole]?.includes(toRole) &&
     user?.roles.includes(fromRole);
 
-  // State for additional details
   const [agentData, setAgentData] = useState({
     licenseNumber: "",
     brokerage: "",
@@ -98,7 +91,6 @@ function AddRoleFormContent() {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    // Build profile object to merge with user
     const updatedProfile: Partial<PopulatedUser> = {
       roles: [...user!.roles, toRole],
       activeRole: toRole,
@@ -129,7 +121,7 @@ function AddRoleFormContent() {
 
     try {
       await updateUserRole(user!._id, updatedProfile);
-      router.push("/onboarding/become-an-agent-or-landlord");
+      router.push("/welcome");
     } catch (error) {
       console.error("Role upgrade failed", error);
     }
@@ -152,7 +144,7 @@ function AddRoleFormContent() {
     >
       {toRole === Role.Agent && (
         <div className="space-y-4">
-          <h3 className="font-semibold text-sm text-gray-700">
+          <h3 className="font-semibold text-sm text-muted">
             Agent Details <span className="text-red-500">*</span>
           </h3>
           <Field
@@ -180,7 +172,7 @@ function AddRoleFormContent() {
 
       {toRole === Role.Landlord && (
         <div className="space-y-4">
-          <h3 className="font-semibold text-sm text-gray-700">
+          <h3 className="font-semibold text-sm text-muted">
             Payout Details (for rent/sale proceeds)
           </h3>
           <Field
@@ -202,7 +194,7 @@ function AddRoleFormContent() {
             value={landlordData.bankName}
             onChange={handleLandlordChange}
             error={errors.bankName}
-            icon={FiGrid}
+            icon={AiFillBank}
             required
           />
           <Field
@@ -222,18 +214,9 @@ function AddRoleFormContent() {
   );
 }
 
-// 3. Exposed the default Page component wrapped with Suspense boundary
 export default function AddRolePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
-          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
-            Loading upgrade options...
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<PageSpinner label="Loading upgrade options..." />}>
       <AddRoleFormContent />
     </Suspense>
   );

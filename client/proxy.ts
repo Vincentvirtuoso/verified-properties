@@ -9,16 +9,17 @@ export function proxy(request: NextRequest) {
 
   const protectedRoutes = [
     "/dashboard",
-    "/complete-registration",
     "/list-property",
     "/profile",
+    "/complete-registration",
+    "/welcome",
+    "/add-role",
   ];
 
   const authRoutes = [
     "/login",
     "/register",
     "/forgot-password",
-    "/add-role",
     "/company/new",
   ];
 
@@ -29,8 +30,6 @@ export function proxy(request: NextRequest) {
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
-
-  console.log(isAuthenticated);
 
   if (isProtectedRoute) {
     if (!isAuthenticated) {
@@ -55,6 +54,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/complete-registration/:path*",
+    "/welcome/:path*",
     "/list-property/:path*",
     "/profile/:path*",
 

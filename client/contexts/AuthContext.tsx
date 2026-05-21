@@ -135,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUser(newUser);
+        setSessionCookie(true);
         localStorage.setItem("dummy_user", JSON.stringify(newUser));
       } catch (error) {
         const message =

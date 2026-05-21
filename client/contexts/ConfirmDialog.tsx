@@ -95,7 +95,6 @@ export function ConfirmationProvider({
   );
 }
 
-/*  Hook                                                               */
 export function useConfirm() {
   const context = useContext(ConfirmContext);
   if (!context)
@@ -103,7 +102,6 @@ export function useConfirm() {
   return context;
 }
 
-/*  Dialog UI                                                          */
 const variantMap: Record<
   ConfirmVariant,
   { bg: string; icon: React.ReactNode }

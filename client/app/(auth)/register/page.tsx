@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Field } from "@/components/ui/Field";
@@ -10,7 +10,9 @@ import { Role, PopulatedUser } from "@/types";
 import { FiAtSign, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import FileUpload from "@/components/ui/FileUpload";
+import { PageSpinner } from "@/components/ui/Spinner";
 
 const accountTypeToRole: Record<string, Role> = {
   seeker: Role.Viewer,
@@ -48,10 +50,12 @@ const accountTypes = [
   },
 ];
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { register, authLoading } = useAuth();
   const router = useRouter();
-  const [accountType, setAccountType] = useState("seeker");
+  const searchParams = useSearchParams();
+  const accountTypeParam = searchParams.get("accountType");
+  const [accountType, setAccountType] = useState(accountTypeParam || "seeker");
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -62,6 +66,8 @@ export default function RegisterPage() {
     repeatPassword: "",
     agreeToTerms: false,
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +114,7 @@ export default function RegisterPage() {
       whatsappNumber: formData.phone.trim(),
       passwordHash: "hashed_" + formData.password,
       name: `${formData.firstName} ${formData.lastName}`.trim(),
-      avatar: undefined,
+      avatar: avatarFile ? URL.createObjectURL(avatarFile) : undefined,
       isEmailVerified: false,
       isPhoneVerified: false,
       roles: [role],
@@ -124,13 +130,13 @@ export default function RegisterPage() {
 
     try {
       await register(newUser);
-      if (role === Role.Viewer) {
-        router.replace("/");
-      } else {
-        router.replace(`/complete-registration?role=${role}`);
-      }
     } catch (error) {
       console.log(error);
+    }
+    if (role === Role.Viewer) {
+      router.replace("/");
+    } else {
+      router.replace(`/complete-registration?role=${role}`);
     }
   };
 
@@ -154,6 +160,15 @@ export default function RegisterPage() {
         value={accountType}
         onChange={setAccountType}
         required
+      />
+
+      <FileUpload
+        variant="avatar"
+        label="User Profile Picture (optional)"
+        maxFiles={1}
+        allowedTypes={["image/jpeg", "image/png", "image/webp"]}
+        className="mb-4"
+        onUploadComplete={(files) => setAvatarFile(files[0] || null)}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -278,5 +293,15 @@ export default function RegisterPage() {
         )}
       </div>
     </AuthForm>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={<PageSpinner label="Setting up your registration form..." />}
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

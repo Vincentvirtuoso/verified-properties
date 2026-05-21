@@ -133,68 +133,6 @@ export function HeroCarousel() {
           </SwiperSlide>
         ))}
       </Swiper>
-
-      <style jsx global>{`
-        .swiper-pagination {
-          bottom: 30px !important;
-          text-align: left !important;
-          padding-left: 5% !important;
-        }
-        @media (min-width: 640px) {
-          .swiper-pagination {
-            bottom: 40px !important;
-          }
-        }
-        .swiper-pagination-bullet {
-          width: 20px !important;
-          height: 4px !important;
-          border-radius: 10px !important;
-          background: rgba(255, 255, 255, 0.2) !important;
-          opacity: 1 !important;
-          margin: 0 4px !important;
-          transition: all 0.5s ease !important;
-        }
-        @media (min-width: 640px) {
-          .swiper-pagination-bullet {
-            width: 24px !important;
-            height: 5px !important;
-          }
-        }
-        .swiper-pagination-bullet-active {
-          width: 40px !important;
-          background: #8b5cf6 !important;
-          box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
-        }
-        @media (min-width: 640px) {
-          .swiper-pagination-bullet-active {
-            width: 50px !important;
-          }
-        }
-
-        @keyframes customFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .swiper-slide-active h2 {
-          animation: customFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
-        }
-        .swiper-slide-active p {
-          animation: customFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s;
-        }
-        .swiper-slide-active .flex {
-          animation: customFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s;
-        }
-        .swiper-slide-active span {
-          animation: customFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s;
-        }
-      `}</style>
     </section>
   );
 }

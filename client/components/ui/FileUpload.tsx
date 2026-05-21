@@ -9,7 +9,9 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiLoader,
+  FiCamera,
 } from "react-icons/fi";
+import { cn } from "@/lib/utils";
 
 export interface FileWithMeta {
   id: string;
@@ -28,6 +30,10 @@ interface FileUploadProps {
   allowedTypes?: string[];
   onUploadComplete?: (files: File[]) => void;
   maxFiles?: number;
+  variant?: "default" | "avatar";
+  label?: string;
+  description?: string;
+  className?: string;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -50,19 +56,30 @@ export default function FileUpload({
   ],
   onUploadComplete,
   maxFiles = 5,
+  variant = "default",
+  label,
+  description,
+  className,
 }: FileUploadProps) {
   const [files, setFiles] = useState<FileWithMeta[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // For avatar variant, enforce single file & image‑only types
+  const effectiveMaxFiles = variant === "avatar" ? 1 : maxFiles;
+  const effectiveAllowedTypes =
+    variant === "avatar"
+      ? allowedTypes.filter((t) => t.startsWith("image/"))
+      : allowedTypes;
+
   const processFiles = (incomingFiles: FileList | null) => {
     if (!incomingFiles) return;
 
     const updatedFiles = [...files];
-    const availableSlots = maxFiles - updatedFiles.length;
+    const availableSlots = effectiveMaxFiles - updatedFiles.length;
 
     if (availableSlots <= 0) {
-      alert(`You can only upload a maximum of ${maxFiles} files.`);
+      alert(`You can only upload a maximum of ${effectiveMaxFiles} file(s).`);
       return;
     }
 
@@ -70,7 +87,7 @@ export default function FileUpload({
 
     filesToProcess.forEach((file) => {
       const id = Math.random().toString(36).substring(7);
-      const isTypeAllowed = allowedTypes.some((type) => {
+      const isTypeAllowed = effectiveAllowedTypes.some((type) => {
         if (type.endsWith("/*")) {
           return file.type.startsWith(type.replace("/*", ""));
         }
@@ -98,7 +115,6 @@ export default function FileUpload({
         newFile.status = "error";
         newFile.errorMessage = `File exceeds ${maxSizeInMB}MB limit.`;
       } else {
-        // Automatically simulate upload if file is valid
         newFile.status = "uploading";
         simulateUpload(id);
       }
@@ -109,7 +125,6 @@ export default function FileUpload({
     setFiles(updatedFiles);
   };
 
-  // Replace this with your actual API endpoint logic (Axios, XHR, etc.)
   const simulateUpload = (id: string) => {
     let progress = 0;
     const interval = setInterval(() => {
@@ -121,7 +136,6 @@ export default function FileUpload({
           prev.map((f) => {
             if (f.id === id) {
               const updated = { ...f, status: "success" as const, progress };
-              // Fire completion callback for valid items
               triggerCompleteCallback();
               return updated;
             }
@@ -141,7 +155,9 @@ export default function FileUpload({
       const successfulFiles = files
         .filter((f) => f.status === "success")
         .map((f) => f.file);
-      onUploadComplete(successfulFiles);
+      if (successfulFiles.length > 0) {
+        onUploadComplete(successfulFiles);
+      }
     }
   };
 
@@ -168,7 +184,7 @@ export default function FileUpload({
     setFiles((prev) => {
       const target = prev.find((f) => f.id === id);
       if (target?.previewUrl) {
-        URL.revokeObjectURL(target.previewUrl); // Free memory
+        URL.revokeObjectURL(target.previewUrl);
       }
       return prev.filter((f) => f.id !== id);
     });
@@ -178,19 +194,97 @@ export default function FileUpload({
     fileInputRef.current?.click();
   };
 
+  // ===== Avatar variant =====
+  if (variant === "avatar") {
+    const currentFile = files[0];
+    return (
+      <div className={cn("flex flex-col items-center gap-3", className)}>
+        {label && (
+          <p className="text-sm font-medium text-foreground">{label}</p>
+        )}
+        <div
+          onClick={triggerFileInput}
+          className={cn(
+            "relative w-28 h-28 rounded-full border-2 border-dashed cursor-pointer overflow-hidden group transition-all",
+            isDragging
+              ? "border-primary bg-primary/10"
+              : "border-border hover:border-primary/50",
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            multiple={false}
+            className="hidden"
+            accept={effectiveAllowedTypes.join(",")}
+          />
+
+          {currentFile?.previewUrl && currentFile.status !== "error" ? (
+            <img
+              src={currentFile.previewUrl}
+              alt="Avatar preview"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-muted">
+              <FiCamera className="w-6 h-6 mb-1" />
+              <span className="text-[10px]">Upload logo</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <FiUploadCloud className="w-5 h-5 text-white" />
+          </div>
+        </div>
+        {description && <p className="text-xs text-muted">{description}</p>}
+
+        {currentFile && currentFile.status === "error" && (
+          <p className="text-xs text-destructive">{currentFile.errorMessage}</p>
+        )}
+        {currentFile && currentFile.status === "uploading" && (
+          <p className="text-xs text-primary">Uploading...</p>
+        )}
+        {currentFile && currentFile.status === "success" && (
+          <div className="flex items-center gap-2">
+            <FiCheckCircle className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs text-emerald-600">Logo uploaded</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeFile(currentFile.id);
+              }}
+              className="text-xs text-muted hover:text-destructive"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ===== Default variant (original multi‑file drop zone) =====
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 bg-card border border-border shadow-sm rounded-xl">
+    <div
+      className={cn(
+        "w-full max-w-2xl mx-auto p-6 bg-card border border-border shadow-sm rounded-xl",
+        className,
+      )}
+    >
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={triggerFileInput}
-        className={`group relative flex flex-col items-center justify-center w-full h-56 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 outline-none
-          ${
-            isDragging
-              ? "border-primary-500 bg-primary-50/40 scale-[0.99]"
-              : "border-input hover:border-primary-400 hover:bg-background"
-          }`}
+        className={cn(
+          "group relative flex flex-col items-center justify-center w-full h-56 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 outline-none",
+          isDragging
+            ? "border-primary-500 bg-primary-50/40 scale-[0.99]"
+            : "border-input hover:border-primary-400 hover:bg-background",
+        )}
       >
         <input
           type="file"
@@ -198,12 +292,16 @@ export default function FileUpload({
           onChange={handleFileChange}
           multiple
           className="hidden"
-          accept={allowedTypes.join(",")}
+          accept={effectiveAllowedTypes.join(",")}
         />
 
         <div className="flex flex-col items-center justify-center p-5 text-center">
           <div
-            className={`p-3 bg- rounded-lg mb-3 border border-border group-hover:scale-110 transition-transform duration-200 ${isDragging && "bg-primary-100 border-primary-200 text-primary-600"}`}
+            className={cn(
+              "p-3 rounded-lg mb-3 border border-border group-hover:scale-110 transition-transform duration-200",
+              isDragging &&
+                "bg-primary-100 border-primary-200 text-primary-600",
+            )}
           >
             <FiUploadCloud className="w-6 h-6 text-slate-500 group-hover:text-primary-500 transition-colors" />
           </div>
@@ -212,7 +310,8 @@ export default function FileUpload({
             and drop
           </p>
           <p className="text-xs text-text-muted">
-            Images and Documents up to {maxSizeInMB}MB (Max {maxFiles} files)
+            Images and Documents up to {maxSizeInMB}MB (Max {effectiveMaxFiles}{" "}
+            files)
           </p>
         </div>
       </div>
@@ -220,14 +319,13 @@ export default function FileUpload({
         <div className="mt-6 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Uploaded Files ({files.length}/{maxFiles})
+              Uploaded Files ({files.length}/{effectiveMaxFiles})
             </h4>
           </div>
 
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
             {files.map((fileMeta) => {
               const isImage = fileMeta.type.startsWith("image/");
-
               return (
                 <div
                   key={fileMeta.id}
@@ -236,7 +334,6 @@ export default function FileUpload({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0 w-10 h-10 bg-white border border-slate-200 rounded-md overflow-hidden flex items-center justify-center">
                       {isImage && fileMeta.previewUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={fileMeta.previewUrl}
                           alt={fileMeta.name}
@@ -279,7 +376,6 @@ export default function FileUpload({
                     {fileMeta.status === "success" && (
                       <FiCheckCircle className="w-4 h-4 text-emerald-500" />
                     )}
-
                     <button
                       type="button"
                       onClick={(e) => {

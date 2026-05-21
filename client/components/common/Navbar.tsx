@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LuMenu } from "react-icons/lu";
+import { LuHousePlus, LuMenu } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -11,54 +11,70 @@ import { Brandmark } from "./BrandMark";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
+import { IconType } from "react-icons";
+import {
+  LuBuilding,
+  LuGraduationCap,
+  LuBriefcase,
+  LuLayoutDashboard,
+  LuUsers,
+} from "react-icons/lu";
+import { BsBuildings } from "react-icons/bs";
 
-function getNavLinks(
+export interface NavLink {
+  href: string;
+  label: string;
+  icon: IconType;
+}
+
+export function getNavLinks(
   role: Role | undefined,
   isAuthenticated: boolean,
-): { href: string; label: string }[] {
-  if (!isAuthenticated) {
-    return [
-      { href: "/properties?type=sale", label: "Buy" },
-      { href: "/properties?type=rent", label: "Rent" },
-      { href: "/academy", label: "Learn Real Estate" },
-    ];
-  }
-
-  const common = [
-    { href: "/properties?type=sale", label: "Buy" },
-    { href: "/properties?type=rent", label: "Rent" },
+): NavLink[] {
+  const common: NavLink[] = [
+    { href: "/properties?type=sale", label: "Buy", icon: LuHousePlus },
+    { href: "/properties?type=rent", label: "Rent", icon: BsBuildings },
   ];
+
+  const academyLink: NavLink = {
+    href: "/academy",
+    label: "Academy",
+    icon: LuGraduationCap,
+  };
+
+  if (!isAuthenticated) {
+    return [...common, academyLink];
+  }
 
   switch (role) {
     case Role.Viewer:
-      return [...common, { href: "/academy", label: "Learn Real Estate" }];
+      return [...common, academyLink];
 
     case Role.Agent:
       return [
         ...common,
-        { href: "/brokers", label: "JV Insist Pro" },
-        { href: "/academy", label: "Learn Real Estate" },
-        { href: "/list-property", label: "Sell & Let" },
+        { href: "/brokers", label: "JV Insist Pro", icon: LuBriefcase },
+        academyLink,
       ];
 
     case Role.Landlord:
     case Role.Developer:
       return [
         ...common,
-        { href: "/my-listings", label: "Manage Properties" },
-        { href: "/academy", label: "Learn Real Estate" },
+        { href: "/my-listings", label: "Manage", icon: LuLayoutDashboard },
+        academyLink,
       ];
 
     case Role.Company:
       return [
         ...common,
-        { href: "/company/listings", label: "Properties" },
-        { href: "/company/team", label: "Team" },
-        { href: "/academy", label: "Learn Real Estate" },
+        { href: "/company/listings", label: "Properties", icon: LuBuilding },
+        { href: "/company/team", label: "Team", icon: LuUsers },
+        academyLink,
       ];
 
     default:
-      return [...common, { href: "/academy", label: "Learn Real Estate" }];
+      return [...common, academyLink];
   }
 }
 

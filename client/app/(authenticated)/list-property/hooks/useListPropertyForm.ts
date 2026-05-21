@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -82,6 +83,16 @@ const getDefaultData = (
 export function useListPropertyForm() {
   const { user } = useAuth();
 
+  const [formData, setFormData] =
+    useState<ListPropertyFormData>(getDefaultData());
+  const [currentStep, setCurrentStep] = useState<ListPropertyStep>("basic");
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof ListPropertyFormData, string>>
+  >({});
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const stepIndex = STEPS.indexOf(currentStep);
+
   const userOwnerType = ((): ListPropertyFormData["ownerType"] => {
     if (!user?.activeRole) return "";
     if (user.activeRole === Role.Agent) return "agent";
@@ -90,41 +101,34 @@ export function useListPropertyForm() {
     return "";
   })();
 
-  const [formData, setFormData] = useState<ListPropertyFormData>(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as ListPropertyFormData;
-          if (userOwnerType && parsed.ownerType !== userOwnerType) {
-            return { ...parsed, ownerType: userOwnerType };
-          }
-          return parsed;
+          setFormData(() => ({ ...parsed }));
         } catch {}
       }
     }
-    return getDefaultData(userOwnerType);
-  });
-
-  const [currentStep, setCurrentStep] = useState<ListPropertyStep>("basic");
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof ListPropertyFormData, string>>
-  >({});
-
-  const stepIndex = STEPS.indexOf(currentStep);
+    setIsInitialized(true);
+  }, []);
 
   useEffect(() => {
-    if (userOwnerType && formData.ownerType !== userOwnerType) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (
+      isInitialized &&
+      userOwnerType &&
+      formData.ownerType !== userOwnerType
+    ) {
       setFormData((prev) => ({ ...prev, ownerType: userOwnerType }));
     }
-  }, [userOwnerType]);
+  }, [isInitialized, userOwnerType, formData.ownerType]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isInitialized && typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
     }
-  }, [formData]);
+  }, [formData, isInitialized]);
 
   const updateField = useCallback(
     <K extends keyof ListPropertyFormData>(
@@ -141,12 +145,10 @@ export function useListPropertyForm() {
     (step: ListPropertyStep) => setCurrentStep(step),
     [],
   );
-
   const goNext = useCallback(() => {
     const next = STEPS[stepIndex + 1];
     if (next) setCurrentStep(next);
   }, [stepIndex]);
-
   const goPrev = useCallback(() => {
     const prev = STEPS[stepIndex - 1];
     if (prev) setCurrentStep(prev);
@@ -155,7 +157,6 @@ export function useListPropertyForm() {
   const validateStep = useCallback(
     (step: ListPropertyStep): boolean => {
       const newErrors: typeof errors = {};
-
       if (step === "basic") {
         if (!formData.title.trim()) newErrors.title = "Title is required";
         if (!formData.listingPurpose)
@@ -164,7 +165,6 @@ export function useListPropertyForm() {
         if (!formData.type) newErrors.type = "Select a property type";
         if (!formData.ownerType) newErrors.ownerType = "Select your role";
       }
-
       if (step === "details") {
         if (!formData.price || isNaN(Number(formData.price)))
           newErrors.price = "Enter a valid price";
@@ -173,13 +173,11 @@ export function useListPropertyForm() {
         if (!formData.bathrooms || isNaN(Number(formData.bathrooms)))
           newErrors.bathrooms = "Enter number of bathrooms";
       }
-
       if (step === "location") {
         if (!formData.address.trim()) newErrors.address = "Address is required";
         if (!formData.city.trim()) newErrors.city = "City is required";
         if (!formData.state.trim()) newErrors.state = "State is required";
       }
-
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     },
@@ -205,6 +203,7 @@ export function useListPropertyForm() {
     stepIndex,
     formData,
     errors,
+    isInitialized,
     updateField,
     goToStep,
     goNext,

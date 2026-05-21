@@ -14,7 +14,6 @@ import {
   SIDEBAR_COLLAPSED_WIDTH,
   SIDEBAR_EXPANDED_WIDTH,
 } from "@/utils/constants";
-import { ConfirmationProvider } from "@/contexts/ConfirmDialog";
 
 const getAds = () =>
   new Promise<Ad[]>((resolve) => setTimeout(() => resolve(dummyAds), 800));
@@ -90,11 +89,9 @@ const LayoutWithBanner = ({ children }: { children: React.ReactNode }) => {
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <BannerHeightProvider>
-      <ConfirmationProvider>
-        <SidebarProvider>
-          <LayoutWithBanner>{children}</LayoutWithBanner>
-        </SidebarProvider>
-      </ConfirmationProvider>
+      <SidebarProvider>
+        <LayoutWithBanner>{children}</LayoutWithBanner>
+      </SidebarProvider>
     </BannerHeightProvider>
   );
 };

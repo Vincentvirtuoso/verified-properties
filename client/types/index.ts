@@ -22,3 +22,4 @@ export * from "./transaction";
 export * from "./company";
 export * from "./jv-property";
 export * from "./course";
+export * from "./podcast";

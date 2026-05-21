@@ -13,9 +13,11 @@ import {
   FiGrid,
   FiUser,
   FiMail,
-  FiPhone,
 } from "react-icons/fi";
 import { LuBuilding } from "react-icons/lu";
+import FileUpload from "@/components/ui/FileUpload";
+import { PhoneField } from "@/components/ui/PhoneField";
+import Select from "@/components/ui/Select";
 
 const VALID_ROLES = [Role.Agent, Role.Landlord, Role.Company, Role.Developer];
 
@@ -39,10 +41,16 @@ function CompleteRegistrationForm() {
 
   const [companyData, setCompanyData] = useState({
     companyName: "",
-    companyType: "real_estate_company" as CompanyType,
+    companyType:
+      role === Role.Company
+        ? "real_estate_company"
+        : ("developer" as CompanyType),
     contactEmail: user?.email,
     contactPhone: user?.phone || "",
+    whatsappNumber: user?.phone || "",
   });
+
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -146,7 +154,9 @@ function CompleteRegistrationForm() {
         _id: companyId,
         name: companyData.companyName.trim(),
         slug: companyData.companyName.toLowerCase().replace(/\s+/g, "-"),
-        logo: undefined,
+        logo: companyLogoFile
+          ? URL.createObjectURL(companyLogoFile)
+          : undefined,
         type: companyData.companyType,
         verificationStatus: "unverified",
         features: {
@@ -178,11 +188,7 @@ function CompleteRegistrationForm() {
     try {
       await completeRegistration(user._id, updates, company);
 
-      if (role === Role.Agent || role === Role.Landlord) {
-        router.push("/onboarding/become-an-agent-or-landlord");
-      } else {
-        router.push("/onboarding/company");
-      }
+      router.push("/welcome");
     } catch (error) {
       console.error("Failed to complete registration", error);
       setErrors({ submit: "Something went wrong. Please try again." });
@@ -213,11 +219,11 @@ function CompleteRegistrationForm() {
     >
       {role === Role.Agent && (
         <div className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-200 text-sm">
+          <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-xl p-4">
+            <h3 className="font-semibold text-primary-900 dark:text-primary-200 text-sm">
               Professional Information
             </h3>
-            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+            <p className="text-xs text-primary-700 dark:text-primary-300 mt-1">
               This helps build trust with clients.
             </p>
           </div>
@@ -300,6 +306,16 @@ function CompleteRegistrationForm() {
               This will be displayed on your listings and profile.
             </p>
           </div>
+          <FileUpload
+            variant="avatar"
+            label="Company Logo"
+            description="Upload a square logo (min 200x200px). PNG, JPG, WEBP."
+            maxSizeInMB={2}
+            maxFiles={1}
+            allowedTypes={["image/jpeg", "image/png", "image/webp"]}
+            onUploadComplete={(files) => setCompanyLogoFile(files[0] || null)}
+            className="mb-4"
+          />
           <Field
             label="Company Name"
             name="companyName"
@@ -312,18 +328,20 @@ function CompleteRegistrationForm() {
             required
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Company Type</label>
-              <select
-                name="companyType"
-                value={companyData.companyType}
-                onChange={handleCompanyChange}
-                className="border border-gray-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-900"
-              >
-                <option value="real_estate_company">Real Estate Company</option>
-                <option value="developer">Developer</option>
-              </select>
-            </div>
+            <Select
+              label="Company Type"
+              value={companyData.companyType}
+              options={[
+                { value: "real_estate_company", label: "Real Estate Company" },
+                { value: "developer", label: "Developer" },
+              ]}
+              onChange={(value) =>
+                setCompanyData((prev) => ({
+                  ...prev,
+                  companyType: value as CompanyType,
+                }))
+              }
+            />
             <Field
               label="Contact Email"
               name="contactEmail"
@@ -336,14 +354,21 @@ function CompleteRegistrationForm() {
               required
             />
           </div>
-          <Field
+          <PhoneField
             label="Contact Phone"
             name="contactPhone"
-            type="tel"
-            placeholder="+2348012345678"
             value={companyData.contactPhone}
-            onChange={handleCompanyChange}
-            icon={FiPhone}
+            onChange={(value) =>
+              setCompanyData((prev) => ({ ...prev, contactPhone: value }))
+            }
+          />
+          <PhoneField
+            label="Contact Whatsapp Number"
+            name="whatsappNumber"
+            value={companyData.whatsappNumber}
+            onChange={(value) =>
+              setCompanyData((prev) => ({ ...prev, whatsappNumber: value }))
+            }
           />
         </div>
       )}

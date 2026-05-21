@@ -10,6 +10,10 @@ import {
   LuUserCheck,
   LuCirclePlus,
   LuChevronUp,
+  LuPlus,
+  LuUserRoundPlus,
+  LuRepeat,
+  LuUserRound,
 } from "react-icons/lu";
 import { Button } from "../ui/Button";
 import { PopulatedUser, Role } from "@/types";
@@ -20,12 +24,13 @@ import {
   DropdownSeparator,
   DropdownTrigger,
 } from "../ui/Dropdown";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { imageLoader } from "@/utils/helpers";
 import { AiOutlineSwitcher } from "react-icons/ai";
 import { Badge } from "../ui";
 import RoleIcon from "../ui/RoleIcon";
-import { BsBuildingAdd, BsBuildings, BsClipboardData } from "react-icons/bs";
+import { BsBuildingAdd, BsBuildings } from "react-icons/bs";
+import { getNavLinks } from "./Navbar";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -36,15 +41,18 @@ interface UserMenuProps {
 
 const ProfileMenu = ({
   user,
+  isAuthenticated,
   onLogout,
   onSwitch,
 }: {
   user: PopulatedUser;
   onLogout?: () => void;
+  isAuthenticated: boolean;
   onSwitch: (role: Role, activeRole: Role) => void;
 }) => {
   const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
   const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
+  const [isSubDropdownOpen1, setIsSubDropdownOpen1] = useState(false);
   const [userImageSrc, setUserImageSrc] = useState(
     user?.avatar || "/placeholder_avatar.png",
   );
@@ -59,6 +67,9 @@ const ProfileMenu = ({
     user.activeRole === Role.Agent || user.activeRole === Role.Landlord;
 
   const switchableRoles = user.roles.filter((role) => role !== user.activeRole);
+  const addableRoles = [Role.Agent, Role.Landlord, Role.Viewer].filter(
+    (role) => !user.roles.includes(role),
+  );
 
   const navLinks = [
     {
@@ -67,6 +78,14 @@ const ProfileMenu = ({
       icon: LuLayoutDashboard,
     },
   ];
+
+  const activeNavLinks = useMemo(
+    () => getNavLinks(user?.activeRole, isAuthenticated),
+    [user?.activeRole, isAuthenticated],
+  );
+
+  navLinks.push(...activeNavLinks);
+  const dashboardNavLink = navLinks[0];
 
   const contextActions = [];
   if (isPureViewer) {
@@ -80,19 +99,19 @@ const ProfileMenu = ({
       href: "/onboarding/list-property",
       icon: LuCirclePlus,
     });
+  } else {
+  }
+  if (!user.companyId) {
     contextActions.push({
       label: "Register Company",
       href: "/onboarding/company",
-      icon: BsClipboardData,
+      icon: LuPlus,
     });
-  } else {
-    if (!user.companyId) {
-      contextActions.push({
-        label: "Register Company",
-        href: "/onboarding/company",
-        icon: BsClipboardData,
-      });
-    }
+    contextActions.push({
+      label: "Register as Developer",
+      href: "/onboarding/company",
+      icon: LuUserRoundPlus,
+    });
   }
   if (hasAgentOrLandlordActiveRole) {
     contextActions.push(
@@ -107,6 +126,9 @@ const ProfileMenu = ({
         icon: BsBuildings,
       },
     );
+    if (!user.roles.includes(Role.Viewer)) {
+      // (Add viewr role) button
+    }
   }
 
   return (
@@ -142,7 +164,7 @@ const ProfileMenu = ({
           </button>
         </DropdownTrigger>
 
-        <DropdownContent className="w-60 mt-2 p-1.5">
+        <DropdownContent className="w-60 mt-2 p-1">
           <div className="px-2 py-1.5 mb-1 text-xs">
             <p className="font-semibold text-foreground truncate">
               {user.name}
@@ -151,36 +173,47 @@ const ProfileMenu = ({
             <p className="text-muted truncate text-[11px]">{user.email}</p>
           </div>
           <DropdownSeparator />
-
-          {navLinks.map(({ href, icon: Icon, label }) => (
-            <DropdownItem key={href} className="p-0">
-              <Link
-                href={href}
-                className="flex items-center gap-2.5 w-full px-2 py-2 text-sm rounded-md"
-              >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
-              </Link>
-            </DropdownItem>
-          ))}
-
-          {contextActions.length > 0 && (
-            <>
-              <DropdownSeparator />
-              {contextActions.map(({ href, icon: Icon, label }) => (
-                <DropdownItem key={href} className="p-0">
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted-foreground rounded-md transition-colors"
-                  >
-                    <Icon className="w-4 h-4 text-primary/80" />
-                    <span className="font-medium text-xs">{label}</span>
-                  </Link>
+          <div className="overflow-hidden max-h-[35vh] overflow-y-auto">
+            <div className="hidden lg:block">
+              <Link href={dashboardNavLink.href}>
+                <DropdownItem
+                  className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+                  icon={
+                    <dashboardNavLink.icon className="w-4 h-4 text-primary/80" />
+                  }
+                >
+                  <span className=" text-xs">{dashboardNavLink.label}</span>
                 </DropdownItem>
+              </Link>
+            </div>
+            <div className="lg:hidden">
+              {navLinks.map(({ href, icon: Icon, label }) => (
+                <Link href={href} key={href}>
+                  <DropdownItem
+                    className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+                    icon={<Icon className="w-4 h-4 text-primary/80" />}
+                  >
+                    <span className=" text-xs">{label}</span>
+                  </DropdownItem>
+                </Link>
               ))}
-            </>
-          )}
-
+            </div>
+            {contextActions.length > 0 && (
+              <>
+                <DropdownSeparator />
+                {contextActions.map(({ href, icon: Icon, label }) => (
+                  <Link key={href + label} href={href}>
+                    <DropdownItem
+                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted-foreground rounded-md transition-colors"
+                      icon={<Icon className="w-4 h-4 text-primary/80" />}
+                    >
+                      <span className="font-medium text-xs">{label}</span>
+                    </DropdownItem>
+                  </Link>
+                ))}
+              </>
+            )}
+          </div>
           {hasAgentOrLandlordRole && switchableRoles.length > 0 && (
             <>
               <DropdownSeparator />
@@ -193,7 +226,7 @@ const ProfileMenu = ({
                 <DropdownTrigger asChild>
                   <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
                     <span>
-                      <AiOutlineSwitcher className="inline-flex mr-2 w-4 h-4 text-primary" />
+                      <LuRepeat className="inline-flex mr-2 w-4 h-4 text-primary" />
                       <span className="group-hover:text-primary">
                         Switch Role to
                       </span>
@@ -209,12 +242,53 @@ const ProfileMenu = ({
                   {switchableRoles.map((role) => (
                     <DropdownItem
                       className="text-xs capitalize py-1"
-                      key={role}
                       icon={<RoleIcon role={role} />}
+                      key={role}
                       onClick={() => onSwitch(role, user.activeRole)}
                     >
                       {role}
                     </DropdownItem>
+                  ))}
+                </DropdownContent>
+              </Dropdown>
+              <DropdownSeparator />
+              <Dropdown
+                className="w-full"
+                placement="bottom-end"
+                offset={-3}
+                onOpenChange={(open) => setIsSubDropdownOpen1(open)}
+              >
+                <DropdownTrigger asChild>
+                  <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
+                    <div className="flex gap-4 items-center">
+                      <div className="relative">
+                        <LuUserRound className="w-4 h-4 text-primary" />
+                        <span className="absolute top-0 translate-y-1/5 -right-2">
+                          <LuPlus className="text-primary text-[10px]" />
+                        </span>
+                      </div>
+                      <span className="group-hover:text-primary">Add Role</span>
+                    </div>
+                    {isSubDropdownOpen1 ? (
+                      <LuChevronUp size={20} />
+                    ) : (
+                      <LuChevronDown size={20} />
+                    )}
+                  </button>
+                </DropdownTrigger>
+                <DropdownContent className="w-35 mr-1 bg-background">
+                  {addableRoles.map((role) => (
+                    <Link
+                      key={role}
+                      href={`/add-role?from=${user.activeRole}&to=${role}`}
+                    >
+                      <DropdownItem
+                        className="text-xs capitalize py-1"
+                        icon={<RoleIcon role={role} />}
+                      >
+                        {role}
+                      </DropdownItem>
+                    </Link>
                   ))}
                 </DropdownContent>
               </Dropdown>
@@ -248,7 +322,12 @@ export function UserMenu({
   if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-3">
-        <ProfileMenu user={user} onLogout={onLogout} onSwitch={onSwitch} />
+        <ProfileMenu
+          user={user}
+          onLogout={onLogout}
+          onSwitch={onSwitch}
+          isAuthenticated={isAuthenticated}
+        />
       </div>
     );
   }

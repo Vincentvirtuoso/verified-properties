@@ -120,7 +120,7 @@ export default function ListPropertyPage() {
   return (
     <div className="min-h-screen bg-background">
       <div
-        className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40"
+        className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20"
         style={{ top: bannerHeight + 64 }}
       >
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
