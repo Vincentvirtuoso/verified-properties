@@ -9,9 +9,9 @@ interface Partner {
 }
 
 const PARTNERS: Partner[] = [
-  { name: "Zillow", logo: "/logos/zillow.svg" },
-  { name: "Realtor", logo: "/logos/amazon.svg" },
-  { name: "Airbnb", logo: "/logos/airbnb.svg" },
+  { name: "CityBird", logo: "/logos/city-bird.jpg" },
+  { name: "Dantata", logo: "/logos/dantata-real-estate.jpg" },
+  { name: "Airbnb", logo: "/logos/mshel-homes.jpg" },
 ];
 
 const StatsAndPartners = ({

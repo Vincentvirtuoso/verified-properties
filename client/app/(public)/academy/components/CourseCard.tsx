@@ -33,9 +33,17 @@ export default function CourseCard({ course, variant = "default" }: Props) {
         className="group relative bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow h-full"
       >
         <div className="h-40 bg-muted/10 flex items-center justify-center">
-          <span className="text-4xl text-muted opacity-40">
-            {typeIcons[course.type] ?? <LuBookOpen />}
-          </span>
+          {course.thumbnail ? (
+            <img
+              src={course.thumbnail}
+              alt={course.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-4xl text-muted opacity-40">
+              {typeIcons[course.type] ?? <LuBookOpen />}
+            </span>
+          )}
         </div>
         <div className="p-5">
           <div className="flex items-center gap-2 mb-2">

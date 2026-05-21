@@ -28,6 +28,12 @@ export const contentBlockSchema = z.discriminatedUnion("type", [
   audioBlockSchema,
 ]);
 
+export const moduleBlockSchema = z.discriminatedUnion("type", [
+  videoBlockSchema.extend({ description: z.string() }),
+  docBlockSchema.extend({ description: z.string() }),
+  audioBlockSchema.extend({ description: z.string() }),
+]);
+
 export const courseSchema = z
   .discriminatedUnion("type", [
     videoBlockSchema.extend({
@@ -45,13 +51,14 @@ export const courseSchema = z
       title: z.string().min(1, "Course title is required"),
       description: z.string().min(1, "Description is required"),
       modules: z
-        .array(contentBlockSchema)
+        .array(moduleBlockSchema)
         .min(1, "At least one module is required"),
     }),
   ])
   .and(
     z.object({
       status: z.enum(["draft", "published", "archived"]).default("draft"),
+      thumbnail: z.string().url().optional(),
       difficulty: z
         .enum(["beginner", "intermediate", "advanced"])
         .default("beginner"),
@@ -68,6 +75,7 @@ export type CourseVideoType = z.infer<typeof videoBlockSchema>;
 export type CourseDocType = z.infer<typeof docBlockSchema>;
 export type CourseAudioType = z.infer<typeof audioBlockSchema>;
 export type CourseContentBlock = z.infer<typeof contentBlockSchema>;
+export type CourseModuleBlock = z.infer<typeof moduleBlockSchema>;
 
 export type Course = CourseFormData & {
   id: string;
