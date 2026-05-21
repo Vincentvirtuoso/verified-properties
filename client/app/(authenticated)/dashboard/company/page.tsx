@@ -18,9 +18,9 @@ import {
   LuHeadphones,
   LuUserCheck,
 } from "react-icons/lu";
-import { InfoRow } from "@/components/InfoRow";
-import { Badge } from "@/components/Badge";
-import { Button } from "@/components/Button";
+import { InfoRow } from "@/components/ui/InfoRow";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Role, CompanyMember } from "@/types";
 import Image from "next/image";
 
