@@ -150,7 +150,7 @@ const ProfileMenu = ({
         />
       </Link>
 
-      <Dropdown onOpenChange={(open) => setIsMainDropdownOpen(open)}>
+      <Dropdown onOpenChange={(open) => setIsMainDropdownOpen(open)} placement="bottom-end">
         <DropdownTrigger asChild>
           <button
             aria-label="Open user menu"
