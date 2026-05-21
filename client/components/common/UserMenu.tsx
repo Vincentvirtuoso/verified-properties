@@ -321,14 +321,12 @@ export function UserMenu({
 }: UserMenuProps) {
   if (isAuthenticated && user) {
     return (
-      <div className="flex items-center gap-3">
         <ProfileMenu
           user={user}
           onLogout={onLogout}
           onSwitch={onSwitch}
           isAuthenticated={isAuthenticated}
         />
-      </div>
     );
   }
 
