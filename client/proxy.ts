@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
 
   const protectedRoutes = [
     "/dashboard",
+    "/dashboard/company",
     "/list-property",
     "/profile",
     "/complete-registration",
@@ -53,6 +54,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "dashboard/company/:path*",
     "/complete-registration/:path*",
     "/welcome/:path*",
     "/list-property/:path*",
