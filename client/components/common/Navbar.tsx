@@ -132,7 +132,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center bg-muted/10 rounded-full px-0.5 py-0.5 border border-border">
-            {activeNavLinks.map(({ href, label }) => {
+            {activeNavLinks.slice(0, 3).map(({ href, label }) => {
               const isActive = pathname === href;
               return (
                 <Link
