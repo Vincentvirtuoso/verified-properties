@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ButtonHTMLAttributes, forwardRef, ReactNode, RefObject } from "react";
+import { LuArrowRight } from "react-icons/lu";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
@@ -12,6 +13,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   asChild?: boolean;
   href?: string;
+  showArrow?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -29,12 +31,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       asChild = false,
       href,
+      showArrow,
       ...props
     },
     ref,
   ) => {
     const baseStyles = cn(
-      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200",
+      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 group",
       "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
       "active:scale-95",
@@ -50,13 +53,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "hover:bg-muted/20 text-foreground": variant === "ghost",
         "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm":
           variant === "danger",
-
         "px-3 py-1.5 text-xs gap-1.5": size === "xs",
         "px-4 py-2 text-sm gap-2": size === "sm",
         "px-6 py-2.5 text-base gap-2": size === "md",
         "px-8 py-3 text-lg gap-2.5": size === "lg",
         "px-10 py-4 text-xl gap-3": size === "xl",
       },
+      href && "hover:text-primary",
       className,
     );
 
@@ -118,6 +121,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             {!isLoading && rightIcon && (
               <span className="inline-flex shrink-0" aria-hidden="true">
                 {rightIcon}
+              </span>
+            )}
+            {!isLoading && showArrow && (
+              <span
+                className="inline-flex shrink-0 group-hover:translate-x-0.5 duration-300"
+                aria-hidden="true"
+              >
+                <LuArrowRight />
               </span>
             )}
           </button>

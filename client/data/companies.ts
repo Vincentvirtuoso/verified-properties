@@ -80,18 +80,19 @@ export const mockCompanies: Company[] = [
 
     team: [
       {
-        userId: "user_004",
+        userId: "user_008",
         role: "admin",
         permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
       {
-        userId: "user_008",
+        userId: "user_004",
         role: "member",
         permissions: ["manage_listings"],
       },
     ],
     contactEmail: "operations@apexprime.ng",
     contactPhone: "+2348123456701",
+    whatsappNumber: "+2349190725522",
     activeListings: 42,
     totalRemitted: 18500000,
     remittanceDetails: {
@@ -230,3 +231,7 @@ export const mockCompanies: Company[] = [
     updatedAt: new Date("2026-03-15"),
   },
 ];
+
+export async function getPublicCompanies(): Promise<Company[]> {
+  return [...mockCompanies] as Company[];
+}

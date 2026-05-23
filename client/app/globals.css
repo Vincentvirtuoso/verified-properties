@@ -31,7 +31,7 @@
   --sidebar-active-bg: var(--primary-50);
   --sidebar-active-foreground: var(--primary-700);
   --sidebar-hover-bg: var(--color-neutral-100);
-  --sidebar-width-expanded: 240px;
+  --sidebar-width-expanded: 200px;
   --sidebar-width-collapsed: 72px;
 
   --navbar-bg: #ffffff;

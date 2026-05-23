@@ -124,8 +124,9 @@ const ProfileMenu = ({
           src={userImageSrc}
           alt={user.name}
           className="object-cover"
-          fill
-          sizes="36px"
+          width={100}
+          height={100}
+          sizes="50px"
           loader={imageLoader}
           onError={() => setUserImageSrc("/placeholder_avatar.png")}
           priority

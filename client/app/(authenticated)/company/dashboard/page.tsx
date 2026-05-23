@@ -26,6 +26,8 @@ import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
+import { formatPhoneNumber } from "@/lib/formatters";
+import { FaWhatsapp } from "react-icons/fa";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -194,15 +196,15 @@ export default function CompanyDashboardPage() {
                 <InfoRow
                   icon={LuPhone}
                   label="Contact Phone"
-                  value={company.contactPhone}
+                  value={formatPhoneNumber(company.contactPhone)}
                   mono
                 />
               )}
               {company.whatsappNumber && (
                 <InfoRow
-                  icon={LuMessageCircle}
+                  icon={FaWhatsapp}
                   label="WhatsApp"
-                  value={company.whatsappNumber}
+                  value={formatPhoneNumber(company.whatsappNumber)}
                   mono
                 />
               )}
@@ -264,10 +266,21 @@ export default function CompanyDashboardPage() {
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Team Members</h2>
-              <Badge variant="secondary">
-                {company.team.length} member
-                {company.team.length > 1 ? "s" : ""}
-              </Badge>
+              <div>
+                <Badge variant="secondary">
+                  {company.team.length} member
+                  {company.team.length > 1 ? "s" : ""}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  href="/company/team"
+                  className="hover:bg-transparent py-0"
+                  leftIcon={<LuSettings />}
+                >
+                  Manage
+                </Button>
+              </div>
             </div>
             <div className="divide-y divide-border">
               {company.team.length === 0 ? (

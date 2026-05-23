@@ -16,7 +16,6 @@ import {
   LuLayoutDashboard,
   LuHistory,
   LuHeart,
-  LuBell,
   LuCircleHelp,
   LuCirclePlus,
   LuUsers,
@@ -52,19 +51,13 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       category: "Account",
     },
     {
-      href: "/notifications",
-      label: "Notifications",
-      icon: <LuBell />,
-      category: "Account",
-    },
-    {
       href: "/settings",
       label: "Settings",
       icon: <LuSettings />,
       category: "Account",
     },
     {
-      href: "/help",
+      href: "/support",
       label: "Support",
       icon: <LuCircleHelp />,
       category: "Account",
@@ -235,7 +228,7 @@ const SidebarContent = ({
   return (
     <div className="flex flex-col h-full pr-px">
       <nav
-        className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-3 space-y-6 custom-scrollbar"
         style={{ maxHeight: `calc(100vh - ${bannerHeight + 170}px)` }}
       >
         {Object.entries(groupedLinks).map(([category, items]) => (
@@ -325,7 +318,7 @@ export const Sidebar = ({
         style={{ paddingTop: bannerHeight }}
       >
         <div
-          className={`flex items-center px-4 py-6 ${collapsed ? "justify-center" : "justify-between"}`}
+          className={`flex items-center p-4 ${collapsed ? "justify-center" : "justify-between"}`}
         >
           {!collapsed && <Brandmark logoOnly logoSize={40} />}
           <button
@@ -366,7 +359,7 @@ export const Sidebar = ({
             className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full w-75 z-70 bg-sidebar-bg shadow-2xl border-border flex flex-col ${isLeft ? "border-r" : "border-l"}`}
             style={{ paddingTop: bannerHeight }}
           >
-            <div className="flex items-center justify-between px-6 py-6">
+            <div className="flex items-center justify-between p-4">
               <Brandmark logoOnly logoSize={40} />
               <button
                 onClick={onClose}

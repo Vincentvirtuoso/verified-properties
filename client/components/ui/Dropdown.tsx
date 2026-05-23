@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, {
@@ -12,6 +14,7 @@ import React, {
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Spinner } from "./Spinner";
+import { createPortal } from "react-dom";
 
 interface DropdownContextType {
   isOpen: boolean;
@@ -121,12 +124,14 @@ interface DropdownTriggerProps {
   children: React.ReactNode;
   className?: string;
   asChild?: boolean;
+  disabled?: boolean;
 }
 
 export function DropdownTrigger({
   children,
   className,
   asChild = false,
+  disabled = false,
 }: DropdownTriggerProps) {
   const { isOpen, setIsOpen, triggerRef } = useDropdownContext();
 
@@ -151,7 +156,6 @@ export function DropdownTrigger({
   };
 
   if (asChild && React.isValidElement(children)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
     return React.cloneElement(childElement, {
       ref: triggerRef,
@@ -160,6 +164,7 @@ export function DropdownTrigger({
       "aria-haspopup": "menu",
       "aria-expanded": isOpen,
       className: cn(childElement.props.className, className),
+      disabled,
     });
   }
 
@@ -172,6 +177,7 @@ export function DropdownTrigger({
       aria-haspopup="menu"
       aria-expanded={isOpen}
       className={className}
+      disabled={disabled}
     >
       {children}
     </button>
@@ -187,14 +193,16 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
   const { isOpen, contentRef, triggerRef, placement, offset, setActiveIndex } =
     useDropdownContext();
 
-  // Track dynamic adjustments if menu hits screen boundaries
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
   const [adjustedPlacement, setAdjustedPlacement] = useState(placement);
+  const [mounted, setMounted] = useState(false);
 
-  useLayoutEffect(() => {
-    if (!isOpen || !triggerRef.current || !contentRef.current) return;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    // Reset layout calculation alignment context
-    setAdjustedPlacement(placement);
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current || !contentRef.current) return;
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const contentRect = contentRef.current.getBoundingClientRect();
@@ -204,7 +212,6 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
     let currentVertical = placement?.startsWith("top") ? "top" : "bottom";
     let currentHorizontal = placement?.endsWith("end") ? "end" : "start";
 
-    // Bottom collision detection -> Flip up
     if (
       currentVertical === "bottom" &&
       triggerRect.bottom + contentRect.height > viewportHeight
@@ -212,9 +219,7 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
       if (triggerRect.top - contentRect.height > 0) {
         currentVertical = "top";
       }
-    }
-    // Top collision detection -> Flip down
-    else if (
+    } else if (
       currentVertical === "top" &&
       triggerRect.top - contentRect.height < 0
     ) {
@@ -223,7 +228,6 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
       }
     }
 
-    // Right side window boundary safety checks
     if (
       currentHorizontal === "start" &&
       triggerRect.left + contentRect.width > viewportWidth
@@ -236,20 +240,45 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
       currentHorizontal = "start";
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setAdjustedPlacement(`${currentVertical}-${currentHorizontal}` as any);
-  }, [isOpen, placement, triggerRef, contentRef]);
+
+    let top = 0;
+    let left = 0;
+
+    if (currentVertical === "bottom") {
+      top = triggerRect.bottom + offset;
+    } else {
+      top = triggerRect.top - contentRect.height - offset;
+    }
+
+    if (currentHorizontal === "start") {
+      left = triggerRect.left;
+    } else {
+      left = triggerRect.right - contentRect.width;
+    }
+
+    setCoords({ top, left });
+  }, [placement, offset, triggerRef, contentRef]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    updatePosition();
+
+    window.addEventListener("resize", updatePosition, true);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition, true);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, updatePosition]);
 
   const handleMouseEnter = () => setActiveIndex(-1);
 
-  const placementStyles = {
-    "bottom-start": { top: `calc(100% + ${offset}px)`, left: 0 },
-    "bottom-end": { top: `calc(100% + ${offset}px)`, right: 0 },
-    "top-start": { bottom: `calc(100% + ${offset}px)`, left: 0 },
-    "top-end": { bottom: `calc(100% + ${offset}px)`, right: 0 },
-  }[adjustedPlacement || "bottom-start"];
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -267,9 +296,10 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
           }}
           transition={{ duration: 0.12, ease: "easeOut" }}
           style={{
-            position: "absolute",
+            position: "fixed",
             zIndex: 50,
-            ...placementStyles,
+            top: coords.top,
+            left: coords.left,
           }}
           onMouseEnter={handleMouseEnter}
           className={cn(
@@ -283,7 +313,8 @@ export function DropdownContent({ children, className }: DropdownContentProps) {
           {children}
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

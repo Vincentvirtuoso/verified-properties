@@ -11,7 +11,10 @@ export default function JvPropertiesPage() {
     <main className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-10">
         <Breadcrumbs
-          items={[{ label: "JV Properties", href: "/jv-properties" }]}
+          items={[
+            { label: "JV Opportunities", href: "/jv-opportunity" },
+            { label: "JV Properties" },
+          ]}
         />
 
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">

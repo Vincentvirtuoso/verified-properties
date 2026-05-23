@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "./Button";
 
 export type StatCardAccent =
   | "primary"
@@ -23,6 +24,11 @@ export type StatCardProps = {
   icon: React.ElementType;
   accent?: StatCardAccent;
   className?: string;
+  action?: {
+    onAction: () => void;
+    label: string;
+    icon?: React.ReactNode;
+  } | null;
 };
 
 export function StatCard({
@@ -32,6 +38,7 @@ export function StatCard({
   icon: Icon,
   accent = "primary",
   className,
+  action = null,
 }: StatCardProps) {
   const accentClasses: Record<StatCardAccent, string> = {
     primary: "bg-primary-50 text-primary ring-primary-500/20",
@@ -70,6 +77,13 @@ export function StatCard({
           <p className="text-xs text-muted-foreground/70 mt-0.5">{sub}</p>
         )}
       </div>
+      {action && (
+        <div className="ml-auto">
+          <Button size="xs" onClick={action.onAction} leftIcon={action.icon}>
+            {action.label}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
