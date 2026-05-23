@@ -14,7 +14,6 @@ import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { LISTING_PURPOSE_LABELS } from "@/utils/constants";
 import { formatPrice, formatRelativeTime } from "@/lib/formatters";
 import { imageLoader } from "@/utils/helpers";
-import { Role } from "@/types";
 import { PopulatedProperty } from "@/types/property";
 import { PopulatedUser } from "@/types";
 import { cn } from "@/lib/utils";
@@ -71,8 +70,7 @@ export function PropertyCard({
   const locationString = location ? `${location.city}, ${location.state}` : "";
 
   const isCompany = ownerType === "company";
-  const isLandlordOrAgent =
-    ownerType === Role.Landlord || ownerType === Role.Agent;
+  // const isAgent = ownerType === Role.Agent;
 
   const ownerName = useMemo(() => {
     if (isCompany) return ownerId.companyId?.name || ownerId.name;
@@ -84,10 +82,7 @@ export function PropertyCard({
   const isVerified = useMemo(() => {
     if (isCompany) return ownerId.companyId?.verificationStatus === "verified";
     const user = ownerId as PopulatedUser;
-    return (
-      user.agentProfile?.verificationStatus === "verified" ||
-      user.landlordProfile?.verificationStatus === "verified"
-    );
+    return user.agentProfile?.verificationStatus === "verified";
   }, [ownerId, isCompany]);
 
   const ownerImg = useMemo(() => {
@@ -102,10 +97,8 @@ export function PropertyCard({
 
   const ownerRoute = useMemo(() => {
     if (isCompany) return `/companies/${ownerId.companyId?._id}`;
-    const user = ownerId as PopulatedUser;
-    const routePrefix =
-      user.activeRole === Role.Landlord ? "landlords" : "agents";
-    return `/${routePrefix}/${ownerId._id}`;
+    const routePrefix = "agents";
+    return `/${routePrefix}/${ownerId._id}/`;
   }, [ownerId, isCompany]);
 
   const handleCardClick = () => {

@@ -9,7 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { properties } from "@/data/properties"; // now typed as Property[]
+import { properties } from "@/data/properties";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LuFilter, LuX, LuSearch } from "react-icons/lu";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -17,7 +17,7 @@ import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
-} from "@/utils/constants"; // unchanged, labels match new types
+} from "@/utils/constants";
 import { PropertyFilterState } from "@/types";
 import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
 import {
@@ -59,15 +59,12 @@ export default function PropertiesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Sync search param with local state
   useEffect(() => {
     if (searchParam && !searchQuery) {
       setSearchQuery(searchParam);
     }
   }, [searchParam, searchQuery]);
 
-  // Search suggestions (now only using title, description, location fields,
-  // category/type/feature labels — no agent data)
   useEffect(() => {
     if (debouncedSearchQuery.length >= 2) {
       const suggestions = new Set<string>();
@@ -79,7 +76,6 @@ export default function PropertiesPage() {
         if (property.description?.toLowerCase().includes(q))
           suggestions.add(property.description);
 
-        // Location object
         if (property.location.city.toLowerCase().includes(q))
           suggestions.add(property.location.city);
         if (property.location.state.toLowerCase().includes(q))
@@ -170,7 +166,6 @@ export default function PropertiesPage() {
       filters.maxArea < DEFAULT_FILTERS.maxArea
     )
       count++;
-    // Agent filter removed
     if (searchQuery) count++;
     setActiveFiltersCount(count);
   }, [
@@ -184,7 +179,6 @@ export default function PropertiesPage() {
   // Filter and sort properties
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
-      // Search query
       if (debouncedSearchQuery) {
         const q = debouncedSearchQuery.toLowerCase();
         const searchable = [
@@ -200,7 +194,6 @@ export default function PropertiesPage() {
         if (!searchable.some((s) => s?.toLowerCase().includes(q))) return false;
       }
 
-      // Tab filter (all / rent / sale / deals)
       if (currentType === "deals") {
         if (
           !property.discount ||
@@ -215,14 +208,12 @@ export default function PropertiesPage() {
         return false;
       }
 
-      // Price range
       if (
         property.price < filters.priceRange[0] ||
         property.price > filters.priceRange[1]
       )
         return false;
 
-      // Bedrooms
       if (filters.bedrooms !== "any") {
         const num = parseInt(filters.bedrooms);
         if (filters.bedrooms === "5+") {
@@ -230,7 +221,6 @@ export default function PropertiesPage() {
         } else if (property.bedrooms !== num) return false;
       }
 
-      // Bathrooms
       if (filters.bathrooms !== "any") {
         const num = parseInt(filters.bathrooms);
         if (filters.bathrooms === "5+") {
@@ -238,29 +228,24 @@ export default function PropertiesPage() {
         } else if (property.bathrooms !== num) return false;
       }
 
-      // Category
       if (filters.category !== "all" && property.category !== filters.category)
         return false;
 
-      // Type
       if (filters.type.length > 0 && !filters.type.includes(property.type))
         return false;
 
-      // Documents
       if (
         filters.documents.length > 0 &&
         !property.documents?.some((doc) => filters.documents.includes(doc.type))
       )
         return false;
 
-      // Features
       if (filters.features.length > 0) {
         const propertyFeats = property.features ?? [];
         if (!filters.features.every((f) => propertyFeats.includes(f)))
           return false;
       }
 
-      // Location – now checking city, state, address
       if (filters.location !== "all") {
         const locStr = filters.location.toLowerCase();
         const locationMatch =
@@ -270,13 +255,11 @@ export default function PropertiesPage() {
         if (!locationMatch) return false;
       }
 
-      // Area
       if (property.area) {
         if (property.area < filters.minArea || property.area > filters.maxArea)
           return false;
       }
 
-      // Agent filter removed entirely
       return true;
     });
 

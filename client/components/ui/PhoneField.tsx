@@ -1,7 +1,8 @@
 "use client";
 
 import { FiChevronDown } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { FieldLabel } from "./FieldLabel";
 import { countries, Country } from "@/utils/constants";
 
@@ -33,6 +34,24 @@ export function PhoneField({
   const [isOpen, setIsOpen] = useState(false);
   const [localNumber, setLocalNumber] = useState("");
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Track alignment coordinates along with current placement state
+  const [coords, setCoords] = useState<{
+    top: number | "auto";
+    bottom: number | "auto";
+    left: number;
+    width: number;
+    placement: "top" | "bottom";
+  }>({
+    top: 0,
+    bottom: "auto",
+    left: 0,
+    width: 0,
+    placement: "bottom",
+  });
+
   useEffect(() => {
     const country = countries.find((c) => value.startsWith(c.code));
     if (country) {
@@ -44,6 +63,61 @@ export function PhoneField({
       setLocalNumber(value.replace(/\D/g, ""));
     }
   }, [value]);
+
+  // Dynamic position updater with smart collision detection
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
+
+    const updateCoordinates = () => {
+      const rect = containerRef.current!.getBoundingClientRect();
+
+      // max-h-80 is 320px, plus we add a 20px buffer for padding and spacing
+      const dropdownHeightBudget = 340;
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      // Flip up if there isn't enough space below AND there is more room above
+      if (spaceBelow < dropdownHeightBudget && rect.top > spaceBelow) {
+        setCoords({
+          top: "auto",
+          bottom: window.innerHeight - rect.top, // Anchors to the top edge of the input
+          left: rect.left,
+          width: rect.width,
+          placement: "top",
+        });
+      } else {
+        setCoords({
+          top: rect.bottom, // Anchors directly beneath the input
+          bottom: "auto",
+          left: rect.left,
+          width: rect.width,
+          placement: "bottom",
+        });
+      }
+    };
+
+    updateCoordinates();
+
+    window.addEventListener("resize", updateCoordinates);
+    window.addEventListener("scroll", updateCoordinates, true);
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("resize", updateCoordinates);
+      window.removeEventListener("scroll", updateCoordinates, true);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const handleCountryChange = (country: Country) => {
     setSelectedCountry(country);
@@ -81,7 +155,7 @@ export function PhoneField({
         {label}
       </FieldLabel>
 
-      <div className="relative">
+      <div className="relative" ref={containerRef}>
         <div className="flex border border-border rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-ring transition-all">
           <button
             type="button"
@@ -109,28 +183,45 @@ export function PhoneField({
           />
         </div>
 
-        {isOpen && (
-          <div className="absolute top-full left-0 mt-2 w-full bg-popover border border-border rounded-2xl shadow-xl z-50 max-h-80 overflow-auto py-2">
-            {countries.map((country) => (
-              <button
-                key={country.iso}
-                type="button"
-                onClick={() => handleCountryChange(country)}
-                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-secondary text-left transition-colors"
-              >
-                <span className="text-2xl">{country.flag}</span>
-                <div className="flex-1">
-                  <div className="font-medium text-popover-foreground">
-                    {country.name}
-                  </div>
-                  <div className="text-sm text-muted-foreground font-mono">
-                    {country.code}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+        {isOpen &&
+          createPortal(
+            <div
+              ref={dropdownRef}
+              style={{
+                position: "fixed",
+                top: coords.top !== "auto" ? `${coords.top}px` : "auto",
+                bottom:
+                  coords.bottom !== "auto" ? `${coords.bottom}px` : "auto",
+                left: `${coords.left}px`,
+                width: `${coords.width}px`,
+              }}
+              className={`bg-popover border border-border rounded-2xl shadow-xl z-9999 pr-1 py-2 transition-all max-w-90 ${
+                coords.placement === "bottom" ? "mt-2" : "mb-2"
+              }`}
+            >
+              <div className=" py-2 max-h-60 overflow-auto">
+                {countries.map((country) => (
+                  <button
+                    key={country.iso}
+                    type="button"
+                    onClick={() => handleCountryChange(country)}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/20 text-left transition-colors"
+                  >
+                    <span className="text-2xl">{country.flag}</span>
+                    <div className="flex-1">
+                      <div className="font-medium text-popover-foreground text-sm">
+                        {country.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {country.code}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>,
+            document.body,
+          )}
       </div>
 
       {error && <p className="text-destructive text-xs mt-1.5 pl-1">{error}</p>}

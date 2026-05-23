@@ -8,6 +8,7 @@ import {
   PropertyDocumentType,
   ListingPurpose,
 } from "@/types/property";
+import { AgentSubRole } from "@/types/user";
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   singleFamilyHouse: "Single-family house",
@@ -207,3 +208,11 @@ export const NIGERIAN_STATES = [
   "Yobe",
   "Zamfara",
 ];
+
+export const agentSubRoleLabels: Record<AgentSubRole, string> = {
+  realtor: "Realtor",
+  lawyer: "Lawyer",
+  surveyor: "Surveyor",
+  landlord: "Landlord",
+  other: "Other",
+};

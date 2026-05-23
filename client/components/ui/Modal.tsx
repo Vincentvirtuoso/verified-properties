@@ -87,7 +87,7 @@ export function Modal({
                 role="dialog"
                 aria-modal="true"
                 className={cn(
-                  "w-full max-w-xl bg-card rounded-t-2xl md:rounded-2xl overflow-y-auto max-h-[85vh] md:max-h-[80vh] shadow-2xl",
+                  "w-full max-w-xl bg-card rounded-t-2xl md:rounded-2xl overflow-y-auto max-h-[85vh] md:max-h-[80vh] shadow-2xl border-border border",
                   className,
                 )}
                 initial={{ opacity: 0, y: 100, scale: 0.95 }}

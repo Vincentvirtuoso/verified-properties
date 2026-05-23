@@ -12,14 +12,8 @@ import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
 import { IconType } from "react-icons";
-import {
-  LuBuilding,
-  LuGraduationCap,
-  LuBriefcase,
-  LuLayoutDashboard,
-  LuUsers,
-} from "react-icons/lu";
-import { BsBuildings } from "react-icons/bs";
+import { LuBuilding, LuBriefcase, LuUsers } from "react-icons/lu";
+import { BsBookmarkStar, BsBuildings } from "react-icons/bs";
 
 export interface NavLink {
   href: string;
@@ -39,7 +33,12 @@ export function getNavLinks(
   const academyLink: NavLink = {
     href: "/academy",
     label: "Academy",
-    icon: LuGraduationCap,
+    icon: BsBookmarkStar,
+  };
+  const jvLink: NavLink = {
+    href: "/jv-opportunity",
+    label: "JV Insist",
+    icon: LuBriefcase,
   };
 
   if (!isAuthenticated) {
@@ -52,22 +51,14 @@ export function getNavLinks(
 
     case Role.Agent:
       return [
-        ...common,
-        { href: "/brokers", label: "JV Insist Pro", icon: LuBriefcase },
-        academyLink,
-      ];
-
-    case Role.Landlord:
-    case Role.Developer:
-      return [
-        ...common,
-        { href: "/my-listings", label: "Manage", icon: LuLayoutDashboard },
+        jvLink,
+        { href: "/my-listings", label: "Properties", icon: BsBuildings },
         academyLink,
       ];
 
     case Role.Company:
       return [
-        ...common,
+        jvLink,
         { href: "/company/listings", label: "Properties", icon: LuBuilding },
         { href: "/company/team", label: "Team", icon: LuUsers },
         academyLink,
@@ -91,8 +82,8 @@ export function Navbar() {
     await logout();
     router.push("/login");
   };
-  const handleSwitchRole = async (role: Role, activeRole: Role) => {
-    await switchRole(role, activeRole);
+  const handleSwitchRole = async (role: Role) => {
+    await switchRole(role);
   };
 
   const activeNavLinks = useMemo(
@@ -135,10 +126,12 @@ export function Navbar() {
                 <LuMenu className="w-6 h-6" />
               </button>
             )}
-            <Brandmark taglineOnly={isDesktop && !isCollapsed} />
+            {(!isDesktop || isCollapsed) && (
+              <Brandmark logoOnly logoSize={35} />
+            )}{" "}
           </div>
 
-          <div className="hidden lg:flex items-center bg-muted/10 rounded-full px-1 py-1 border border-border">
+          <div className="flex items-center bg-muted/10 rounded-full px-0.5 py-0.5 border border-border">
             {activeNavLinks.map(({ href, label }) => {
               const isActive = pathname === href;
               return (
@@ -146,7 +139,7 @@ export function Navbar() {
                   key={href}
                   href={href}
                   className={`
-                    px-4 py-2 text-sm font-medium rounded-full transition-all
+                    px-3 sm:px-4 sm:py-2 py-1.5 sm:text-sm text-[12px] font-medium rounded-full transition-all
                     ${
                       isActive
                         ? "bg-background text-primary shadow-sm border border-border"

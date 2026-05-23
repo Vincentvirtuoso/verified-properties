@@ -75,10 +75,11 @@ const steps = [
 export default function BecomeAgentLandlordOnboarding() {
   const { user } = useAuth();
 
-  const nextRoute =
-    user?.roles.includes(Role.Agent) || user?.roles.includes(Role.Landlord)
-      ? "/dashboard"
-      : `/add-role?from=${user?.activeRole || Role.Viewer}&to=${Role.Agent}`;
+  const nextRoute = user?.roles.includes(Role.Agent)
+    ? "/dashboard"
+    : user?.activeRole === Role.Viewer
+      ? `/add-role?from=${user?.activeRole}&to=${Role.Agent}`
+      : "/profile";
 
   const router = useRouter();
   if (

@@ -33,7 +33,7 @@ export interface ListPropertyFormData {
   category: PropertyCategory | "";
   type: PropertyType | "";
   description: string;
-  ownerType: "agent" | "landlord" | "company" | "";
+  ownerType: "agent" | "company" | ""; // Removed "landlord" — now under agent
 
   price: string;
   currency: string;
@@ -93,12 +93,14 @@ export function useListPropertyForm() {
 
   const stepIndex = STEPS.indexOf(currentStep);
 
+  // Determine ownerType based on activeRole
   const userOwnerType = ((): ListPropertyFormData["ownerType"] => {
     if (!user?.activeRole) return "";
+
     if (user.activeRole === Role.Agent) return "agent";
-    if (user.activeRole === Role.Landlord) return "landlord";
     if (user.activeRole === Role.Company) return "company";
-    return "";
+
+    return ""; // Viewer cannot list directly
   })();
 
   useEffect(() => {
@@ -107,8 +109,10 @@ export function useListPropertyForm() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as ListPropertyFormData;
-          setFormData(() => ({ ...parsed }));
-        } catch {}
+          setFormData(parsed);
+        } catch (e) {
+          console.error(e, "Failed to parse saved form data");
+        }
       }
     }
     setIsInitialized(true);
@@ -136,19 +140,22 @@ export function useListPropertyForm() {
       value: ListPropertyFormData[K],
     ) => {
       setFormData((prev) => ({ ...prev, [key]: value }));
-      if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+      if (errors[key]) {
+        setErrors((prev) => ({ ...prev, [key]: undefined }));
+      }
     },
     [errors],
   );
 
-  const goToStep = useCallback(
-    (step: ListPropertyStep) => setCurrentStep(step),
-    [],
-  );
+  const goToStep = useCallback((step: ListPropertyStep) => {
+    setCurrentStep(step);
+  }, []);
+
   const goNext = useCallback(() => {
     const next = STEPS[stepIndex + 1];
     if (next) setCurrentStep(next);
   }, [stepIndex]);
+
   const goPrev = useCallback(() => {
     const prev = STEPS[stepIndex - 1];
     if (prev) setCurrentStep(prev);
@@ -157,14 +164,16 @@ export function useListPropertyForm() {
   const validateStep = useCallback(
     (step: ListPropertyStep): boolean => {
       const newErrors: typeof errors = {};
+
       if (step === "basic") {
         if (!formData.title.trim()) newErrors.title = "Title is required";
         if (!formData.listingPurpose)
           newErrors.listingPurpose = "Select a purpose";
         if (!formData.category) newErrors.category = "Select a category";
         if (!formData.type) newErrors.type = "Select a property type";
-        if (!formData.ownerType) newErrors.ownerType = "Select your role";
+        if (!formData.ownerType) newErrors.ownerType = "Owner type is required";
       }
+
       if (step === "details") {
         if (!formData.price || isNaN(Number(formData.price)))
           newErrors.price = "Enter a valid price";
@@ -173,11 +182,13 @@ export function useListPropertyForm() {
         if (!formData.bathrooms || isNaN(Number(formData.bathrooms)))
           newErrors.bathrooms = "Enter number of bathrooms";
       }
+
       if (step === "location") {
         if (!formData.address.trim()) newErrors.address = "Address is required";
         if (!formData.city.trim()) newErrors.city = "City is required";
         if (!formData.state.trim()) newErrors.state = "State is required";
       }
+
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     },
@@ -211,5 +222,6 @@ export function useListPropertyForm() {
     handleNext,
     validateStep,
     resetForm,
+    userOwnerType,
   };
 }

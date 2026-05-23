@@ -1,9 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Role } from "@/types";
+import { Role, AgentSubRole, agentSubRoleLabels } from "@/types";
 import { LuShield } from "react-icons/lu";
-import { Button } from "./Button";
 
 export type BadgeVariant =
   | "default"
@@ -27,7 +26,7 @@ const BadgeContent = ({
 }) => {
   const variants: Record<BadgeVariant, string> = {
     default: "bg-primary/10 text-primary ring-primary/20",
-    outline: "bg-transparent text-muted-foreground ring-border",
+    outline: "bg-transparent text-muted ring-border",
     premium:
       "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 ring-amber-400/30 dark:from-amber-900/20 dark:to-yellow-900/20 dark:text-amber-400 dark:ring-amber-400/20",
     success:
@@ -89,10 +88,8 @@ export function RoleBadge({ role }: { role: Role }) {
     [Role.Viewer]: "bg-secondary text-secondary-foreground border-border",
     [Role.Agent]:
       "bg-primary-50 dark:bg-primary-950/40 text-primary border-primary-200/30 dark:border-primary-800/30",
-    [Role.Landlord]:
+    [Role.Company]:
       "bg-primary-100 dark:bg-primary-900/30 text-primary border-primary-300/30 dark:border-primary-700/30",
-    [Role.Developer]: "bg-warning/10 text-warning border-warning/20",
-    [Role.Company]: "bg-info/10 text-info border-info/20",
   };
 
   return (
@@ -109,6 +106,45 @@ export function LockedBadge() {
     <Badge variant="premium" className="shadow-sm">
       <LuShield className="mr-1 h-3 w-3 text-warning" />
       Institutional Account
+    </Badge>
+  );
+}
+
+export function AgentSubRoleBadge({
+  subRole,
+  variant = "info",
+  showLabel = true,
+  className,
+}: {
+  subRole: AgentSubRole;
+  variant?: BadgeVariant;
+  showLabel?: boolean;
+  className?: string;
+}) {
+  const label = agentSubRoleLabels[subRole];
+  const displayText = showLabel ? label : subRole;
+
+  const subRoleColors: Partial<Record<AgentSubRole, string>> = {
+    realtor:
+      "bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800",
+    lawyer:
+      "bg-purple-50 text-purple-700 ring-purple-200 dark:bg-purple-950/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800",
+    surveyor:
+      "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800",
+    landlord:
+      "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800",
+    other:
+      "bg-gray-100 text-gray-600 ring-gray-200 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700",
+  };
+
+  const customClass = subRoleColors[subRole] || "";
+
+  return (
+    <Badge
+      variant={variant}
+      className={cn("font-medium uppercase ring-0", customClass, className)}
+    >
+      {displayText}
     </Badge>
   );
 }

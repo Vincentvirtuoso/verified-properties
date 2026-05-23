@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { ButtonHTMLAttributes, forwardRef, ReactNode, RefObject } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,6 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: ReactNode;
   fullWidth?: boolean;
   asChild?: boolean;
+  href?: string;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -26,6 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       disabled,
       asChild = false,
+      href,
       ...props
     },
     ref,
@@ -40,11 +43,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
         "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow":
           variant === "primary",
-        "bg-secondary text-secondary-foreground hover:bg-inverse":
+        "bg-neutral-600 text-secondary-foreground hover:bg-neutral-600/60":
           variant === "secondary",
         "border border-border hover:bg-muted/20 text-foreground bg-background":
           variant === "outline",
-        "hover:bg-secondary text-foreground": variant === "ghost",
+        "hover:bg-muted/20 text-foreground": variant === "ghost",
         "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm":
           variant === "danger",
 
@@ -66,6 +69,59 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         >
           {children}
         </span>
+      );
+    }
+
+    if (href) {
+      return (
+        <Link href={href}>
+          <button
+            ref={ref}
+            className={baseStyles}
+            disabled={disabled || isLoading}
+            aria-busy={isLoading}
+            aria-disabled={disabled || isLoading}
+            {...props}
+          >
+            {isLoading && (
+              <svg
+                className="animate-spin h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            )}
+
+            {!isLoading && leftIcon && (
+              <span className="inline-flex shrink-0" aria-hidden="true">
+                {leftIcon}
+              </span>
+            )}
+
+            {isLoading && loadingText ? loadingText : children}
+
+            {!isLoading && rightIcon && (
+              <span className="inline-flex shrink-0" aria-hidden="true">
+                {rightIcon}
+              </span>
+            )}
+          </button>
+        </Link>
       );
     }
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { PopulatedProperty, PopulatedUser } from "@/types";
+import { PopulatedUser } from "@/types";
 import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import {
+  AgentSubRoleBadge,
   InfoRow,
   InfoRowProps,
   StatCard,
@@ -24,18 +25,21 @@ import { dummyUsers } from "@/data/users";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
 import { populateProperty } from "@/lib/utils";
+import { properties } from "@/data/properties";
 
 export default function AgentClient({
   agent,
-  listings,
+  id,
 }: {
   agent: PopulatedUser;
-  listings: PopulatedProperty[];
+  id: string;
 }) {
+  const listings = properties.filter(
+    (p) => p.ownerId._id === id && p.ownerType === "agent",
+  );
   const populatedListings = listings.map((p) =>
     populateProperty(p, dummyUsers),
   );
-
   const defaultAgentImage = "/placeholder_avatar.png";
   const [agentImageSrc, setAgentImageSrc] = useState(
     agent?.avatar || defaultAgentImage,
@@ -103,8 +107,8 @@ export default function AgentClient({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-neutral-400 overflow-hidden relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="w-30 h-30 rounded-full bg-neutral-400 overflow-hidden relative">
               <Image
                 src={agentImageSrc}
                 alt={agent.name}
@@ -121,6 +125,9 @@ export default function AgentClient({
                 </h1>
                 {agent.agentProfile?.verificationStatus === "verified" && (
                   <VerifiedBadge size="lg" showText={false} />
+                )}
+                {agent.agentProfile?.subRole && (
+                  <AgentSubRoleBadge subRole={agent.agentProfile?.subRole} />
                 )}
               </div>
               <div className="mt-1 flex flex-wrap gap-4 text-sm text-gray-600">

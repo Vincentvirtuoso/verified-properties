@@ -1,4 +1,10 @@
-export type CompanyType = "real_estate_company" | "developer";
+export type CompanyType = "real_estate_company" | "developer" | "broker";
+
+export type CompanyVerificationStatus =
+  | "unverified"
+  | "pending"
+  | "verified"
+  | "rejected";
 
 export interface CompanyFeatures {
   whatsappNotifications: boolean;
@@ -18,17 +24,30 @@ export type CompanyPermission =
   | "manage_members"
   | "view_analytics";
 
+export interface CompanyOnboardingDocs {
+  cacCertificateUrl: string;
+  companyLogoUrl?: string;
+  proofOfAddressUrl?: string;
+  additionalDocs?: {
+    label: string;
+    fileUrl: string;
+  }[];
+}
+
 export interface Company {
   _id: string;
   name: string;
   slug: string;
   logo?: string;
   type: CompanyType;
-  verificationStatus: "unverified" | "pending" | "verified";
+
+  verificationStatus: CompanyVerificationStatus;
+  onboardingDocs: CompanyOnboardingDocs;
 
   features: CompanyFeatures;
 
   team: CompanyMember[];
+
   contactEmail: string;
   contactPhone?: string;
   whatsappNumber?: string;
@@ -45,3 +64,9 @@ export interface Company {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const companyTypeLabels: Record<CompanyType, string> = {
+  real_estate_company: "Real Estate Company",
+  developer: "Developer",
+  broker: "Broker",
+};

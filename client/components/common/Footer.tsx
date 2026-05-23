@@ -6,12 +6,12 @@ const Footer = () => {
     <footer className="bg-sidebar-bg border-t border-border pt-16 pb-8">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div>
-            <Brandmark direction="col" logoSize={60} />
-            <p className="text-sm text-muted-foreground mt-1">
-              Nigeria&apos;s most trusted real estate platform.
-            </p>
-          </div>
+          <Brandmark
+            logoSize={60}
+            description="Nigeria's most trusted real estate platform."
+            direction="col"
+            alignStart
+          />
           <div>
             <h4 className="font-semibold mb-4 text-foreground">Explore</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
@@ -58,6 +58,14 @@ const Footer = () => {
                   className="hover:text-primary transition-colors"
                 >
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="hover:text-primary transition-colors"
+                >
+                  Customer Support
                 </Link>
               </li>
               <li>

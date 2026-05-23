@@ -3,13 +3,15 @@
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Field } from "@/components/ui/Field";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FiLock, FiMail } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageSpinner } from "@/components/ui/Spinner";
 
-const LoginPage = () => {
+const LoginForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, authLoading, authError, clearError, isAuthenticated, user } =
     useAuth();
 
@@ -20,19 +22,40 @@ const LoginPage = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const callbackUrl = searchParams.get("callbackUrl");
+
+  const getSafeRedirectUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    try {
+      const urlObj = new URL(url, window.location.origin);
+      if (urlObj.origin === window.location.origin) {
+        return urlObj.pathname + urlObj.search + urlObj.hash;
+      }
+    } catch {
+      if (url.startsWith("/")) return url;
+    }
+    return null;
+  };
+
+  const safeCallbackUrl = getSafeRedirectUrl(callbackUrl);
+
   useEffect(() => {
     if (isAuthenticated && user) {
+      if (safeCallbackUrl) {
+        router.push(safeCallbackUrl);
+        return;
+      }
       const roleRoutes: Record<string, string> = {
         buyer: "/",
         agent: "/dashboard",
         landlord: "/dashboard",
         developer: "/dashboard",
-        company: "/dashboard/company",
+        company: "/company/dashboard",
       };
       const redirectTo = roleRoutes[user.activeRole] || "/";
       router.push(redirectTo);
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, safeCallbackUrl]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -129,6 +152,14 @@ const LoginPage = () => {
         </a>
       </div>
     </AuthForm>
+  );
+};
+
+const LoginPage = () => {
+  return (
+    <Suspense fallback={<PageSpinner label="Loading Form context" />}>
+      <LoginForm />
+    </Suspense>
   );
 };
 

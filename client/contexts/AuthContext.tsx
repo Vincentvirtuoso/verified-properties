@@ -1,6 +1,6 @@
 "use client";
 
-import { Company, PopulatedUser, Role } from "@/types";
+import { Company, PopulatedUser, Role, LOCKED_ROLES } from "@/types";
 import { dummyUsers } from "@/data/users";
 import React, {
   createContext,
@@ -13,7 +13,7 @@ import { mockCompanies } from "@/data/companies";
 
 interface AuthContextType {
   user: PopulatedUser | null;
-  companies: Company[] | [];
+  companies: Company[];
   isAuthenticated: boolean;
   isLoading: boolean;
   authLoading: boolean;
@@ -22,7 +22,7 @@ interface AuthContextType {
   register: (newUser: PopulatedUser, company?: Company) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-  switchRole: (role: Role, currentRole: Role) => Promise<void>;
+  switchRole: (newRole: Role) => Promise<void>;
   updateUserRole: (
     userId: string,
     updates: Partial<PopulatedUser>,
@@ -40,9 +40,7 @@ const fakeDelay = () =>
   new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 500));
 
 const isValidPassword = (input: string, storedHash: string) => {
-  console.log(input);
-  console.log(storedHash);
-
+  // In production, use proper password hashing (bcrypt, Argon2, etc.)
   return input === storedHash;
 };
 
@@ -86,10 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
       try {
         await fakeDelay();
-
-        if (Math.random() < 0.05) {
-          throw new Error("Network error. Please try again.");
-        }
 
         const foundUser = users.find(
           (u) => u.email.toLowerCase() === email.toLowerCase(),
@@ -152,11 +146,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserRole = async (
     userId: string,
     updates: Partial<PopulatedUser>,
-  ) => {
+  ): Promise<PopulatedUser> => {
     setAuthLoading(true);
     setAuthError(null);
     try {
       await fakeDelay();
+
       if (user && user._id === userId) {
         const updatedUser: PopulatedUser = {
           ...user,
@@ -164,9 +159,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           agentProfile: updates.agentProfile
             ? { ...user.agentProfile, ...updates.agentProfile }
             : user.agentProfile,
-          landlordProfile: updates.landlordProfile
-            ? { ...user.landlordProfile, ...updates.landlordProfile }
-            : user.landlordProfile,
           roles: updates.roles
             ? [...new Set([...user.roles, ...updates.roles])]
             : user.roles,
@@ -174,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
 
         setUser(updatedUser);
-        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        localStorage.setItem("dummy_user", JSON.stringify(updatedUser));
         return updatedUser;
       }
 
@@ -192,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ) => {
       setAuthLoading(true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await fakeDelay();
 
         if (user && user._id === userId) {
           const updatedUser: PopulatedUser = {
@@ -201,9 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             agentProfile: updates.agentProfile
               ? { ...user.agentProfile, ...updates.agentProfile }
               : user.agentProfile,
-            landlordProfile: updates.landlordProfile
-              ? { ...user.landlordProfile, ...updates.landlordProfile }
-              : user.landlordProfile,
             roles: updates.roles ?? user.roles,
             activeRole: updates.activeRole ?? user.activeRole,
             updatedAt: new Date(),
@@ -212,19 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (company) {
             updatedUser.companyId = company;
             updatedUser.companyRole = "admin";
-
-            const existingCompanies = JSON.parse(
-              localStorage.getItem("companies") || "[]",
-            );
-            existingCompanies.push(company);
-            localStorage.setItem(
-              "companies",
-              JSON.stringify(existingCompanies),
-            );
           }
 
           setUser(updatedUser);
-          localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+          localStorage.setItem("dummy_user", JSON.stringify(updatedUser));
         }
       } finally {
         setAuthLoading(false);
@@ -233,36 +213,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user],
   );
 
-  const switchRole = async (role: Role, currentRole: Role) => {
-    const ALLOWED_TRANSITIONS: Record<string, Role[]> = {
-      [Role.Viewer]: [Role.Agent, Role.Landlord],
-      [Role.Agent]: [Role.Viewer, Role.Landlord],
-      [Role.Landlord]: [Role.Viewer, Role.Agent],
-    };
+  const switchRole = async (newRole: Role) => {
+    if (!user) throw new Error("No user logged in");
+
     setAuthLoading(true);
     setAuthError(null);
+
     try {
       await fakeDelay();
 
-      const isValidTransition =
-        currentRole &&
-        role &&
-        ALLOWED_TRANSITIONS[currentRole]?.includes(role) &&
-        user?.roles.includes(currentRole);
-      if (!isValidTransition) {
-        throw new Error("Cannot switch role.");
+      // Prevent switching from locked roles
+      if (LOCKED_ROLES.includes(user.activeRole)) {
+        throw new Error("This account role cannot be changed.");
       }
-      if (user) {
-        const updatedUser: PopulatedUser = {
-          ...user,
-          activeRole: role,
-        };
 
-        setUser(updatedUser);
-        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      // Prevent switching to locked roles unless already assigned
+      if (LOCKED_ROLES.includes(newRole) && !user.roles.includes(newRole)) {
+        throw new Error("You cannot switch to this role.");
       }
+
+      const updatedUser: PopulatedUser = {
+        ...user,
+        activeRole: newRole,
+        metadata: {
+          ...user.metadata,
+          lastRoleSwitch: new Date(),
+        },
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("dummy_user", JSON.stringify(updatedUser));
     } catch (error) {
-      console.log(error);
+      const message =
+        error instanceof Error ? error.message : "Failed to switch role.";
+      setAuthError(message);
+      throw error;
     } finally {
       setAuthLoading(false);
     }
@@ -277,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("dummy_user");
     } catch (error) {
       setAuthError("Logout failed. Please try again.");
-      console.log(error);
+      console.error(error);
     } finally {
       setAuthLoading(false);
     }
@@ -287,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        companies,
         isAuthenticated: !!user,
         isLoading,
         authLoading,
@@ -295,9 +281,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         clearError,
-        companies,
-        updateUserRole,
         switchRole,
+        updateUserRole,
         completeRegistration,
       }}
     >

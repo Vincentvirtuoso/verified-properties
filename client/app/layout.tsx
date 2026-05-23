@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${lato.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col antialiased selection:bg-primary/20">
         <AuthProvider>
           <ConfirmationProvider>{children}</ConfirmationProvider>
         </AuthProvider>

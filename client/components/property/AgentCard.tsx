@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
-import { PopulatedProperty, Company, Role, PropertyOwnerType } from "@/types";
+import { PopulatedProperty, Company, PropertyOwnerType } from "@/types";
 import VerifiedBadge from "../icons/VerifiedBadge";
 
 interface OwnerCardProps {
@@ -34,8 +34,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
 
   const isVerified = isCompany
     ? owner.companyId?.verificationStatus === "verified"
-    : owner.agentProfile?.verificationStatus === "verified" ||
-      owner.landlordProfile?.verificationStatus === "verified";
+    : owner.agentProfile?.verificationStatus === "verified";
 
   const email = isCompany ? owner.companyId?.contactEmail : owner.email;
   const phone = isCompany ? owner.companyId?.contactPhone : owner.phone;
@@ -52,10 +51,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
     profileHref = `/companies/${owner._id}`;
   } else {
     const user = owner;
-    profileHref =
-      user.activeRole === Role.Landlord
-        ? `/landlords/${user._id}`
-        : `/agents/${user._id}`;
+    profileHref = `/agents/${user._id}`;
   }
 
   const displayRoleLabel = isCompany

@@ -10,25 +10,21 @@ import {
   AccordionContent,
 } from "@/components/ui/Accordion";
 import {
-  LuHouse,
   LuUserCheck,
-  LuBuilding,
   LuBuilding2,
-  LuHammer,
   LuLayoutDashboard,
   LuListChecks,
   LuTrendingUp,
   LuMegaphone,
-  LuFileText,
   LuUsers,
   LuSearch,
   LuStar,
   LuCirclePlus,
-  LuSettings,
 } from "react-icons/lu";
 import { useAuth } from "@/contexts/AuthContext";
-import { PageSpinner, Spinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { BsArrowRight } from "react-icons/bs";
+import RoleIcon from "@/components/ui/RoleIcon";
 
 interface RoleGuide {
   title: string;
@@ -55,8 +51,8 @@ const roleGuides: Record<Role, RoleGuide> = {
       },
       {
         icon: <LuUserCheck />,
-        label: "Become an Agent / Landlord",
-        href: "/onboarding/become-an-agent-or-landlord",
+        label: "Become an Agent",
+        href: "/onboarding/become-an-agent",
       },
       {
         icon: <LuBuilding2 />,
@@ -73,14 +69,14 @@ const roleGuides: Record<Role, RoleGuide> = {
       {
         label: "Why upgrade?",
         content:
-          "As an Agent or Landlord you can list properties, manage leads, and unlock premium features. It’s free to get started.",
+          "As an Agent you can list properties, manage leads, and unlock premium features. It’s free to get started.",
       },
     ],
   },
   [Role.Agent]: {
     title: "Welcome, Agent!",
     description:
-      "Manage your listings, connect with clients, and grow your portfolio.",
+      "Manage your listings, connect with clients, and grow your portfolio. Your specific sub‑role (realtor, lawyer, surveyor, landlord, or other) gives you tailored tools.",
     steps: [
       {
         icon: <LuLayoutDashboard />,
@@ -108,71 +104,11 @@ const roleGuides: Record<Role, RoleGuide> = {
         href: "/academy",
       },
     ],
-  },
-  [Role.Landlord]: {
-    title: "Welcome, Landlord!",
-    description:
-      "Showcase your properties and find the right tenants or JV partners.",
-    steps: [
-      {
-        icon: <LuLayoutDashboard />,
-        label: "Landlord Dashboard",
-        href: "/dashboard",
-      },
-      {
-        icon: <LuCirclePlus />,
-        label: "List a property for sale/rent",
-        href: "/list-property",
-      },
-      {
-        icon: <LuFileText />,
-        label: "Upload property documents",
-        href: "/dashboard/documents",
-      },
-      {
-        icon: <LuTrendingUp />,
-        label: "Track performance",
-        href: "/dashboard/analytics",
-      },
-      {
-        icon: <LuUsers />,
-        label: "View tenant inquiries",
-        href: "/dashboard/inquiries",
-      },
-    ],
     extraInfo: [
       {
-        label: "Joint Venture Ready?",
+        label: "Need to verify your identity?",
         content:
-          "You can also publish JV opportunities directly from your dashboard. Check the JV section to start earning passive returns.",
-      },
-    ],
-  },
-  [Role.Developer]: {
-    title: "Welcome, Developer!",
-    description:
-      "Access JV deals, manage projects, and find investors for your developments.",
-    steps: [
-      {
-        icon: <LuBuilding />,
-        label: "View JV Opportunities",
-        href: "/jv-properties",
-      },
-      {
-        icon: <LuHammer />,
-        label: "Create a development project",
-        href: "/projects/new",
-      },
-      {
-        icon: <LuTrendingUp />,
-        label: "Monitor investments",
-        href: "/dashboard/investments",
-      },
-      { icon: <LuUsers />, label: "Connect with agents", href: "/network" },
-      {
-        icon: <LuSettings />,
-        label: "Set up your developer profile",
-        href: "/profile/settings",
+          "Make sure your verification documents are submitted in your profile. Verified agents appear higher in search results.",
       },
     ],
   },
@@ -183,7 +119,7 @@ const roleGuides: Record<Role, RoleGuide> = {
       {
         icon: <LuLayoutDashboard />,
         label: "Company Dashboard",
-        href: "/dashboard",
+        href: "/company/dashboard",
       },
       {
         icon: <LuUsers />,
@@ -226,7 +162,10 @@ export default function WelcomePage() {
 
   const activeRole = user.activeRole as Role;
   const guide = roleGuides[activeRole] ?? roleGuides[Role.Viewer];
-  const allRoles = user.roles.length > 0 ? user.roles : [Role.Viewer];
+  // Only roles that actually exist in the system (Viewer, Agent, Company)
+  const allRoles = user.roles.filter((role) =>
+    [Role.Viewer, Role.Agent, Role.Company].includes(role),
+  );
 
   return (
     <main className="min-h-screen bg-background py-10">
@@ -298,7 +237,11 @@ export default function WelcomePage() {
                   const roleGuide = roleGuides[role] ?? roleGuides[Role.Viewer];
                   return (
                     <AccordionItem key={role} value={role}>
-                      <AccordionTrigger icon={getRoleIcon(role)}>
+                      <AccordionTrigger>
+                        <RoleIcon
+                          role={role}
+                          className="inline-flex mr-2 text-primary"
+                        />
                         {role.charAt(0).toUpperCase() + role.slice(1)} Guide
                       </AccordionTrigger>
                       <AccordionContent>
@@ -306,7 +249,7 @@ export default function WelcomePage() {
                           <p className="text-sm text-muted">
                             {roleGuide.description}
                           </p>
-                          <ul className="space-y-3">
+                          <ul className="grid sm:grid-cols-2 gap-2">
                             {roleGuide.steps.map((step, i) => (
                               <li
                                 key={i}
@@ -378,21 +321,4 @@ export default function WelcomePage() {
       </div>
     </main>
   );
-}
-
-function getRoleIcon(role: Role) {
-  switch (role) {
-    case Role.Viewer:
-      return <LuSearch className="h-4 w-4" />;
-    case Role.Agent:
-      return <LuUserCheck className="h-4 w-4" />;
-    case Role.Landlord:
-      return <LuHouse className="h-4 w-4" />;
-    case Role.Developer:
-      return <LuHammer className="h-4 w-4" />;
-    case Role.Company:
-      return <LuBuilding className="h-4 w-4" />;
-    default:
-      return <LuStar className="h-4 w-4" />;
-  }
 }

@@ -1,19 +1,12 @@
 import { Role } from "@/types";
-import {
-  LuEye,
-  LuUserCheck,
-  LuHouse,
-  LuCode,
-  LuBuilding2,
-  LuUser,
-} from "react-icons/lu";
+import { LuUser } from "react-icons/lu";
+import { MdBusiness, MdRealEstateAgent } from "react-icons/md";
+import { HiOutlineLocationMarker } from "react-icons/hi";
 
 const roleIconMap: Record<Role, React.ComponentType<{ className?: string }>> = {
-  [Role.Viewer]: LuEye,
-  [Role.Agent]: LuUserCheck,
-  [Role.Landlord]: LuHouse,
-  [Role.Developer]: LuCode,
-  [Role.Company]: LuBuilding2,
+  [Role.Viewer]: HiOutlineLocationMarker,
+  [Role.Agent]: MdRealEstateAgent,
+  [Role.Company]: MdBusiness,
 };
 
 interface RoleIconProps {

@@ -12,19 +12,32 @@ import {
   LuUsers,
   LuBriefcase,
   LuArrowUpRight,
+  LuRocket,
+  LuMessageSquare,
+  LuFileText,
+  LuPhone,
 } from "react-icons/lu";
 import { FiBarChart2, FiZap } from "react-icons/fi";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import UserHeaderCard from "@/components/cards/UserHeaderCard";
+import {
+  BsBarChartSteps,
+  BsBuildingAdd,
+  BsBuildingFillGear,
+} from "react-icons/bs";
+import { cn } from "@/lib/utils";
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   const recommended = properties.slice(0, 2);
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Welcome back!</h2>
+      <h2 className="text-2xl font-bold">
+        Welcome back, {user.name.split(" ")[0]}!
+      </h2>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
           icon={<LuHeart />}
@@ -39,7 +52,7 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
         />
         <DashboardCard
           icon={<LuCirclePlus />}
-          label="Budget Range Status"
+          label="Budget Range"
           value={
             user.viewerProfile?.budgetRange
               ? `${user.viewerProfile.budgetRange.currency} ${user.viewerProfile.budgetRange.max?.toLocaleString()}`
@@ -47,180 +60,173 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
           }
         />
       </div>
+
       <RecentListings title="Recommended For You" listings={recommended} />
     </div>
   );
 };
 
 const AgentDashboard = ({ user }: { user: PopulatedUser }) => {
+  const agentProfile = user.agentProfile;
+  const subRole = agentProfile?.subRole;
+
   const agentListings = properties.filter(
     (p) =>
       p.ownerType === "agent" &&
       (typeof p.ownerId === "string"
         ? p.ownerId === user._id
-        : p.ownerId._id === user._id),
+        : p.ownerId?._id === user._id),
   );
+
+  const quickActions = [
+    {
+      label: "List a Property",
+      icon: BsBuildingAdd,
+      href: "/list-property",
+      color: "primary",
+    },
+    {
+      label: "Boost a Listing",
+      icon: LuRocket,
+      href: "/dashboard/boost",
+      color: "amber",
+    },
+    {
+      label: "View Inquiries",
+      icon: LuMessageSquare,
+      href: "/dashboard/inquiries",
+      color: "blue",
+    },
+    {
+      label: "Analytics",
+      icon: BsBarChartSteps,
+      href: "/dashboard/analytics",
+      color: "emerald",
+    },
+  ];
+
+  // Role-specific actions
+  if (subRole === "realtor") {
+    quickActions.push({
+      label: "Manage Brokerage",
+      icon: BsBuildingFillGear,
+      href: "/dashboard/brokerage",
+      color: "purple",
+    });
+  }
+
+  if (subRole === "lawyer") {
+    quickActions.push({
+      label: "Document Templates",
+      icon: LuFileText,
+      href: "/dashboard/documents",
+      color: "purple",
+    });
+  }
+
+  if (subRole === "surveyor") {
+    quickActions.push({
+      label: "Survey Reports",
+      icon: LuFileText,
+      href: "/dashboard/surveys",
+      color: "purple",
+    });
+  }
+
+  if (subRole === "landlord") {
+    quickActions.push({
+      label: "Tenant Applications",
+      icon: LuUsers,
+      href: "/dashboard/tenants",
+      color: "purple",
+    });
+  }
+
+  quickActions.push({
+    label: "Contact Support",
+    icon: LuPhone,
+    href: "/support",
+    color: "gray",
+  });
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Agent Dashboard</h2>
-        {user.agentProfile?.verificationStatus && <VerifiedBadge size="md" />}
-      </div>
+      <UserHeaderCard user={user} variant="dashboard" />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
           icon={<LuCirclePlus />}
           label="Active Listings"
-          value={user.agentProfile?.activeListings ?? agentListings.length}
+          value={agentProfile?.activeListings ?? agentListings.length}
           href="/my-listings"
         />
         <DashboardCard
           icon={<FiZap />}
           label="Boosted Listings"
-          value={user.agentProfile?.activeBoostedListings ?? 0}
+          value={agentProfile?.activeBoostedListings ?? 0}
         />
-        <DashboardCard
-          icon={<LuUsers />}
-          label="Brokerage Network"
-          value={user.agentProfile?.brokerage ?? "Independent"}
-        />
+
+        {subRole === "realtor" && (
+          <DashboardCard
+            icon={<LuUsers />}
+            label="Brokerage"
+            value={agentProfile?.brokerage ?? "Independent"}
+          />
+        )}
+
+        {subRole === "landlord" && (
+          <DashboardCard
+            icon={<LuArrowUpRight />}
+            label="Properties Owned"
+            value={agentProfile?.activeListings ?? 0}
+          />
+        )}
+
+        {(subRole === "lawyer" || subRole === "surveyor") && (
+          <DashboardCard
+            icon={<LuBriefcase />}
+            label="Professional ID"
+            value={agentProfile?.licenseNumber ?? "N/A"}
+          />
+        )}
       </div>
-      <RecentListings title="Your Listings" listings={agentListings} />
-    </div>
-  );
-};
 
-const LandlordDashboard = ({ user }: { user: PopulatedUser }) => {
-  const landlordListings = properties.filter(
-    (p) =>
-      p.ownerType === "landlord" &&
-      (typeof p.ownerId === "string"
-        ? p.ownerId === user._id
-        : p.ownerId._id === user._id),
-  );
-
-  return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Landlord Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DashboardCard
-          icon={<LuCirclePlus />}
-          label="My Properties"
-          value={
-            user.landlordProfile?.activeListings ?? landlordListings.length
-          }
-          href="/my-listings"
-        />
-        <DashboardCard
-          icon={<FiBarChart2 />}
-          label="Verification Profile"
-          value={user.landlordProfile?.verificationStatus ?? "Unverified"}
-          className="capitalize"
-        />
-        <DashboardCard
-          icon={<LuArrowUpRight />}
-          label="Total Remitted Revenue"
-          value={`₦${(user.landlordProfile?.totalRemitted ?? 0).toLocaleString()}`}
-        />
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <LuRocket className="text-primary" />
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {quickActions.map((action) => (
+            <Button
+              key={action.label}
+              variant="outline"
+              size="sm"
+              fullWidth
+              href={action.href}
+              className={cn(
+                "gap-2 justify-start",
+                action.color === "primary" &&
+                  "hover:border-primary/50 hover:bg-primary/5",
+                action.color === "amber" &&
+                  "hover:border-amber-500/50 hover:bg-amber-500/5",
+                action.color === "blue" &&
+                  "hover:border-blue-500/50 hover:bg-blue-500/5",
+                action.color === "emerald" &&
+                  "hover:border-emerald-500/50 hover:bg-emerald-500/5",
+                action.color === "purple" &&
+                  "hover:border-purple-500/50 hover:bg-purple-500/5",
+                action.color === "gray" && "hover:border-muted-foreground/30",
+              )}
+              leftIcon={<action.icon className="h-4 w-4" />}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </div>
       </div>
-      <RecentListings title="Your Properties" listings={landlordListings} />
-    </div>
-  );
-};
 
-const DeveloperDashboard = ({ user }: { user: PopulatedUser }) => {
-  const companyData = user.companyId;
-  const developerListings = properties.filter(
-    (p) =>
-      p.ownerType === "company" &&
-      (typeof p.ownerId === "string"
-        ? p.ownerId === user._id
-        : p.ownerId._id === user._id),
-  );
-
-  return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Developer Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DashboardCard
-          icon={<LuBriefcase />}
-          label="Active Projects"
-          value={
-            companyData && typeof companyData !== "string"
-              ? companyData.activeListings
-              : developerListings.length
-          }
-        />
-        <DashboardCard
-          icon={<LuUsers />}
-          label="Team Infrastructure"
-          value={
-            companyData && typeof companyData !== "string"
-              ? (companyData.team?.length ?? 0)
-              : 0
-          }
-          href="/company/team"
-        />
-        <DashboardCard
-          icon={<LuCirclePlus />}
-          label="Project Verification"
-          value={
-            companyData && typeof companyData !== "string"
-              ? companyData.verificationStatus
-              : "Unverified"
-          }
-          className="capitalize"
-        />
-      </div>
-      <RecentListings
-        title="Recent Managed Projects"
-        listings={developerListings}
-      />
-    </div>
-  );
-};
-
-const CompanyDashboard = ({ user }: { user: PopulatedUser }) => {
-  const companyData = user.companyId;
-  const companyListings = properties.filter(
-    (p) =>
-      p.ownerType === "company" &&
-      (typeof p.ownerId === "string"
-        ? p.ownerId === user._id
-        : p.ownerId._id === user._id),
-  );
-
-  return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Company Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DashboardCard
-          icon={<LuCirclePlus />}
-          label="Total Enterprise Listings"
-          value={
-            companyData && typeof companyData !== "string"
-              ? companyData.activeListings
-              : companyListings.length
-          }
-          href="/company/listings"
-        />
-        <DashboardCard
-          icon={<LuUsers />}
-          label="Active Members"
-          value={
-            companyData && typeof companyData !== "string"
-              ? (companyData.team?.length ?? 0)
-              : 0
-          }
-          href="/company/team"
-        />
-        <DashboardCard
-          icon={<FiBarChart2 />}
-          label="Total Remitted Asset Value"
-          value={`₦${(companyData && typeof companyData !== "string" ? companyData.totalRemitted : 0).toLocaleString()}`}
-        />
-      </div>
-      <RecentListings title="Company Portfolios" listings={companyListings} />
+      <RecentListings title="Your Recent Listings" listings={agentListings} />
     </div>
   );
 };
@@ -239,25 +245,26 @@ function DashboardCard({
   className?: string;
 }) {
   const Content = (
-    <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 hover:shadow-md transition-shadow h-full">
+    <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 hover:shadow-md transition-all h-full">
       <div className="p-3 bg-primary/10 rounded-xl text-primary text-2xl shrink-0">
         {icon}
       </div>
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className={`text-2xl font-bold ${className || ""}`}>{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-muted-foreground truncate">{label}</p>
+        <p className={`text-2xl font-bold truncate ${className || ""}`}>
+          {value}
+        </p>
       </div>
     </div>
   );
 
-  if (href) {
-    return (
-      <a href={href} className="block h-full">
-        {Content}
-      </a>
-    );
-  }
-  return Content;
+  return href ? (
+    <Link href={href} className="block h-full">
+      {Content}
+    </Link>
+  ) : (
+    Content
+  );
 }
 
 function RecentListings({
@@ -271,20 +278,24 @@ function RecentListings({
     <div>
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       {listings.length === 0 ? (
-        <p className="text-muted-foreground">
-          No property listings found to display.
-        </p>
+        <div className="bg-muted/50 border border-border rounded-2xl p-8 text-center">
+          <p className="text-muted-foreground">No listings found yet.</p>
+        </div>
       ) : (
-        <div className="flex flex-col">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {listings.map((item) => (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {listings.slice(0, 3).map((item) => (
               <PropertyCard key={item._id} {...item} />
             ))}
           </div>
-          <Link href="/my-listings" className="mx-auto">
-            <Button className="px-16">View all</Button>
-          </Link>
-        </div>
+          <div className="flex justify-center mt-6">
+            <Link href="/my-listings">
+              <Button variant="outline" className="px-8">
+                View All Listings
+              </Button>
+            </Link>
+          </div>
+        </>
       )}
     </div>
   );
@@ -292,11 +303,7 @@ function RecentListings({
 
 export default function DashboardPage() {
   const router = useRouter();
-  const authContext = useAuth();
-
-  const user = authContext.user as PopulatedUser | null;
-  const isAuthenticated = authContext.isAuthenticated;
-  const isLoading = authContext.isLoading;
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -312,26 +319,26 @@ export default function DashboardPage() {
     );
   }
 
-  const roleComponent = {
-    [Role.Viewer]: <ViewerDashboard user={user} />,
-    [Role.Agent]: <AgentDashboard user={user} />,
-    [Role.Landlord]: <LandlordDashboard user={user} />,
-    [Role.Developer]: <DeveloperDashboard user={user} />,
-    [Role.Company]: <CompanyDashboard user={user} />,
-  }[user.activeRole] ?? <ViewerDashboard user={user} />;
+  const renderDashboard = () => {
+    switch (user.activeRole) {
+      case Role.Viewer:
+        return <ViewerDashboard user={user} />;
+      case Role.Agent:
+        return <AgentDashboard user={user} />;
+      case Role.Company:
+        return null;
+      default:
+        return <ViewerDashboard user={user} />;
+    }
+  };
+
+  if (user.activeRole === Role.Company) {
+    return router.replace("/company/dashboard");
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Hello, {user.name ? user.name.split(" ")[0] : "User"}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1)}{" "}
-          space view
-        </p>
-      </div>
-      {roleComponent}
+      {renderDashboard()}
     </div>
   );
 }

@@ -26,7 +26,6 @@ import {
 } from "../ui/Dropdown";
 import { useMemo, useState } from "react";
 import { imageLoader } from "@/utils/helpers";
-import { AiOutlineSwitcher } from "react-icons/ai";
 import { Badge } from "../ui";
 import RoleIcon from "../ui/RoleIcon";
 import { BsBuildingAdd, BsBuildings } from "react-icons/bs";
@@ -52,24 +51,22 @@ const ProfileMenu = ({
 }) => {
   const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
   const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
-  const [isSubDropdownOpen1, setIsSubDropdownOpen1] = useState(false);
+  const [isAddRoleDropdownOpen, setIsAddRoleDropdownOpen] = useState(false);
   const [userImageSrc, setUserImageSrc] = useState(
     user?.avatar || "/placeholder_avatar.png",
   );
 
+  // Role‑based flags (aligned with user.ts)
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
   const isCompanyUser = user.activeRole === Role.Company;
-  const hasAgentOrLandlordRole = user.roles.some(
-    (role) => role === Role.Agent || role === Role.Landlord,
-  );
-  const hasAgentOrLandlordActiveRole =
-    user.activeRole === Role.Agent || user.activeRole === Role.Landlord;
+  const hasAgentRole = user.roles.includes(Role.Agent);
+  const isAgentActive = user.activeRole === Role.Agent;
 
   const switchableRoles = user.roles.filter((role) => role !== user.activeRole);
-  const addableRoles = [Role.Agent, Role.Landlord, Role.Viewer].filter(
-    (role) => !user.roles.includes(role),
-  );
+
+  const canAddAgent = !user.roles.includes(Role.Agent);
+  const addableRoles = canAddAgent ? [Role.Agent] : [];
 
   const navLinks = [
     {
@@ -78,20 +75,19 @@ const ProfileMenu = ({
       icon: LuLayoutDashboard,
     },
   ];
-
   const activeNavLinks = useMemo(
     () => getNavLinks(user?.activeRole, isAuthenticated),
     [user?.activeRole, isAuthenticated],
   );
-
   navLinks.push(...activeNavLinks);
   const dashboardNavLink = navLinks[0];
 
   const contextActions = [];
+
   if (isPureViewer) {
     contextActions.push({
-      label: "Become an Agent/Landlord",
-      href: "/onboarding/become-an-agent-or-landlord",
+      label: "Become an Agent",
+      href: "/onboarding/become-an-agent",
       icon: LuUserCheck,
     });
     contextActions.push({
@@ -99,36 +95,22 @@ const ProfileMenu = ({
       href: "/onboarding/list-property",
       icon: LuCirclePlus,
     });
-  } else {
   }
+
   if (!user.companyId) {
     contextActions.push({
       label: "Register Company",
       href: "/onboarding/company",
       icon: LuPlus,
     });
-    contextActions.push({
-      label: "Register as Developer",
-      href: "/onboarding/company",
-      icon: LuUserRoundPlus,
-    });
   }
-  if (hasAgentOrLandlordActiveRole) {
-    contextActions.push(
-      {
-        label: "List a New Property",
-        href: "/list-property",
-        icon: BsBuildingAdd,
-      },
-      {
-        label: "My Properties",
-        href: "/my-listings",
-        icon: BsBuildings,
-      },
-    );
-    if (!user.roles.includes(Role.Viewer)) {
-      // (Add viewr role) button
-    }
+
+  if (isAgentActive) {
+    contextActions.push({
+      label: "List a New Property",
+      href: "/list-property",
+      icon: BsBuildingAdd,
+    });
   }
 
   return (
@@ -150,7 +132,10 @@ const ProfileMenu = ({
         />
       </Link>
 
-      <Dropdown onOpenChange={(open) => setIsMainDropdownOpen(open)} placement="bottom-end">
+      <Dropdown
+        onOpenChange={(open) => setIsMainDropdownOpen(open)}
+        placement="bottom-end"
+      >
         <DropdownTrigger asChild>
           <button
             aria-label="Open user menu"
@@ -168,11 +153,12 @@ const ProfileMenu = ({
           <div className="px-2 py-1.5 mb-1 text-xs">
             <p className="font-semibold text-foreground truncate">
               {user.name}
-              <Badge className="ml-2">{user.activeRole}</Badge>
+              <Badge className="ml-2 capitalize">{user.activeRole}</Badge>
             </p>
             <p className="text-muted truncate text-[11px]">{user.email}</p>
           </div>
           <DropdownSeparator />
+
           <div className="overflow-hidden max-h-[35vh] overflow-y-auto">
             <div className="hidden lg:block">
               <Link href={dashboardNavLink.href}>
@@ -182,10 +168,11 @@ const ProfileMenu = ({
                     <dashboardNavLink.icon className="w-4 h-4 text-primary/80" />
                   }
                 >
-                  <span className=" text-xs">{dashboardNavLink.label}</span>
+                  <span className="text-xs">{dashboardNavLink.label}</span>
                 </DropdownItem>
               </Link>
             </div>
+
             <div className="lg:hidden">
               {navLinks.map(({ href, icon: Icon, label }) => (
                 <Link href={href} key={href}>
@@ -193,11 +180,12 @@ const ProfileMenu = ({
                     className="flex items-center gap-2.5 px-2 py-2 rounded-md"
                     icon={<Icon className="w-4 h-4 text-primary/80" />}
                   >
-                    <span className=" text-xs">{label}</span>
+                    <span className="text-xs">{label}</span>
                   </DropdownItem>
                 </Link>
               ))}
             </div>
+
             {contextActions.length > 0 && (
               <>
                 <DropdownSeparator />
@@ -214,7 +202,9 @@ const ProfileMenu = ({
               </>
             )}
           </div>
-          {hasAgentOrLandlordRole && switchableRoles.length > 0 && (
+
+          {/* SWITCH ROLE (if there are other roles to switch to) */}
+          {hasAgentRole && switchableRoles.length > 0 && (
             <>
               <DropdownSeparator />
               <Dropdown
@@ -251,12 +241,18 @@ const ProfileMenu = ({
                   ))}
                 </DropdownContent>
               </Dropdown>
+            </>
+          )}
+
+          {/* ADD ROLE (only Agent can be added) */}
+          {addableRoles.length > 0 && (
+            <>
               <DropdownSeparator />
               <Dropdown
                 className="w-full"
                 placement="bottom-end"
                 offset={-3}
-                onOpenChange={(open) => setIsSubDropdownOpen1(open)}
+                onOpenChange={(open) => setIsAddRoleDropdownOpen(open)}
               >
                 <DropdownTrigger asChild>
                   <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
@@ -269,7 +265,7 @@ const ProfileMenu = ({
                       </div>
                       <span className="group-hover:text-primary">Add Role</span>
                     </div>
-                    {isSubDropdownOpen1 ? (
+                    {isAddRoleDropdownOpen ? (
                       <LuChevronUp size={20} />
                     ) : (
                       <LuChevronDown size={20} />
@@ -321,12 +317,12 @@ export function UserMenu({
 }: UserMenuProps) {
   if (isAuthenticated && user) {
     return (
-        <ProfileMenu
-          user={user}
-          onLogout={onLogout}
-          onSwitch={onSwitch}
-          isAuthenticated={isAuthenticated}
-        />
+      <ProfileMenu
+        user={user}
+        onLogout={onLogout}
+        onSwitch={onSwitch}
+        isAuthenticated={isAuthenticated}
+      />
     );
   }
 

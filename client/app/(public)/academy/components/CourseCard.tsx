@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import type { Course } from "@/types";
 import { LuBookOpen, LuVideo, LuHeadphones, LuLayers } from "react-icons/lu";
+import Image from "next/image";
 
 const typeIcons: Record<string, React.ReactNode> = {
   video: <LuVideo />,
@@ -34,9 +35,11 @@ export default function CourseCard({ course, variant = "default" }: Props) {
       >
         <div className="h-40 bg-muted/10 flex items-center justify-center">
           {course.thumbnail ? (
-            <img
+            <Image
               src={course.thumbnail}
               alt={course.title}
+              width={1600}
+              height={900}
               className="w-full h-full object-cover"
             />
           ) : (

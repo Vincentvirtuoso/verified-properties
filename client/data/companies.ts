@@ -14,6 +14,7 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: true,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
     team: [
       {
         userId: "agent-1",
@@ -46,11 +47,13 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: false,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
+
     team: [
       {
-        userId: "agent-2",
+        userId: "user_009",
         role: "member",
-        permissions: ["manage_listings"],
+        permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
     ],
     contactEmail: "hello@greenacres.com",
@@ -73,6 +76,8 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: true,
       whiteLabel: true,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
+
     team: [
       {
         userId: "user_004",
@@ -80,7 +85,7 @@ export const mockCompanies: Company[] = [
         permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
       {
-        userId: "user_012",
+        userId: "user_008",
         role: "member",
         permissions: ["manage_listings"],
       },
@@ -110,6 +115,8 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: true,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
+
     team: [
       {
         userId: "user_008",
@@ -147,6 +154,8 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: false,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
+
     team: [
       {
         userId: "user_015",
@@ -173,6 +182,8 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: false,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
+
     team: [
       {
         userId: "user_022",
@@ -204,6 +215,7 @@ export const mockCompanies: Company[] = [
       dedicatedAccountManager: false,
       whiteLabel: false,
     },
+    onboardingDocs: { cacCertificateUrl: "" },
     team: [
       {
         userId: "user_031",

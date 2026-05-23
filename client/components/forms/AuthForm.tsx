@@ -39,7 +39,12 @@ export function AuthForm({
     <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-200">
       <div className={cn("w-full max-w-md animate-fade-in", className)}>
         <div className="text-center mb-10">
-          <Brandmark logoSize={50} logoOnly href="" />
+          <Brandmark
+            logoSize={50}
+            href={undefined}
+            direction="col"
+            className="mb-4"
+          />
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             {title}
           </h1>

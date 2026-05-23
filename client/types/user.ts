@@ -3,18 +3,19 @@ import { Company } from "./company";
 export enum Role {
   Viewer = "viewer",
   Agent = "agent",
-  Landlord = "landlord",
-  Developer = "developer",
   Company = "company",
 }
 
-export const LOCKED_ROLES: Role[] = [Role.Developer, Role.Company];
+export const LOCKED_ROLES: Role[] = [Role.Company];
 
-export const PARTNER_ROLES: Role[] = [
-  Role.Landlord,
-  Role.Developer,
-  Role.Company,
-];
+export const PARTNER_ROLES: Role[] = [Role.Company];
+
+export type AgentSubRole =
+  | "realtor"
+  | "lawyer"
+  | "surveyor"
+  | "landlord"
+  | "other";
 
 export interface User<Populated extends boolean = false> {
   _id: string;
@@ -32,7 +33,6 @@ export interface User<Populated extends boolean = false> {
 
   viewerProfile?: ViewerProfile;
   agentProfile?: AgentProfile;
-  landlordProfile?: LandlordProfile;
 
   companyId?: Populated extends true ? Company : string;
   companyRole?: "admin" | "member";
@@ -58,22 +58,31 @@ export interface ViewerProfile {
 }
 
 export interface AgentProfile {
-  licenseNumber?: string;
-  brokerage?: string;
-  verificationStatus: "unverified" | "pending" | "verified";
+  subRole: AgentSubRole;
+
+  logo?: string;
+  verificationDocs?: AgentVerificationDocs;
+
+  verificationStatus: "unverified" | "pending" | "verified" | "rejected";
+
   activeListings: number;
   activeBoostedListings: number;
+
+  licenseNumber?: string;
+  barNumber?: string;
+  surveyorRegNumber?: string;
+  brokerage?: string;
 }
 
-export interface LandlordProfile {
-  verificationStatus: "unverified" | "pending" | "verified";
-  activeListings: number;
-  remittanceDetails?: {
-    accountNumber: string;
-    bankName: string;
-    accountName: string;
-  };
-  totalRemitted: number;
+export interface AgentVerificationDocs {
+  logoUrl: string;
+  governmentIdUrl?: string;
+  professionalCertUrl?: string;
+  utilityBillUrl?: string;
+  additionalDocs?: {
+    label: string;
+    fileUrl: string;
+  }[];
 }
 
 export type BoostStatus = "active" | "expired" | "cancelled";
@@ -90,3 +99,11 @@ export interface Boost {
   paymentReference: string;
   createdAt: Date;
 }
+
+export const agentSubRoleLabels: Record<AgentSubRole, string> = {
+  realtor: "Realtor",
+  lawyer: "Lawyer",
+  surveyor: "Surveyor",
+  landlord: "Landlord",
+  other: "Other",
+};

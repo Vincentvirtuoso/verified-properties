@@ -1,4 +1,4 @@
-import { Role, PopulatedUser } from "@/types";
+import { Role, PopulatedUser, AgentSubRole } from "@/types";
 import { mockCompanies } from "./companies";
 
 export const dummyUsers: PopulatedUser[] = [
@@ -64,11 +64,13 @@ export const dummyUsers: PopulatedUser[] = [
       savedListingIds: [],
     },
     agentProfile: {
+      subRole: "realtor" as AgentSubRole,
       licenseNumber: "LASRERA/2025/AG/089",
       brokerage: "Bakare & Partners Properties",
       verificationStatus: "verified",
       activeListings: 12,
       activeBoostedListings: 3,
+      logo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
     },
     createdAt: new Date("2025-09-15T11:00:00Z"),
     updatedAt: new Date("2026-05-14T16:30:00Z"),
@@ -90,6 +92,7 @@ export const dummyUsers: PopulatedUser[] = [
       savedListingIds: ["prop_006"],
     },
     agentProfile: {
+      subRole: "realtor" as AgentSubRole,
       verificationStatus: "pending",
       activeListings: 2,
       activeBoostedListings: 0,
@@ -108,20 +111,17 @@ export const dummyUsers: PopulatedUser[] = [
     name: "Alhaji Musa Danladi",
     isEmailVerified: true,
     isPhoneVerified: true,
-    roles: [Role.Viewer, Role.Landlord],
-    activeRole: Role.Landlord,
+    roles: [Role.Viewer, Role.Agent],
+    activeRole: Role.Agent,
     viewerProfile: {
       savedListingIds: [],
     },
-    landlordProfile: {
+    agentProfile: {
+      subRole: "landlord" as AgentSubRole,
       verificationStatus: "verified",
       activeListings: 5,
-      remittanceDetails: {
-        accountNumber: "0012345678",
-        bankName: "Zenith Bank",
-        accountName: "Musa Danladi",
-      },
-      totalRemitted: 2350000,
+      activeBoostedListings: 4,
+      logo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
     },
     createdAt: new Date("2025-11-20T07:45:00Z"),
     updatedAt: new Date("2026-05-01T14:20:00Z"),
@@ -138,15 +138,16 @@ export const dummyUsers: PopulatedUser[] = [
     name: "Yetunde Shonukan",
     isEmailVerified: true,
     isPhoneVerified: true,
-    roles: [Role.Viewer, Role.Landlord],
-    activeRole: Role.Landlord,
+    roles: [Role.Viewer, Role.Agent],
+    activeRole: Role.Agent,
     viewerProfile: {
       savedListingIds: [],
     },
-    landlordProfile: {
+    agentProfile: {
+      subRole: "landlord" as AgentSubRole,
       verificationStatus: "unverified",
       activeListings: 1,
-      totalRemitted: 0,
+      activeBoostedListings: 0,
     },
     createdAt: new Date("2026-05-12T09:15:00Z"),
     updatedAt: new Date("2026-05-12T09:30:00Z"),
@@ -161,8 +162,8 @@ export const dummyUsers: PopulatedUser[] = [
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
     isEmailVerified: true,
     isPhoneVerified: true,
-    roles: [Role.Developer],
-    activeRole: Role.Developer,
+    roles: [Role.Company],
+    activeRole: Role.Company,
     companyId: mockCompanies[0],
     companyRole: "admin",
     createdAt: new Date("2025-06-01T08:00:00Z"),
@@ -179,7 +180,7 @@ export const dummyUsers: PopulatedUser[] = [
     isPhoneVerified: true,
     roles: [Role.Company],
     activeRole: Role.Company,
-    companyId: mockCompanies[1],
+    companyId: mockCompanies[2],
     companyRole: "admin",
     createdAt: new Date("2025-10-10T10:00:00Z"),
     updatedAt: new Date("2026-04-20T13:00:00Z"),
@@ -209,7 +210,7 @@ export const dummyUsers: PopulatedUser[] = [
     name: "Blessing Johnson",
     isEmailVerified: true,
     isPhoneVerified: true,
-    roles: [Role.Viewer, Role.Agent, Role.Landlord],
+    roles: [Role.Viewer, Role.Agent],
     activeRole: Role.Viewer,
     viewerProfile: {
       savedListingIds: ["prop_012", "prop_023"],
@@ -221,19 +222,10 @@ export const dummyUsers: PopulatedUser[] = [
       preferredLocations: ["Gbagada", "Ikeja"],
     },
     agentProfile: {
+      subRole: "realtor" as AgentSubRole,
       verificationStatus: "verified",
       activeListings: 4,
       activeBoostedListings: 1,
-    },
-    landlordProfile: {
-      verificationStatus: "verified",
-      activeListings: 2,
-      remittanceDetails: {
-        accountNumber: "2209876543",
-        bankName: "Access Bank",
-        accountName: "Blessing Johnson",
-      },
-      totalRemitted: 850000,
     },
     createdAt: new Date("2025-08-01T12:00:00Z"),
     updatedAt: new Date("2026-05-15T18:10:00Z"),

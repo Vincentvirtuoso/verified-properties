@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
 
   const protectedRoutes = [
     "/dashboard",
-    "/dashboard/company",
+    "/company/dashboard",
     "/list-property",
     "/profile",
     "/complete-registration",
@@ -17,12 +17,7 @@ export function proxy(request: NextRequest) {
     "/add-role",
   ];
 
-  const authRoutes = [
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/company/new",
-  ];
+  const authRoutes = ["/login", "/register", "/forgot-password"];
 
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -54,7 +49,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/dashboard/company/:path*",
+    "/company/dashboard/:path*",
     "/complete-registration/:path*",
     "/welcome/:path*",
     "/list-property/:path*",
@@ -64,6 +59,5 @@ export const config = {
     "/register/:path*",
     "/forgot-password/:path*",
     "/add-role/:path*",
-    "/company/new/:path*",
   ],
 };

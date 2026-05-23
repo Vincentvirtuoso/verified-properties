@@ -16,37 +16,27 @@ import { PageSpinner } from "@/components/ui/Spinner";
 
 const accountTypeToRole: Record<string, Role> = {
   seeker: Role.Viewer,
-  broker: Role.Agent,
+  agent: Role.Agent,
   company: Role.Company,
-  developer: Role.Developer,
-  landlord: Role.Landlord,
 };
 
 const accountTypes = [
   {
     value: "seeker",
     label: "Seeker Account",
-    description: "For Those Looking For Real-Estate Services",
+    description: "For those browsing and searching for properties",
   },
   {
-    value: "broker",
-    label: "Agent/Broker Account",
-    description: "For Those Offering Real-Estate Services",
+    value: "agent",
+    label: "Agent Package",
+    description:
+      "For realtors, lawyers, surveyors, landlords and individual listers — free to join",
   },
   {
     value: "company",
-    label: "Company Account",
-    description: "For Real-Estate Agencies and Companies",
-  },
-  {
-    value: "developer",
-    label: "Developer Account",
-    description: "For Real-Estate Developers",
-  },
-  {
-    value: "landlord",
-    label: "Landlord Account",
-    description: "For Property Owners and Landlords",
+    label: "Partnership Package",
+    description:
+      "For CAC-registered real estate firms, developers and brokerages — featured placement",
   },
 ];
 
@@ -67,7 +57,6 @@ function RegisterForm() {
     agreeToTerms: false,
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +110,6 @@ function RegisterForm() {
       activeRole: role,
       viewerProfile: role === Role.Viewer ? { savedListingIds: [] } : undefined,
       agentProfile: undefined,
-      landlordProfile: undefined,
       companyId: undefined,
       companyRole: undefined,
       createdAt: now,
@@ -133,6 +121,7 @@ function RegisterForm() {
     } catch (error) {
       console.log(error);
     }
+
     if (role === Role.Viewer) {
       router.replace("/");
     } else {
@@ -164,7 +153,7 @@ function RegisterForm() {
 
       <FileUpload
         variant="avatar"
-        label="User Profile Picture (optional)"
+        label="Profile Picture (optional)"
         maxFiles={1}
         allowedTypes={["image/jpeg", "image/png", "image/webp"]}
         className="mb-4"
@@ -183,7 +172,6 @@ function RegisterForm() {
           icon={FiUser}
           required
         />
-
         <Field
           label="Last Name"
           name="lastName"
@@ -226,9 +214,7 @@ function RegisterForm() {
         value={formData.phone}
         onChange={(phone) => {
           setFormData((prev) => ({ ...prev, phone }));
-          if (errors.phone) {
-            setErrors((prev) => ({ ...prev, phone: "" }));
-          }
+          if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
         }}
         error={errors.phone}
         required
@@ -247,7 +233,6 @@ function RegisterForm() {
           icon={FiLock}
           required
         />
-
         <Field
           label="Repeat Password"
           name="repeatPassword"
@@ -285,7 +270,6 @@ function RegisterForm() {
           checked={formData.agreeToTerms}
           onChange={handleInputChange}
         />
-
         {errors.agreeToTerms && (
           <p className="text-red-500 text-xs mt-1.5 ml-8">
             {errors.agreeToTerms}

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { Role } from "@/types/user";
-import { properties } from "@/data/properties";
 import { dummyUsers } from "@/data/users";
 import AgentClient from "../_components/AgentClient";
 
@@ -16,9 +15,5 @@ export default async function AgentPage({
 
   if (!agent) notFound();
 
-  const listings = properties.filter(
-    (p) => p.ownerId._id === id && p.ownerType === "agent",
-  );
-
-  return <AgentClient agent={agent} listings={listings} />;
+  return <AgentClient agent={agent} id={id} />;
 }

@@ -117,19 +117,6 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           icon: <LuHistory />,
           category: "Management",
         },
-        ...commonAccount,
-      ];
-
-    case Role.Landlord:
-      return [
-        ...commonExplore,
-        { href: "/dashboard", label: "Dashboard", icon: <LuLayoutDashboard /> },
-        {
-          href: "/my-listings",
-          label: "My Properties",
-          icon: <LuCirclePlus />,
-          category: "Management",
-        },
         {
           href: "/analytics",
           label: "Analytics",
@@ -139,12 +126,11 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
         ...commonAccount,
       ];
 
-    case Role.Developer:
     case Role.Company:
       return [
         ...commonExplore,
         {
-          href: "/dashboard/company",
+          href: "/company/dashboard",
           label: "Company Dashboard",
           icon: <LuLayoutDashboard />,
         },

@@ -8,11 +8,13 @@ interface BrandmarkProps {
   direction?: "row" | "col";
   logoOnly?: boolean;
   taglineOnly?: boolean;
+  alignStart?: boolean;
   logoSize?: number;
   tagline?: React.ReactNode;
   className?: string;
   href?: string;
   linkProps?: Omit<LinkProps, "href">;
+  description?: string;
   onClick?: () => void;
 }
 
@@ -39,8 +41,10 @@ export const Brandmark = forwardRef<
       logoSize = 40,
       tagline = <DefaultTagline />,
       className,
-      href,
+      href = "/",
       linkProps,
+      description,
+      alignStart,
       onClick,
     },
     ref,
@@ -52,8 +56,9 @@ export const Brandmark = forwardRef<
     const content = (
       <div
         className={cn(
-          "inline-flex items-center gap-2 group",
+          "inline-flex gap-2 group",
           isRow ? "flex-row" : "flex-col",
+          alignStart ? "items-start" : "items-center",
           className,
         )}
       >
@@ -71,18 +76,25 @@ export const Brandmark = forwardRef<
             />
           </div>
         )}
-
-        {showTagline && (
-          <span
-            className={cn(
-              "font-bold whitespace-nowrap transition-colors",
-              isRow ? "text-md" : "text-base text-center",
-              !showLogo && (isRow ? "ml-0" : "mt-0"),
-            )}
-          >
-            {tagline}
-          </span>
-        )}
+        <div>
+          {showTagline && (
+            <p
+              className={cn(
+                "font-bold whitespace-nowrap transition-colors",
+                isRow ? "text-md" : "text-base",
+                !alignStart && "text-center",
+                !showLogo && (isRow ? "ml-0" : "mt-0"),
+              )}
+            >
+              {tagline}
+            </p>
+          )}
+          {description && (
+            <span className={cn("text-sm", !alignStart && "text-center")}>
+              {description}
+            </span>
+          )}
+        </div>
       </div>
     );
 
