@@ -1,3 +1,4 @@
+
 import { Metadata } from "next";
 import HeroSection from "./components/HeroSection";
 import FeaturedCoursesCarousel from "./components/FeaturedCoursesCarousel";
@@ -10,7 +11,6 @@ import { LuFolderOpen, LuFolders, LuGraduationCap } from "react-icons/lu";
 import { BreadcrumbItem } from "@/components/common/BreadCrumbs";
 import { MOCK_COURSES, MOCK_PODCASTS } from "@/data/courses";
 
-// 1. Static SEO Metadata API (Generates Head tags on the Server)
 export const metadata: Metadata = {
   title: "Online Courses & Professional Certifications | Academy",
   description:
@@ -26,11 +26,11 @@ export const metadata: Metadata = {
     title: "Online Courses & Professional Certifications | Academy",
     description:
       "Browse our comprehensive catalog of expert-led courses, video tutorials, and industry podcasts.",
-    url: "https://yourwebsite.com/academy", // Replace with your actual domain
+    url: "https://yourwebsite.com/academy",
     siteName: "Your Brand Academy",
     images: [
       {
-        url: "https://yourwebsite.com/og-academy.jpg", // Replace with your standard social share image
+        url: "https://yourwebsite.com/og-academy.jpg",
         width: 1200,
         height: 630,
         alt: "Academy Learning Platform",
@@ -51,7 +51,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Kept your helper function intact for external layout/component use
 export const getBreadcrumbItems = (pathname: string, courseTitle?: string) => {
   const items: BreadcrumbItem[] = [
     { label: "Academy", href: "/academy", icon: <LuGraduationCap /> },
