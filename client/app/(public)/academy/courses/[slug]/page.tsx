@@ -17,7 +17,7 @@ import { useState } from "react";
 import { MOCK_COURSES } from "@/data/courses";
 import { Course, CourseContentBlock } from "@/types/course";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
-import { getBreadcrumbItems } from "../../page";
+import { getBreadcrumbItems } from "../../AcademyPageClient";
 
 const typeIcons: Record<string, React.ReactNode> = {
   video: <LuVideo className="h-4 w-4" />,
