@@ -9,16 +9,7 @@ import LearningStatsSection from "./components/LearningStatsSection";
 import CtaSection from "./components/CtaSection";
 import { LuFolderOpen, LuFolders, LuGraduationCap } from "react-icons/lu";
 import { BreadcrumbItem } from "@/components/common/BreadCrumbs";
-
-interface Course {
-  title?: string;
-  description?: string;
-  [key: string]: unknown;
-}
-
-interface Podcast {
-  [key: string]: unknown;
-}
+import { Course, Podcast } from "@/types";
 
 interface AcademyPageClientProps {
   courses: Course[];
