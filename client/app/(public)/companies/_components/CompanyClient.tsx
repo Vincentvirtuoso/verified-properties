@@ -12,7 +12,7 @@ import { imageLoader } from "@/utils/helpers";
 import { RoleBadge, StatCard } from "@/components/ui";
 import { Role } from "@/types";
 import { LuClock, LuWallet, LuUsers, LuTrendingUp, LuBuilding } from "react-icons/lu";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/Badge";
 
 export default function CompanyPage({
   company,
