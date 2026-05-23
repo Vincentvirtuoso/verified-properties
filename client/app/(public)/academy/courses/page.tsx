@@ -12,8 +12,8 @@ import {
 } from "react-icons/lu";
 import { MOCK_COURSES } from "@/data/courses";
 import CourseCard from "../components/CourseCard";
-import { getBreadcrumbItems } from "../page";
-import { usePathname } from "next/dist/client/components/navigation";
+import { getBreadcrumbItems } from "../AcademyPageClient";
+import { usePathname } from "next/navigation";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 
 const TYPE_OPTIONS = [
