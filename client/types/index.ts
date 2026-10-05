@@ -23,3 +23,4 @@ export * from "./company";
 export * from "./jv-property";
 export * from "./course";
 export * from "./podcast";
+export * from "./enquiry";

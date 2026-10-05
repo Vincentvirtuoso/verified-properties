@@ -28,6 +28,8 @@ import {
 } from "@/hooks/useProperty";
 import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";
 import { Badge } from "@/components/ui";
+import { NoResults } from "@/components/propertiesList/NoResults";
+import { motion } from "framer-motion";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -107,7 +109,6 @@ export default function PropertiesPage() {
     }
   }, [debouncedSearchQuery]);
 
-  // Update URL search param
   const updateSearchParams = useCallback(
     (query: string) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -146,7 +147,6 @@ export default function PropertiesPage() {
     setSearchSuggestions([]);
   }, [updateSearchParams]);
 
-  // Count active filters
   useEffect(() => {
     let count = 0;
     if (
@@ -176,7 +176,6 @@ export default function PropertiesPage() {
     searchQuery,
   ]);
 
-  // Filter and sort properties
   const { filteredProperties, sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
       if (debouncedSearchQuery) {
@@ -280,7 +279,6 @@ export default function PropertiesPage() {
     return { filteredProperties: filtered, sortedProperties: sorted };
   }, [currentType, sortBy, filters, debouncedSearchQuery]);
 
-  // Tab switching (type filter)
   const handleTypeChange = (type: FilterType) => {
     const params = new URLSearchParams(searchParams.toString());
     startTransition(() => {
@@ -323,7 +321,6 @@ export default function PropertiesPage() {
     [DEFAULT_FILTERS, clearSearch],
   );
 
-  // Highlight matched text in search suggestions
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
     const parts = text.split(new RegExp(`(${query})`, "gi"));
@@ -605,33 +602,29 @@ export default function PropertiesPage() {
               </div>
             ) : (
               <>
-                <div
+                <motion.div
                   id="property-list"
+                  layout
                   className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
                 >
-                  {sortedProperties.map((property) => (
-                    <PropertyCard key={property._id} {...property} />
+                  {sortedProperties.map((property, index) => (
+                    <motion.div
+                      key={property.slug}
+                      layout
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: Math.min(index * 0.04, 0.2),
+                      }}
+                    >
+                      <PropertyCard {...property} isSaved />
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
 
                 {sortedProperties.length === 0 && (
-                  <div className="text-center py-16 bg-card rounded-2xl">
-                    <div className="text-6xl mb-6">🔍</div>
-                    <h3 className="text-2xl font-semibold text-foreground">
-                      No properties found
-                    </h3>
-                    <p className="text-muted-foreground mt-3 mb-6">
-                      {searchQuery
-                        ? `No results for "${searchQuery}". Try different keywords or adjust your filters.`
-                        : "Try adjusting your filters or check back later."}
-                    </p>
-                    <button
-                      onClick={clearAllFilters}
-                      className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  </div>
+                  <NoResults search={searchQuery} onClear={clearAllFilters} />
                 )}
               </>
             )}
@@ -657,7 +650,6 @@ export default function PropertiesPage() {
   );
 }
 
-// Reusable FilterTag – uses improved Badge component
 function FilterTag({
   label,
   onRemove,
@@ -679,7 +671,6 @@ function FilterTag({
   );
 }
 
-// Skeleton unchanged
 function PropertyCardSkeleton() {
   return (
     <div className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border animate-pulse">

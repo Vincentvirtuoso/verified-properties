@@ -28,8 +28,10 @@ import { useMemo, useState } from "react";
 import { imageLoader } from "@/utils/helpers";
 import { Badge } from "../ui";
 import RoleIcon from "../ui/RoleIcon";
-import { BsBuildingAdd, BsBuildings } from "react-icons/bs";
+import { BsBuildingAdd } from "react-icons/bs";
 import { getNavLinks } from "./Navbar";
+import { ProfileModal } from "@/components/profile/ProfileModal";
+import { Avatar } from "../ui/Avatar";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -52,18 +54,18 @@ const ProfileMenu = ({
   const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
   const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
   const [isAddRoleDropdownOpen, setIsAddRoleDropdownOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   const [userImageSrc, setUserImageSrc] = useState(
     user?.avatar || "/placeholder_avatar.png",
   );
 
-  // Role‑based flags (aligned with user.ts)
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
   const isCompanyUser = user.activeRole === Role.Company;
   const hasAgentRole = user.roles.includes(Role.Agent);
   const isAgentActive = user.activeRole === Role.Agent;
 
-  const switchableRoles = user.roles.filter((role) => role !== user.activeRole);
 
   const canAddAgent = !user.roles.includes(Role.Agent);
   const addableRoles = canAddAgent ? [Role.Agent] : [];
@@ -71,15 +73,10 @@ const ProfileMenu = ({
   const navLinks = [
     {
       label: isCompanyUser ? "Company Dashboard" : "Dashboard",
-      href: user.activeRole === Role.Viewer ? "/profile" : "/dashboard",
+      href: isCompanyUser ? "/company/dashboard" : "/dashboard",
       icon: LuLayoutDashboard,
     },
   ];
-  const activeNavLinks = useMemo(
-    () => getNavLinks(user?.activeRole, isAuthenticated),
-    [user?.activeRole, isAuthenticated],
-  );
-  navLinks.push(...activeNavLinks);
   const dashboardNavLink = navLinks[0];
 
   const contextActions = [];
@@ -115,23 +112,14 @@ const ProfileMenu = ({
 
   return (
     <div className="flex items-center gap-1.5">
-      <Link
-        href="/profile"
-        title="Your profile"
-        className="relative w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs hover:bg-primary/20 hover:scale-105 transition-all cursor-pointer overflow-hidden shrink-0"
+      <Button
+        variant="outline"
+        className="relative w-9 h-9 p-0 rounded-full overflow-hidden shrink-0 border-primary border-2 hover:scale-105 transition-all flex items-center justify-center text-xs"
+        onClick={() => setIsProfileOpen(true)}
+        title="Your Profile"
       >
-        <Image
-          src={userImageSrc}
-          alt={user.name}
-          className="object-cover"
-          width={100}
-          height={100}
-          sizes="50px"
-          loader={imageLoader}
-          onError={() => setUserImageSrc("/placeholder_avatar.png")}
-          priority
-        />
-      </Link>
+        <Avatar src={user.avatar} name={user.name} size={36} priority/>
+      </Button>
 
       <Dropdown
         onOpenChange={(open) => setIsMainDropdownOpen(open)}
@@ -161,6 +149,13 @@ const ProfileMenu = ({
           <DropdownSeparator />
 
           <div className="overflow-hidden max-h-[35vh] overflow-y-auto">
+            <DropdownItem
+              className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+              onClick={() => setIsProfileOpen(true)}
+              icon={<LuUserRound className="w-4 h-4 text-primary/80" />}
+            >
+              <span className="text-xs">View Profile</span>
+            </DropdownItem>
             <div className="hidden lg:block">
               <Link href={dashboardNavLink.href}>
                 <DropdownItem
@@ -204,48 +199,7 @@ const ProfileMenu = ({
             )}
           </div>
 
-          {/* SWITCH ROLE (if there are other roles to switch to) */}
-          {hasAgentRole && switchableRoles.length > 0 && (
-            <>
-              <DropdownSeparator />
-              <Dropdown
-                className="w-full"
-                placement="bottom-end"
-                offset={-3}
-                onOpenChange={(open) => setIsSubDropdownOpen(open)}
-              >
-                <DropdownTrigger asChild>
-                  <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
-                    <span>
-                      <LuRepeat className="inline-flex mr-2 w-4 h-4 text-primary" />
-                      <span className="group-hover:text-primary">
-                        Switch Role to
-                      </span>
-                    </span>
-                    {isSubDropdownOpen ? (
-                      <LuChevronUp size={20} />
-                    ) : (
-                      <LuChevronDown size={20} />
-                    )}
-                  </button>
-                </DropdownTrigger>
-                <DropdownContent className="w-35 mr-1 bg-background">
-                  {switchableRoles.map((role) => (
-                    <DropdownItem
-                      className="text-xs capitalize py-1"
-                      icon={<RoleIcon role={role} />}
-                      key={role}
-                      onClick={() => onSwitch(role, user.activeRole)}
-                    >
-                      {role}
-                    </DropdownItem>
-                  ))}
-                </DropdownContent>
-              </Dropdown>
-            </>
-          )}
 
-          {/* ADD ROLE (only Agent can be added) */}
           {addableRoles.length > 0 && (
             <>
               <DropdownSeparator />
@@ -306,6 +260,10 @@ const ProfileMenu = ({
           )}
         </DropdownContent>
       </Dropdown>
+      <ProfileModal
+        open={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </div>
   );
 };

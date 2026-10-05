@@ -160,6 +160,11 @@ export type Property<Populated extends boolean = false> = {
 
 export type PopulatedProperty = Property<true>;
 
+export type SavedProperty = PopulatedProperty & {
+  /** When the user saved this listing — powers "Recently saved" sorting. */
+  savedAt: string;
+};
+
 export const documentTypeLabels: Record<PropertyDocumentType, string> = {
   certificateOfOccupancy: "Certificate of Occupancy (C of O)",
   governorsConsent: "Governor's Consent",

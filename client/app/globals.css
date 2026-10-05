@@ -31,8 +31,6 @@
   --sidebar-active-bg: var(--primary-50);
   --sidebar-active-foreground: var(--primary-700);
   --sidebar-hover-bg: var(--color-neutral-100);
-  --sidebar-width-expanded: 200px;
-  --sidebar-width-collapsed: 72px;
 
   --navbar-bg: #ffffff;
   --navbar-foreground: #171717;
@@ -198,6 +196,11 @@
       opacity: 1;
     }
   }
+}
+
+html {
+  scrollbar-color: var(--primary) transparent;
+  scrollbar-width: thin;
 }
 
 body {
@@ -383,20 +386,6 @@ button {
 }
 .swiper-slide-active span {
   animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-400);
 }
 
 input:-webkit-autofill {

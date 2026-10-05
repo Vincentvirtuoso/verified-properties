@@ -68,7 +68,7 @@ export function Modal({
             exit={{ opacity: 0 }}
           >
             <div
-              className="absolute right-4 top-4 w-15 h-15 hover:text-muted flex justify-center items-center bg-inverse border border-border rounded-full text-2xl"
+              className="absolute right-4 top-4 w-12 h-12 hover:text-muted flex justify-center items-center bg-inverse border border-border rounded-full text-2xl z-1"
               onClick={onClose}
               style={{ top: `calc(${bannerHeight + 16}px)` }}
             >

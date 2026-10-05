@@ -79,7 +79,7 @@ export default function BecomeAgentLandlordOnboarding() {
     ? "/dashboard"
     : user?.activeRole === Role.Viewer
       ? `/add-role?from=${user?.activeRole}&to=${Role.Agent}`
-      : "/profile";
+      : "/dashboard";
 
   const router = useRouter();
   if (

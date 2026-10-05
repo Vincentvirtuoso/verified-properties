@@ -8,18 +8,17 @@ import {
   LuX,
   LuHouse,
   LuSearch,
-  LuUser,
   LuSettings,
   LuLogOut,
   LuChevronRight,
   LuChevronLeft,
   LuLayoutDashboard,
-  LuHistory,
-  LuHeart,
   LuCircleHelp,
   LuCirclePlus,
   LuUsers,
   LuBriefcase,
+  LuMessagesSquare,
+  LuBookmark,
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,11 +26,18 @@ import { Role } from "@/types";
 import { Brandmark } from "./BrandMark";
 import { FiBarChart2 } from "react-icons/fi";
 
+type SidebarSlot =
+  | { kind: "count"; value: number; max?: number }
+  | { kind: "label"; value: string; tone?: "info" | "warning" | "success" };
+
 export interface SidebarLink {
   href: string;
   label: string;
   icon: React.ReactNode;
   category?: string;
+  slot?: SidebarSlot;
+  isActive?: (pathname: string) => boolean;
+  disabled?: boolean;
 }
 
 function getRoleLinks(role: Role | undefined): SidebarLink[] {
@@ -44,18 +50,6 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
   }
 
   const commonAccount: SidebarLink[] = [
-    {
-      href: "/profile",
-      label: "Profile",
-      icon: <LuUser />,
-      category: "Account",
-    },
-    {
-      href: "/settings",
-      label: "Settings",
-      icon: <LuSettings />,
-      category: "Account",
-    },
     {
       href: "/support",
       label: "Support",
@@ -74,16 +68,18 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       return [
         ...commonExplore,
         {
-          href: "/saved-properties",
-          label: "Saved Homes",
-          icon: <LuHeart />,
+          href: "/enquiries",
+          label: "Enquiries",
+          icon: <LuMessagesSquare />,
           category: "Management",
+          slot: { kind: "count", value: 2, max: 9 },
         },
         {
-          href: "/history",
-          label: "Recent Views",
-          icon: <LuHistory />,
+          href: "/saved-properties",
+          label: "Saved Homes",
+          icon: <LuBookmark />,
           category: "Management",
+          slot: { kind: "count", value: 7, max: 99 },
         },
         ...commonAccount,
       ];
@@ -91,23 +87,29 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     case Role.Agent:
       return [
         ...commonExplore,
-        { href: "/dashboard", label: "Dashboard", icon: <LuLayoutDashboard /> },
+        {
+          href: "/dashboard",
+          label: "Dashboard",
+          icon: <LuLayoutDashboard />,
+        },
+        {
+          href: "/enquiries",
+          label: "Enquiries",
+          icon: <LuMessagesSquare />,
+          category: "Management",
+          slot: { kind: "count", value: 12, max: 99 },
+        },
         {
           href: "/my-listings",
           label: "My Listings",
           icon: <LuCirclePlus />,
           category: "Management",
+          slot: { kind: "count", value: 4, max: 99 },
         },
         {
           href: "/saved-properties",
           label: "Saved Homes",
-          icon: <LuHeart />,
-          category: "Management",
-        },
-        {
-          href: "/history",
-          label: "Recent Views",
-          icon: <LuHistory />,
+          icon: <LuBookmark />,
           category: "Management",
         },
         {
@@ -115,6 +117,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Analytics",
           icon: <FiBarChart2 />,
           category: "Management",
+          slot: { kind: "label", value: "New", tone: "info" },
         },
         ...commonAccount,
       ];
@@ -128,16 +131,25 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           icon: <LuLayoutDashboard />,
         },
         {
+          href: "/company/enquiries",
+          label: "Enquiries",
+          icon: <LuMessagesSquare />,
+          category: "Management",
+          slot: { kind: "count", value: 23, max: 99 },
+        },
+        {
           href: "/company/listings",
           label: "All Listings",
           icon: <LuCirclePlus />,
           category: "Management",
+          slot: { kind: "count", value: 41, max: 99 },
         },
         {
           href: "/company/team",
           label: "Team",
           icon: <LuUsers />,
           category: "Management",
+          slot: { kind: "count", value: 8, max: 99 },
         },
         {
           href: "/company/analytics",
@@ -150,6 +162,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Open Roles",
           icon: <LuBriefcase />,
           category: "Management",
+          slot: { kind: "label", value: "3", tone: "warning" },
         },
         ...commonAccount,
       ];
@@ -159,45 +172,153 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
   }
 }
 
-// UI sub‑components
-const NavItem = ({
-  link,
-  isActive,
+function formatCount(slot: Extract<SidebarSlot, { kind: "count" }>) {
+  const { value, max } = slot;
+  if (max != null && value > max) return `${max}+`;
+  return String(value);
+}
+
+const labelToneClasses: Record<
+  NonNullable<Extract<SidebarSlot, { kind: "label" }>["tone"]>,
+  string
+> = {
+  info: "bg-info/10 text-info",
+  warning: "bg-warning/10 text-warning",
+  success: "bg-success/10 text-success",
+};
+
+function SlotBadge({
+  slot,
+  active,
   collapsed,
-  onClose,
 }: {
+  slot: SidebarSlot;
+  active: boolean;
+  collapsed?: boolean;
+}) {
+  if (collapsed) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`absolute right-2 top-2 h-1.5 w-1.5 rounded-full ${
+          active ? "bg-primary-foreground" : "bg-primary"
+        }`}
+      />
+    );
+  }
+
+  const baseClasses =
+    "ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums";
+
+  if (slot.kind === "count") {
+    return (
+      <span
+        className={`${baseClasses} ${
+          active
+            ? "bg-primary-foreground/20 text-primary-foreground"
+            : "bg-primary/10 text-primary"
+        }`}
+      >
+        {formatCount(slot)}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`${baseClasses} ${
+        active
+          ? "bg-primary-foreground/20 text-primary-foreground"
+          : labelToneClasses[slot.tone ?? "info"]
+      }`}
+    >
+      {slot.value}
+    </span>
+  );
+}
+
+interface NavItemProps {
   link: SidebarLink;
-  isActive: boolean;
+  active: boolean;
   collapsed?: boolean;
   onClose?: () => void;
-}) => (
-  <Link
-    href={link.href}
-    onClick={onClose}
-    title={collapsed ? link.label : undefined}
-    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-      isActive
+}
+
+const NavItem = ({ link, active, collapsed, onClose }: NavItemProps) => {
+  const { href, label, icon, slot, disabled } = link;
+
+  const sharedClasses = `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+    collapsed ? "justify-center" : "justify-start"
+  } ${
+    disabled
+      ? "pointer-events-none opacity-40"
+      : active
         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
         : "text-sidebar-foreground hover:bg-inverse"
-    } ${collapsed ? "justify-center" : "justify-start"}`}
-  >
-    <span
-      className={`text-xl shrink-0 ${!isActive && "text-muted-foreground group-hover:text-primary"}`}
+  }`;
+
+  const inner = (
+    <>
+      <span
+        className={`shrink-0 text-xl ${
+          !active &&
+          !disabled &&
+          "text-muted-foreground group-hover:text-primary"
+        }`}
+      >
+        {icon}
+      </span>
+
+      {!collapsed && <span className="flex-1 truncate">{label}</span>}
+
+      {slot && <SlotBadge slot={slot} active={active} collapsed={collapsed} />}
+
+      {active && !collapsed && (
+        <motion.div
+          layoutId="activeSide"
+          className="absolute left-0 h-5 w-1 rounded-r-full bg-primary-foreground"
+        />
+      )}
+
+      {!active && !disabled && !collapsed && !slot && (
+        <LuChevronRight className="h-4 w-4 -translate-x-2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+      )}
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        title={collapsed ? label : undefined}
+        className={sharedClasses}
+      >
+        {inner}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      title={collapsed ? label : undefined}
+      aria-current={active ? "page" : undefined}
+      className={sharedClasses}
     >
-      {link.icon}
-    </span>
-    {!collapsed && <span className="flex-1 truncate">{link.label}</span>}
-    {isActive && !collapsed && (
-      <motion.div
-        layoutId="activeSide"
-        className="absolute left-0 w-1 h-5 bg-primary-foreground rounded-r-full"
-      />
-    )}
-    {!isActive && !collapsed && (
-      <LuChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-muted-foreground" />
-    )}
-  </Link>
-);
+      {inner}
+    </Link>
+  );
+};
+
+interface SidebarContentProps {
+  links: SidebarLink[];
+  pathname: string;
+  collapsed?: boolean;
+  onClose?: () => void;
+  onLogout: () => void;
+  userRole?: Role | undefined;
+}
 
 const SidebarContent = ({
   links,
@@ -205,14 +326,10 @@ const SidebarContent = ({
   collapsed,
   onClose,
   onLogout,
-}: {
-  links: SidebarLink[];
-  pathname: string;
-  collapsed?: boolean;
-  onClose?: () => void;
-  onLogout: () => void;
-}) => {
+  userRole,
+}: SidebarContentProps) => {
   const { bannerHeight } = useBannerHeightContext();
+
   const groupedLinks = useMemo(() => {
     return links.reduce(
       (acc, link) => {
@@ -225,41 +342,53 @@ const SidebarContent = ({
     );
   }, [links]);
 
+  const showLogout = userRole !== undefined;
+
   return (
-    <div className="flex flex-col h-full pr-px">
+    <div className="flex h-full flex-col pr-px">
       <nav
-        className="flex-1 overflow-y-auto px-3 space-y-6 custom-scrollbar"
+        className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-3"
         style={{ maxHeight: `calc(100vh - ${bannerHeight + 170}px)` }}
       >
         {Object.entries(groupedLinks).map(([category, items]) => (
           <div key={category} className="space-y-1">
             {!collapsed && (
-              <h4 className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
+              <h4 className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                 {category}
               </h4>
             )}
-            {items.map((link) => (
-              <NavItem
-                key={link.href}
-                link={link}
-                isActive={pathname === link.href}
-                collapsed={collapsed}
-                onClose={onClose}
-              />
-            ))}
+            {items.map((link) => {
+              const active = link.isActive
+                ? link.isActive(pathname)
+                : pathname === link.href;
+
+              return (
+                <NavItem
+                  key={link.href}
+                  link={link}
+                  active={active}
+                  collapsed={collapsed}
+                  onClose={onClose}
+                />
+              );
+            })}
           </div>
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-border">
-        <button
-          onClick={onLogout}
-          className={`flex items-center gap-3 w-full p-2.5 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors group ${collapsed ? "justify-center" : ""}`}
-        >
-          <LuLogOut className="w-5 h-5 shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </button>
-      </div>
+      {showLogout && (
+        <div className="mt-auto border-t border-border px-4 py-2">
+          <button
+            onClick={onLogout}
+            className={`group flex w-full items-center gap-3 rounded-xl p-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 ${
+              collapsed ? "justify-center" : ""
+            }`}
+          >
+            <LuLogOut className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Logout</span>}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -288,7 +417,6 @@ export const Sidebar = ({
   const { bannerHeight } = useBannerHeightContext();
   const { user, logout } = useAuth();
 
-  // Derive links based on active role, unless an external list is provided
   const activeLinks = useMemo(() => {
     if (externalLinks) return externalLinks;
     return getRoleLinks(user?.activeRole);
@@ -330,6 +458,7 @@ export const Sidebar = ({
         </div>
 
         <SidebarContent
+          userRole={user?.activeRole}
           links={activeLinks}
           pathname={pathname}
           collapsed={collapsed}
@@ -374,6 +503,7 @@ export const Sidebar = ({
               pathname={pathname}
               onClose={onClose}
               onLogout={handleLogout}
+              userRole={user?.activeRole}
             />
           </motion.aside>
         </>

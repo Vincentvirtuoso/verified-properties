@@ -11,6 +11,7 @@ export interface CompanyFeatures {
   prioritySupport: boolean;
   dedicatedAccountManager: boolean;
   whiteLabel: boolean;
+  tier: "standard" | "pro";
 }
 
 export interface CompanyMember {

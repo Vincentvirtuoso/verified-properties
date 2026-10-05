@@ -14,6 +14,7 @@ import { PopulatedProperty, Stats, Testimonial } from "@/types";
 import StatsAndPartners from "@/components/home/StatsAndPatners";
 import QuickActions from "@/components/home/QuickActions";
 import { FeaturedProperties } from "@/components/home/FeaturedProperties";
+import { AICallingSpotlight } from "@/components/home/AICallingSpotlight";
 
 export default function HomePage() {
   const router = useRouter();
@@ -25,13 +26,6 @@ export default function HomePage() {
   const [propertyError, setPropertyError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [isSubscribing, setIsSubscribing] = useState(false);
-  const [subscribeStatus, setSubscribeStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   useEffect(() => {
@@ -60,20 +54,9 @@ export default function HomePage() {
       }
     };
 
-    const loadTestimonials = async () => {
-      try {
-        const data = await fetchTestimonials();
-        setTestimonials(data);
-      } catch (err) {
-        console.error("Failed to load testimonials", err);
-      } finally {
-        setIsLoadingTestimonials(false);
-      }
-    };
 
     loadFeatured();
     loadStats();
-    loadTestimonials();
   }, []);
 
   useEffect(() => {
@@ -85,7 +68,7 @@ export default function HomePage() {
   }, []);
 
   const handleSearch = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (searchQuery.trim()) {
         router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
@@ -94,31 +77,6 @@ export default function HomePage() {
     [searchQuery, router],
   );
 
-  const handleSubscribe = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newsletterEmail)) {
-        setSubscribeStatus("error");
-        return;
-      }
-
-      setIsSubscribing(true);
-      setSubscribeStatus("idle");
-
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setSubscribeStatus("success");
-        setNewsletterEmail("");
-        setTimeout(() => setSubscribeStatus("idle"), 3000);
-      } catch {
-        setSubscribeStatus("error");
-      } finally {
-        setIsSubscribing(false);
-      }
-    },
-    [newsletterEmail],
-  );
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -149,6 +107,7 @@ export default function HomePage() {
       </div>
 
       <QuickActions />
+      <AICallingSpotlight />
 
       <StatsAndPartners stats={stats} isLoading={isLoadingStats} />
 
@@ -158,80 +117,6 @@ export default function HomePage() {
         isLoading={isLoadingProperties}
       />
 
-      {!isLoadingTestimonials && testimonials.length > 0 && (
-        <section className="py-16 bg-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <h2 className="text-3xl sm:text-4xl font-bold text-center text-foreground mb-10">
-              What Our Clients Say
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {testimonials.map((t) => (
-                <div
-                  key={t.id}
-                  className="bg-card rounded-xl p-6 text-center border border-border"
-                >
-                  <div className="flex justify-center mb-4 text-warning">
-                    {[...Array(t.rating)].map((_, i) => (
-                      <FaStar key={i} className="w-5 h-5" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground italic mb-4">
-                    &quot;{t.text}&quot;
-                  </p>
-                  <p className="font-semibold text-foreground">{t.author}</p>
-                  <p className="text-sm text-muted-foreground">{t.role}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="bg-card py-16 border-t border-border">
-        <div className="max-w-2xl mx-auto text-center px-4 sm:px-6">
-          <h3 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-primary to-warning bg-clip-text text-transparent">
-            Stay Updated
-          </h3>
-          <p className="mt-3 text-muted-foreground">
-            Subscribe to our newsletter for exclusive deals and new listings.
-          </p>
-
-          <form onSubmit={handleSubscribe} className="mt-8">
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className={`flex-1 px-6 py-4 rounded-2xl bg-background border transition-colors focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground ${
-                  subscribeStatus === "error"
-                    ? "border-destructive"
-                    : "border-border"
-                }`}
-                disabled={isSubscribing}
-              />
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubscribing || !newsletterEmail}
-              >
-                {isSubscribing ? "Subscribing..." : "Subscribe"}
-              </Button>
-            </div>
-
-            {subscribeStatus === "success" && (
-              <p className="mt-3 text-sm text-success animate-fade-in">
-                ✓ Successfully subscribed!
-              </p>
-            )}
-            {subscribeStatus === "error" && (
-              <p className="mt-3 text-sm text-destructive animate-fade-in">
-                Please enter a valid email address.
-              </p>
-            )}
-          </form>
-        </div>
-      </section>
 
       {showScrollButton && (
         <button

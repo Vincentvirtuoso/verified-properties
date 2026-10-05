@@ -13,6 +13,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: true,
       dedicatedAccountManager: true,
       whiteLabel: false,
+      tier: "pro",
     },
     onboardingDocs: { cacCertificateUrl: "" },
     team: [
@@ -46,6 +47,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: false,
       dedicatedAccountManager: false,
       whiteLabel: false,
+      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -75,6 +77,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: true,
       dedicatedAccountManager: true,
       whiteLabel: true,
+      tier: "pro",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -115,7 +118,9 @@ export const mockCompanies: Company[] = [
       prioritySupport: false,
       dedicatedAccountManager: true,
       whiteLabel: false,
+      tier: "pro",
     },
+
     onboardingDocs: { cacCertificateUrl: "" },
 
     team: [
@@ -154,6 +159,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: false,
       dedicatedAccountManager: false,
       whiteLabel: false,
+      tier: "pro",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -182,6 +188,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: true,
       dedicatedAccountManager: false,
       whiteLabel: false,
+      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -215,6 +222,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: false,
       dedicatedAccountManager: false,
       whiteLabel: false,
+      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
     team: [

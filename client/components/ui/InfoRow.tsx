@@ -25,11 +25,11 @@ export type InfoRowProps = {
 };
 
 const badgeVariantClasses: Record<InfoRowBadgeVariant, string> = {
-  default: "bg-gray-50 text-gray-700 ring-gray-600/20",
-  success: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-  warning: "bg-amber-50 text-amber-800 ring-amber-600/20",
-  error: "bg-rose-50 text-rose-700 ring-rose-600/10",
-  info: "bg-blue-50 text-blue-700 ring-blue-600/20",
+  default: "bg-neutral-500 text-secondary-foreground ring-border",
+  success: "bg-success/10 text-success ring-success/20 ",
+  warning: "bg-warning/10 text-warning ring-warning/20 ",
+  error: "bg-destructive/10 text-destructive ring-destructive/20 ",
+  info: "bg-info/10 text-info ring-info/20 ",
 };
 
 export function InfoRow({

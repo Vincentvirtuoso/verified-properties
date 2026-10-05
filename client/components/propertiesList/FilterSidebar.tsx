@@ -1,7 +1,11 @@
 "use client";
+
 import { useEffect } from "react";
+import { FiSliders } from "react-icons/fi";
+
 import { AdvancedFilters } from "./AdvancedFilters";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
+
 import {
   PropertyCategory,
   PropertyDocument,
@@ -24,7 +28,9 @@ export const FilterSidebar = ({
   allDocuments,
 }: {
   filters: PropertyFilterState;
-  handleFilterChange: (newFilters: Partial<PropertyFilterState>) => void;
+  handleFilterChange: (
+    newFilters: Partial<PropertyFilterState>,
+  ) => void;
   locations: PropertyLocation[];
   propertyTypes: PropertyType[];
   priceRange: [number, number];
@@ -39,8 +45,11 @@ export const FilterSidebar = ({
   useEffect(() => {
     const updateStickyTop = () => {
       const header = document.querySelector("header");
-      const headerHeight = header?.getBoundingClientRect().height || 0;
+      const headerHeight =
+        header?.getBoundingClientRect().height || 0;
+
       const topOffset = headerHeight + bannerHeight;
+
       document.documentElement.style.setProperty(
         "--sticky-filter-top",
         `${topOffset}px`,
@@ -48,40 +57,61 @@ export const FilterSidebar = ({
     };
 
     updateStickyTop();
+
     window.addEventListener("resize", updateStickyTop);
-    window.addEventListener("scroll", updateStickyTop);
+
     return () => {
       window.removeEventListener("resize", updateStickyTop);
-      window.removeEventListener("scroll", updateStickyTop);
     };
-  }, []);
+  }, [bannerHeight]);
 
   return (
     <aside
-      className="hidden lg:block w-70 shrink-0"
-      aria-label="Filter sidebar"
+      className="hidden w-72 shrink-0 lg:block"
+      aria-label="Property filters"
     >
       <div
-        className="sticky p-4 pr-2 bg-card rounded-2xl border border-border overflow-hidden"
+        className="sticky overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
         style={{
-          top: `calc(var(--sticky-filter-top, 120px) + 25px)`,
-          maxHeight: `calc(100dvh - var(--sticky-filter-top, 120px) - 30px)`,
+          top: "calc(var(--sticky-filter-top, 120px) + 20px)",
+          maxHeight:
+            "calc(100dvh - var(--sticky-filter-top, 120px) - 40px)",
         }}
       >
-        <div className="flex items-center justify-between mb-5 border-b pb-3 border-border">
-          <h2 className="text-lg font-semibold text-foreground">Filters</h2>
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FiSliders size={15} />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Filters
+              </h2>
+
+              <p className="text-xs text-muted-foreground">
+                Refine your search
+              </p>
+            </div>
+          </div>
+
           <button
+            type="button"
             onClick={clearAllFilters}
-            className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-            aria-label="Clear all filters"
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+            aria-label="Clear all property filters"
           >
-            Clear All
+            Clear all
           </button>
         </div>
+
         <div
-          className="px-2 overflow-y-auto"
+          className="overflow-y-auto px-5 py-4 scrollbar-thin"
           style={{
-            height: `calc(100dvh - var(--sticky-filter-top, 120px) - 120px)`,
+            maxHeight:
+              "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
+            minHeight:
+              "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
           }}
         >
           <AdvancedFilters

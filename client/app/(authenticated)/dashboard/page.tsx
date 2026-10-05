@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, PopulatedUser, PopulatedProperty } from "@/types";
@@ -28,6 +28,7 @@ import {
   BsBuildingFillGear,
 } from "react-icons/bs";
 import { cn } from "@/lib/utils";
+import { ProfileModal } from "@/components/profile/ProfileModal";
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   const recommended = properties.slice(0, 2);
@@ -66,7 +67,13 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   );
 };
 
-const AgentDashboard = ({ user }: { user: PopulatedUser }) => {
+const AgentDashboard = ({
+  user,
+  setProfileOpen,
+}: {
+  user: PopulatedUser;
+  setProfileOpen: (isOpen: boolean) => void;
+}) => {
   const agentProfile = user.agentProfile;
   const subRole = agentProfile?.subRole;
 
@@ -151,7 +158,7 @@ const AgentDashboard = ({ user }: { user: PopulatedUser }) => {
 
   return (
     <div className="space-y-8">
-      <UserHeaderCard user={user} variant="dashboard" />
+      <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
@@ -304,6 +311,7 @@ function RecentListings({
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -324,7 +332,7 @@ export default function DashboardPage() {
       case Role.Viewer:
         return <ViewerDashboard user={user} />;
       case Role.Agent:
-        return <AgentDashboard user={user} />;
+        return <AgentDashboard user={user} setProfileOpen={setProfileOpen} />;
       case Role.Company:
         return null;
       default:
@@ -339,6 +347,8 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {renderDashboard()}
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
 import { properties } from "@/data/properties";
+import { dummySavedProperties } from "@/data/saved-properties";
 import {
   ListingPurpose,
   PropertyCategory,
   PropertyDocument,
   PropertyFeature,
   PropertyFilterState,
+  SavedProperty,
 } from "@/types";
 
 export type FilterType = "all" | "deals" | ListingPurpose;

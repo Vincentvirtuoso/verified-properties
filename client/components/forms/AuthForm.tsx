@@ -41,8 +41,7 @@ export function AuthForm({
         <div className="text-center mb-10">
           <Brandmark
             logoSize={50}
-            href={undefined}
-            direction="col"
+            href={null}
             className="mb-4"
           />
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">

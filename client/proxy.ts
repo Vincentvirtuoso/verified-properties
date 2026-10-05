@@ -11,7 +11,6 @@ export function proxy(request: NextRequest) {
     "/dashboard",
     "/company/dashboard",
     "/list-property",
-    "/profile",
     "/complete-registration",
     "/welcome",
     "/add-role",
@@ -53,7 +52,6 @@ export const config = {
     "/complete-registration/:path*",
     "/welcome/:path*",
     "/list-property/:path*",
-    "/profile/:path*",
 
     "/login/:path*",
     "/register/:path*",
@@ -61,3 +59,4 @@ export const config = {
     "/add-role/:path*",
   ],
 };
+

@@ -39,11 +39,12 @@ export function PropertyCard({
   ownerType,
   ownerId,
   status,
-}: PopulatedProperty) {
+  isSaved = false,
+}: PopulatedProperty & { isSaved?: boolean }) {
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState(image || defaultImage);
   const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isSaved ?? false);
 
   const discountedPrice = useMemo(() => {
     if (discount?.percentage)
@@ -336,21 +337,21 @@ export function PropertyCard({
             )}
 
             <div className="min-w-0 flex-1">
-              <button
-                onClick={handleOwnerClick}
-                className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left w-full"
-              >
-                {ownerName}
-              </button>
               <div className="flex items-center gap-1 mt-0.5">
-                {isVerified && <VerifiedBadge />}
-                <Badge
-                  className="text-xs capitalize"
-                  variant={isCompany ? "premium" : "secondary"}
+                <button
+                  onClick={handleOwnerClick}
+                  className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left"
                 >
-                  {ownerType}
-                </Badge>
+                  {ownerName}
+                </button>
+                {isVerified && <VerifiedBadge />}
               </div>
+              <Badge
+                className="text-xs capitalize"
+                variant={isCompany ? "premium" : "secondary"}
+              >
+                {ownerType}
+              </Badge>
             </div>
           </div>
 

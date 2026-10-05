@@ -28,6 +28,8 @@ import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
+import UserHeaderCard from "@/components/cards/UserHeaderCard";
+import { ProfileModal } from "@/components/profile/ProfileModal";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,6 +47,7 @@ const itemVariants = {
 export default function CompanyDashboardPage() {
   const { user, companies } = useAuth();
   const [imageError, setImageError] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const companyId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
@@ -91,63 +94,7 @@ export default function CompanyDashboardPage() {
       animate="show"
       className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-6 lg:px-8"
     >
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="flex items-center gap-5">
-          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-primary bg-muted/20 shadow-sm">
-            {!imageError && company.logo ? (
-              <Image
-                src={company.logo}
-                alt={company.name}
-                fill
-                loader={imageLoader}
-                priority
-                onError={() => setImageError(true)}
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary text-2xl font-bold">
-                {company.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-              {company.name}
-            </h1>
-            <p className="text-sm text-muted">@{company.slug}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge
-                variant={company.type === "developer" ? "premium" : "info"}
-              >
-                {companyTypeLabels[company.type]}
-              </Badge>
-              {isVerified ? (
-                <VerifiedBadge size="md" showText={false} />
-              ) : (
-                <Badge
-                  variant={verificationVariant}
-                  className="text-[13px] px-4"
-                >
-                  {company.verificationStatus === "verified" && (
-                    <LuBadgeCheck className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {company.verificationStatus.charAt(0).toUpperCase() +
-                    company.verificationStatus.slice(1)}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm">
-            <LuSettings className="h-4 w-4" />
-            Settings
-          </Button>
-        </div>
-      </motion.div>
+      <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
 
       <motion.div
         variants={itemVariants}
@@ -342,6 +289,7 @@ export default function CompanyDashboardPage() {
           )}
         </motion.div>
       </div>
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </motion.div>
   );
 }

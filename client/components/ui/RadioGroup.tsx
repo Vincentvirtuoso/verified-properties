@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useId } from "react";
 import { LuCheck } from "react-icons/lu";
 
-interface RadioOption {
+export interface RadioOption {
   value: string;
   label: string;
   description?: string;

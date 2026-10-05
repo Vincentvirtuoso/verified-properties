@@ -48,7 +48,7 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 export default CountdownTimer;
 
 const TimeUnit = ({ val, label }: { val: number; label: string }) => (
-  <div className="flex flex-col items-center px-3 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-border/20 min-w-17.5">
+  <div className="flex flex-col items-center px-3 py-2 min-w-17.5">
     <span className="text-2xl md:text-3xl font-black text-white tabular-nums leading-none">
       {val.toString().padStart(2, "0")}
     </span>

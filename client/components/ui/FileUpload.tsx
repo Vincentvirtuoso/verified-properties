@@ -44,6 +44,7 @@ interface FileUploadProps {
   description?: string;
   className?: string;
   accept?: string;
+  currentImageUrl?: string;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -72,6 +73,7 @@ export default function FileUpload({
   description,
   className,
   accept,
+  currentImageUrl,
 }: FileUploadProps) {
   const [files, setFiles] = useState<FileWithMeta[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -273,6 +275,8 @@ export default function FileUpload({
   // ===== Avatar variant =====
   if (variant === "avatar") {
     const currentFile = files[0];
+    const displayUrl = currentFile?.previewUrl ?? currentImageUrl;
+
     return (
       <div className={cn("flex flex-col items-center gap-3", className)}>
         {label && (
@@ -303,6 +307,13 @@ export default function FileUpload({
               fill
               src={currentFile.previewUrl}
               alt="Avatar preview"
+              className="w-full h-full object-cover"
+            />
+          ) : displayUrl ? (
+            <Image
+              fill
+              src={displayUrl}
+              alt="Current avatar"
               className="w-full h-full object-cover"
             />
           ) : (

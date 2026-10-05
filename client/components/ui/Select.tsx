@@ -1,20 +1,22 @@
 import React from "react";
 import { FieldLabel } from "./FieldLabel";
 import { cn } from "@/lib/utils";
+import { LuChevronDown } from "react-icons/lu";
 
-interface SelectOption {
+export interface SelectOption {
   value: string;
   label: string;
 }
 
 export type SelectProps = {
-  label: string;
+  label?: string;
   options: SelectOption[];
   required?: boolean;
   className?: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  showPlaceholder?: boolean;
 };
 const Select = ({
   label,
@@ -23,13 +25,16 @@ const Select = ({
   className,
   error,
   onChange,
+  showPlaceholder = true,
 }: SelectProps) => {
   return (
     <div>
-      <FieldLabel htmlFor={label}>
-        {label}
-        {required && <span className="text-destructive ml-1">*</span>}
-      </FieldLabel>
+      {label && (
+        <FieldLabel htmlFor={label}>
+          {label}
+          {required && <span className="text-destructive ml-1">*</span>}
+        </FieldLabel>
+      )}
       <div className="relative" id={label}>
         <select
           aria-label={label}
@@ -40,26 +45,16 @@ const Select = ({
           onChange={(e) => onChange(e.target.value)}
           required={required}
         >
-          <option value="">Select {label}</option>
+          {showPlaceholder && label && <option value="">Select {label}</option>}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </select>
-        <svg
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+          <LuChevronDown className="h-4 w-4" />
+        </div>
       </div>
       {error && <p className="text-destructive text-xs mt-1.5">{error}</p>}
     </div>

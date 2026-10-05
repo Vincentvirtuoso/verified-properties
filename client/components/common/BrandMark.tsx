@@ -12,7 +12,7 @@ interface BrandmarkProps {
   logoSize?: number;
   tagline?: React.ReactNode;
   className?: string;
-  href?: string;
+  href?: string | null;
   linkProps?: Omit<LinkProps, "href">;
   description?: string;
   onClick?: () => void;

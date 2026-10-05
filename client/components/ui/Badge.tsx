@@ -1,7 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Role, AgentSubRole, agentSubRoleLabels } from "@/types";
+import {
+  Role,
+  AgentSubRole,
+  agentSubRoleLabels,
+  companyTypeLabels,
+  Company,
+} from "@/types";
 import { LuShield } from "react-icons/lu";
 
 export type BadgeVariant =
@@ -101,11 +107,13 @@ export function RoleBadge({ role }: { role: Role }) {
   );
 }
 
-export function LockedBadge() {
+export function LockedBadge({ company }: { company: Company }) {
   return (
-    <Badge variant="premium" className="shadow-sm">
-      <LuShield className="mr-1 h-3 w-3 text-warning" />
-      Institutional Account
+    <Badge
+      variant={company.type === "developer" ? "premium" : "info"}
+      className="shadow-sm"
+    >
+      {company.type ? companyTypeLabels[company.type] : "Institutional Account"}
     </Badge>
   );
 }

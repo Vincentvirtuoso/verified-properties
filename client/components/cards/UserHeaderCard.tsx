@@ -19,32 +19,28 @@ import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { Modal } from "@/components/ui/Modal";
 import { imageLoader } from "@/utils/helpers";
+import FileUpload from "../ui/FileUpload";
 
 interface UserHeaderCardProps {
   user: PopulatedUser;
-  variant?: "dashboard" | "profile";
   onUpdate?: (updatedData: any) => Promise<void>;
+  onProfileOpen: () => void;
 }
 
 const UserHeaderCard = ({
   user,
-  variant = "profile",
+  onProfileOpen,
   onUpdate,
 }: UserHeaderCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isProfileView = variant === "profile";
   const isCompany = user.activeRole === Role.Company;
   const isAgent = user.activeRole === Role.Agent;
   const hasCompany = !!user.companyId && typeof user.companyId !== "string";
 
   const company = hasCompany ? user.companyId : null;
-
-  const oppositeButton = isProfileView
-    ? { label: "View Dashboard", href: "/dashboard", icon: LuLayoutDashboard }
-    : { label: "View Profile", href: "/profile", icon: LuUserRound };
 
   const roleLabel =
     user.activeRole === "agent"
@@ -52,11 +48,8 @@ const UserHeaderCard = ({
       : user.activeRole === "company"
         ? user.companyRole || "Company"
         : "";
-  const greeting = isProfileView
-    ? `Your profile, ${user.name.split(" ")[0]}`
-    : `Welcome back, ${roleLabel ? roleLabel.charAt(0).toUpperCase() + roleLabel.slice(1) : ""} ${user.name.split(" ")[0]}!`;
 
-  const variantBadge = isProfileView ? "Profile View" : "Dashboard View";
+  const greeting = `Welcome back, ${roleLabel ? roleLabel.charAt(0).toUpperCase() + roleLabel.slice(1) : ""} ${user.name.split(" ")[0]}!`;
 
   // Profile fields
   const [name, setName] = useState(user.name);
@@ -104,35 +97,32 @@ const UserHeaderCard = ({
     setIsSaving(true);
     try {
       const updated = {} as any;
-      if (isProfileView) {
-        updated.name = name;
-        updated.phone = phone;
-        updated.whatsappNumber = whatsappNumber;
-        updated.avatar = avatar;
-      } else {
-        if (isAgent) {
-          updated.agentProfile = {
-            ...user.agentProfile,
-            licenseNumber,
-            barNumber,
-            surveyorRegNumber,
-            brokerage,
-          };
-        } else if (isCompany && company) {
-          updated.company = {
-            name: companyName,
-            slug: companySlug,
-            logo: companyLogo,
-            contactEmail,
-            contactPhone,
-            whatsappNumber: companyWhatsapp,
-            remittanceDetails: {
-              accountNumber,
-              bankName,
-              accountName,
-            },
-          };
-        }
+      updated.name = name;
+      updated.phone = phone;
+      updated.whatsappNumber = whatsappNumber;
+      updated.avatar = avatar;
+      if (isAgent) {
+        updated.agentProfile = {
+          ...user.agentProfile,
+          licenseNumber,
+          barNumber,
+          surveyorRegNumber,
+          brokerage,
+        };
+      } else if (isCompany && company) {
+        updated.company = {
+          name: companyName,
+          slug: companySlug,
+          logo: companyLogo,
+          contactEmail,
+          contactPhone,
+          whatsappNumber: companyWhatsapp,
+          remittanceDetails: {
+            accountNumber,
+            bankName,
+            accountName,
+          },
+        };
       }
       await onUpdate(updated);
       setIsModalOpen(false);
@@ -146,11 +136,8 @@ const UserHeaderCard = ({
   return (
     <div className="relative group">
       <div
-        className={`absolute inset-0 h-36 md:h-48 rounded-t-2xl rounded-b-none pointer-events-none transition-colors duration-300 ${
-          isProfileView
-            ? "bg-linear-to-r from-primary/10 via-primary/5 to-transparent"
-            : "bg-linear-to-r from-emerald-500/10 via-teal-500/5 to-transparent"
-        }`}
+        className={`absolute inset-0 h-36 md:h-48 rounded-t-2xl rounded-b-none pointer-events-none transition-colors duration-300 bg-linear-to-r from-emerald-500/10 via-teal-500/5 to-transparent"
+        `}
       />
       <div className="absolute inset-0 h-36 md:h-48 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent rounded-t-2xl rounded-b-none pointer-events-none" />
 
@@ -176,8 +163,8 @@ const UserHeaderCard = ({
                   <LuUser className="h-12 w-12 text-neutral-400" />
                 )}
               </div>
-              {!isProfileView && company?.logo && (
-                <div className="relative h-12 w-12 rounded-full border-2 border-background bg-white overflow-hidden shadow-md -ml-3 mb-2">
+              {company?.logo && (
+                <div className="relative h-12 w-12 rounded-full border-2 border-background bg-white overflow-hidden shadow-md -ml-8 mb-0">
                   <Image
                     src={company.logo}
                     alt={company.name}
@@ -186,13 +173,6 @@ const UserHeaderCard = ({
                   />
                 </div>
               )}
-              <button
-                className="absolute text-base hover:text-primary text-foreground flex items-center justify-center h-8 w-8 bg-background border border-border rounded-full -bottom-1 -right-1 shadow-sm transition-all hover:scale-110 active:scale-95"
-                onClick={() => setIsModalOpen(true)}
-                aria-label="Edit settings"
-              >
-                <FiSettings size={14} />
-              </button>
             </div>
 
             <div className="flex flex-1 flex-wrap items-start justify-between gap-4 w-full">
@@ -215,7 +195,7 @@ const UserHeaderCard = ({
                 {user.roles.map((role: Role) => (
                   <RoleBadge key={role} role={role} />
                 ))}
-                {isCompany && <LockedBadge />}
+                {isCompany && <LockedBadge company={company!} />}
               </div>
             </div>
           </div>
@@ -223,9 +203,6 @@ const UserHeaderCard = ({
           <div className="flex justify-between items-start mb-2">
             <div className="text-base text-muted-foreground">
               <span className="font-bold">{greeting}</span>
-            </div>
-            <div className="text-[10px] font-mono uppercase tracking-wider bg-muted/30 px-2 py-0.5 rounded-full text-muted-foreground">
-              {variantBadge}
             </div>
           </div>
 
@@ -261,16 +238,26 @@ const UserHeaderCard = ({
           <div className="h-px bg-border/60 my-4" />
 
           <div className="flex flex-wrap justify-between items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              href={oppositeButton.href}
-              className="gap-2"
-              leftIcon={<oppositeButton.icon className="h-4 w-4" />}
-            >
-              {oppositeButton.label}
-            </Button>
-
+            <div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onProfileOpen}
+                className="gap-2"
+                leftIcon={<LuUserRound className="h-4 w-4" />}
+              >
+                View Profile
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 py-2.5 ml-2"
+                aria-label="Settings"
+                onClick={() => setIsModalOpen(true)}
+              >
+                {<FiSettings className="h-4 w-4" />}
+              </Button>
+            </div>
             {user.activeRole === Role.Agent &&
               user.agentProfile?.verificationStatus !== "verified" && (
                 <Button
@@ -278,7 +265,7 @@ const UserHeaderCard = ({
                   size="sm"
                   className="text-amber-600 hover:text-amber-700 gap-1"
                   leftIcon={<LuTriangleAlert className="h-4 w-4" />}
-                  href="/profile/verification"
+                  href={`/verification?userId=${user._id}`}
                 >
                   Verify your profile
                 </Button>
@@ -287,46 +274,56 @@ const UserHeaderCard = ({
         </div>
       </div>
 
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} >
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            {isProfileView
-              ? "Edit Profile"
-              : `Edit ${isAgent ? "Agent" : "Company"} Settings`}
-          </h2>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            {isProfileView ? (
-              <>
-                <Field
-                  label="Full Name"
-                  name="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <PhoneField
-                  label="Phone Number"
-                  name="phone"
-                  value={phone}
-                  onChange={setPhone}
-                  required={false}
-                />
-                <PhoneField
-                  label="WhatsApp Number"
-                  name="whatsapp"
-                  value={whatsappNumber}
-                  onChange={setWhatsappNumber}
-                  required={false}
-                />
-                <Field
-                  label="Avatar URL"
-                  name="avatar"
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                />
-              </>
-            ) : isAgent ? (
-              <>
+          <h2 className="text-xl font-semibold mb-1">Edit Profile</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Update your personal details{isAgent ? ", credentials" : ""}
+            {isCompany ? ", and company settings" : ""}.
+          </p>
+
+          <div className="space-y-8">
+            <section className="space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Personal details
+              </h3>
+              <FileUpload
+                variant="avatar"
+                label="Profile photo"
+                currentImageUrl={avatar}
+                onUploadComplete={(files) => {
+                  const file = files[0];
+                  if (file) setAvatar(URL.createObjectURL(file));
+                }}
+              />
+              <Field
+                label="Full Name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+              <PhoneField
+                label="Phone Number"
+                name="phone"
+                value={phone}
+                onChange={setPhone}
+                required={false}
+              />
+              <PhoneField
+                label="WhatsApp Number"
+                name="whatsapp"
+                value={whatsappNumber}
+                onChange={setWhatsappNumber}
+                required={false}
+              />
+            </section>
+
+            {isAgent && (
+              <section className="space-y-4 pt-6 border-t border-border">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Agent credentials
+                </h3>
                 <Field
                   label="License Number (Realtors)"
                   name="license"
@@ -351,78 +348,96 @@ const UserHeaderCard = ({
                   value={brokerage}
                   onChange={(e) => setBrokerage(e.target.value)}
                 />
-              </>
-            ) : isCompany && company ? (
+              </section>
+            )}
+
+            {isCompany && company && (
               <>
-                <Field
-                  label="Company Name"
-                  name="companyName"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  required
-                />
-                <Field
-                  label="Slug"
-                  name="companySlug"
-                  value={companySlug}
-                  onChange={(e) => setCompanySlug(e.target.value)}
-                  required
-                />
-                <Field
-                  label="Logo URL"
-                  name="companyLogo"
-                  value={companyLogo}
-                  onChange={(e) => setCompanyLogo(e.target.value)}
-                />
-                <Field
-                  label="Contact Email"
-                  name="contactEmail"
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  required
-                />
-                <PhoneField
-                  label="Contact Phone"
-                  name="contactPhone"
-                  value={contactPhone}
-                  onChange={setContactPhone}
-                  required={false}
-                />
-                <PhoneField
-                  label="WhatsApp Number"
-                  name="companyWhatsapp"
-                  value={companyWhatsapp}
-                  onChange={setCompanyWhatsapp}
-                  required={false}
-                />
-                <div className="border-t pt-3 mt-2">
-                  <p className="font-medium mb-2">Remittance Details</p>
-                  <div className="space-y-3">
-                    <Field
-                      label="Account Number"
-                      name="accountNumber"
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                    />
-                    <Field
-                      label="Bank Name"
-                      name="bankName"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                    />
-                    <Field
-                      label="Account Name"
-                      name="accountName"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                    />
+                <section className="space-y-4 pt-6 border-t border-border">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Company settings
+                  </h3>
+                  <FileUpload
+                    variant="avatar"
+                    label="Company logo"
+                    currentImageUrl={companyLogo}
+                    onUploadComplete={(files) => {
+                      const file = files[0];
+                      if (file) setCompanyLogo(URL.createObjectURL(file));
+                    }}
+                  />
+                  <Field
+                    label="Company Name"
+                    name="companyName"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                  />
+                  <Field
+                    label="Slug"
+                    name="companySlug"
+                    value={companySlug}
+                    onChange={(e) => setCompanySlug(e.target.value)}
+                    required
+                  />
+                  <Field
+                    label="Contact Email"
+                    name="contactEmail"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    required
+                  />
+                  <PhoneField
+                    label="Contact Phone"
+                    name="contactPhone"
+                    value={contactPhone}
+                    onChange={setContactPhone}
+                    required={false}
+                  />
+                  <PhoneField
+                    label="WhatsApp Number"
+                    name="companyWhatsapp"
+                    value={companyWhatsapp}
+                    onChange={setCompanyWhatsapp}
+                    required={false}
+                  />
+                </section>
+
+                <section className="space-y-4 pt-6 border-t border-border">
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Remittance details
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Used to send your share of closed transactions. Only
+                      visible to your team's admins.
+                    </p>
                   </div>
-                </div>
+                  <Field
+                    label="Account Number"
+                    name="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                  />
+                  <Field
+                    label="Bank Name"
+                    name="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                  />
+                  <Field
+                    label="Account Name"
+                    name="accountName"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                  />
+                </section>
               </>
-            ) : null}
+            )}
           </div>
-          <div className="flex justify-end gap-3 mt-6">
+
+          <div className="flex justify-end gap-3 mt-6 py-4 border-t border-border sticky bottom-0 bg-card">
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>

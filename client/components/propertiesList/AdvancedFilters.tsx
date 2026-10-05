@@ -2,22 +2,118 @@
 
 import { useMemo, useState } from "react";
 import { LuChevronDown, LuChevronUp } from "react-icons/lu";
+
 import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
   DOCUMENT_TYPE_LABELS,
 } from "@/utils/constants";
-import {
+import type {
   PropertyType,
   PropertyCategory,
   PropertyFeature,
   PropertyDocument,
   PropertyLocation,
 } from "@/types/property";
-import { PropertyFilterState } from "@/types";
+import type { PropertyFilterState } from "@/types";
+import { cn } from "@/lib/utils";
+
 import { Checkbox } from "../ui/Checkbox";
 import { Slider } from "../ui/Slider";
+
+const fieldClass = cn(
+  "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm",
+  "text-foreground outline-none transition-all",
+  "placeholder:text-muted-foreground/60",
+  "hover:border-border/80",
+  "focus:border-primary focus:ring-4 focus:ring-primary/10",
+);
+
+const ROOM_OPTIONS = ["1", "2", "3", "4", "5+"] as const;
+
+function formatPrice(price: number) {
+  if (price >= 1_000_000) return `₦${(price / 1_000_000).toFixed(1)}M`;
+  return `₦${(price / 1000).toFixed(0)}K`;
+}
+
+function formatLocationLabel(loc: PropertyLocation) {
+  if (!loc) return "";
+  const label =
+    loc.city && loc.state ? `${loc.city}, ${loc.state}` : loc.address;
+  return label.length > 35 ? `${label.substring(0, 35)}...` : label;
+}
+
+function locationValue(loc: PropertyLocation) {
+  return loc.city && loc.state ? `${loc.city}, ${loc.state}` : loc.address;
+}
+
+function toggleArrayItem<T>(arr: T[], item: T, checked: boolean): T[] {
+  return checked ? [...arr, item] : arr.filter((x) => x !== item);
+}
+
+function SelectField({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(fieldClass, "appearance-none pr-10")}
+      >
+        {children}
+      </select>
+      <LuChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
+
+function FilterSection({
+  title,
+  expanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-b border-border/70 py-4 first:pt-0 last:border-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="group flex w-full items-center justify-between rounded-lg text-left"
+      >
+        <span className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+          {title}
+        </span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition group-hover:bg-primary/10 group-hover:text-primary">
+          {expanded ? (
+            <LuChevronUp className="h-4 w-4" />
+          ) : (
+            <LuChevronDown className="h-4 w-4" />
+          )}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
 
 interface AdvancedFiltersProps {
   filters: PropertyFilterState;
@@ -53,24 +149,11 @@ export function AdvancedFilters({
     documents: false,
   });
 
+  const [docSearchTerm, setDocSearchTerm] = useState("");
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
-
-  const formatPrice = (price: number) => {
-    if (price >= 1_000_000) return `₦${(price / 1_000_000).toFixed(1)}M`;
-    return `₦${(price / 1000).toFixed(0)}K`;
-  };
-
-  // FIXED: Adjusted to accept the PropertyLocation object directly
-  const formatLocationLabel = (loc: PropertyLocation) => {
-    if (!loc) return "";
-    const label =
-      loc.city && loc.state ? `${loc.city}, ${loc.state}` : loc.address;
-    return label.length > 35 ? `${label.substring(0, 35)}...` : label;
-  };
-
-  const [docSearchTerm, setDocSearchTerm] = useState("");
 
   const filteredDocuments = useMemo(() => {
     if (!docSearchTerm.trim()) return allDocuments;
@@ -82,31 +165,28 @@ export function AdvancedFilters({
     });
   }, [allDocuments, docSearchTerm]);
 
+  const allVisibleSelected =
+    filteredDocuments.length > 0 &&
+    filteredDocuments.every((doc) => filters.documents.includes(doc.type));
+
   const toggleDocumentType = (
     docType: PropertyDocument["type"],
     checked: boolean,
   ) => {
-    const newDocs = checked
-      ? [...filters.documents, docType]
-      : filters.documents.filter((t) => t !== docType);
-    onFilterChange({ documents: newDocs });
+    onFilterChange({
+      documents: toggleArrayItem(filters.documents, docType, checked),
+    });
   };
 
   const selectAllVisibleDocs = (checked: boolean) => {
     const visibleTypes = filteredDocuments.map((doc) => doc.type);
-    const newDocs = checked
+    const next = checked
       ? Array.from(new Set([...filters.documents, ...visibleTypes]))
       : filters.documents.filter((t) => !visibleTypes.includes(t));
-    onFilterChange({ documents: newDocs });
+    onFilterChange({ documents: next });
   };
 
-  const clearAllDocs = () => {
-    onFilterChange({ documents: [] });
-  };
-
-  const allVisibleSelected =
-    filteredDocuments.length > 0 &&
-    filteredDocuments.every((doc) => filters.documents.includes(doc.type));
+  const clearAllDocs = () => onFilterChange({ documents: [] });
 
   return (
     <div className="space-y-4">
@@ -128,39 +208,25 @@ export function AdvancedFilters({
         </p>
       </FilterSection>
 
-      {/* FIXED LOCATION SECTION */}
       <FilterSection
         title="Location"
         expanded={expandedSections.location}
         onToggle={() => toggleSection("location")}
       >
-        <div className="relative">
-          <select
-            value={filters.location}
-            onChange={(e) => onFilterChange({ location: e.target.value })}
-            className="w-full appearance-none rounded-lg border border-border bg-background pl-3 pr-10 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
-          >
-            <option value="all">📍 All Locations</option>
-            {locations.map((loc, index) => {
-              // Ensure uniqueness in selection state matching what your layout mapping tracks
-              const selectionValue =
-                loc.city && loc.state
-                  ? `${loc.city}, ${loc.state}`
-                  : loc.address;
-              return (
-                <option
-                  key={`${selectionValue}-${index}`}
-                  value={selectionValue}
-                >
-                  {formatLocationLabel(loc)}
-                </option>
-              );
-            })}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
-            <LuChevronDown className="h-4 w-4" />
-          </div>
-        </div>
+        <SelectField
+          value={filters.location}
+          onChange={(value) => onFilterChange({ location: value })}
+        >
+          <option value="all">All Locations</option>
+          {locations.map((loc, index) => {
+            const value = locationValue(loc);
+            return (
+              <option key={`${value}-${index}`} value={value}>
+                {formatLocationLabel(loc)}
+              </option>
+            );
+          })}
+        </SelectField>
       </FilterSection>
 
       <FilterSection
@@ -168,14 +234,11 @@ export function AdvancedFilters({
         expanded={expandedSections.category}
         onToggle={() => toggleSection("category")}
       >
-        <select
+        <SelectField
           value={filters.category}
-          onChange={(e) =>
-            onFilterChange({
-              category: e.target.value as PropertyCategory | "all",
-            })
+          onChange={(value) =>
+            onFilterChange({ category: value as PropertyCategory | "all" })
           }
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="all">All Categories</option>
           {allCategories.map((cat) => (
@@ -183,7 +246,7 @@ export function AdvancedFilters({
               {PROPERTY_CATEGORY_LABELS[cat]}
             </option>
           ))}
-        </select>
+        </SelectField>
       </FilterSection>
 
       <FilterSection
@@ -197,12 +260,15 @@ export function AdvancedFilters({
               key={typeKey}
               label={PROPERTY_TYPE_LABELS[typeKey]}
               checked={filters.type.includes(typeKey)}
-              onChange={(e) => {
-                const newTypes = e.target.checked
-                  ? [...filters.type, typeKey]
-                  : filters.type.filter((t) => t !== typeKey);
-                onFilterChange({ type: newTypes });
-              }}
+              onChange={(e) =>
+                onFilterChange({
+                  type: toggleArrayItem(
+                    filters.type,
+                    typeKey,
+                    e.target.checked,
+                  ),
+                })
+              }
             />
           ))}
         </div>
@@ -219,12 +285,15 @@ export function AdvancedFilters({
               key={feat}
               label={PROPERTY_FEATURE_LABELS[feat]}
               checked={filters.features.includes(feat)}
-              onChange={(e) => {
-                const newFeats = e.target.checked
-                  ? [...filters.features, feat]
-                  : filters.features.filter((f) => f !== feat);
-                onFilterChange({ features: newFeats });
-              }}
+              onChange={(e) =>
+                onFilterChange({
+                  features: toggleArrayItem(
+                    filters.features,
+                    feat,
+                    e.target.checked,
+                  ),
+                })
+              }
             />
           ))}
         </div>
@@ -240,35 +309,34 @@ export function AdvancedFilters({
             <label className="mb-1.5 block text-sm font-medium text-foreground">
               Bedrooms
             </label>
-            <select
+            <SelectField
               value={filters.bedrooms}
-              onChange={(e) => onFilterChange({ bedrooms: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+              onChange={(value) => onFilterChange({ bedrooms: value })}
             >
               <option value="any">Any</option>
-              {[1, 2, 3, 4, "5+"].map((n) => (
-                <option key={n} value={n.toString()}>
+              {ROOM_OPTIONS.map((n) => (
+                <option key={n} value={n}>
                   {n}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">
               Bathrooms
             </label>
-            <select
+            <SelectField
               value={filters.bathrooms}
-              onChange={(e) => onFilterChange({ bathrooms: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+              onChange={(value) => onFilterChange({ bathrooms: value })}
             >
               <option value="any">Any</option>
-              {[1, 2, 3, 4, "5+"].map((n) => (
-                <option key={n} value={n.toString()}>
+              {ROOM_OPTIONS.map((n) => (
+                <option key={n} value={n}>
                   {n}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
         </div>
       </FilterSection>
@@ -292,7 +360,7 @@ export function AdvancedFilters({
                 }
                 min={globalMinArea}
                 max={filters.maxArea}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                className={fieldClass}
               />
             </div>
             <div className="flex-1">
@@ -307,7 +375,7 @@ export function AdvancedFilters({
                 }
                 min={filters.minArea}
                 max={globalMaxArea}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                className={fieldClass}
               />
             </div>
           </div>
@@ -329,24 +397,23 @@ export function AdvancedFilters({
               placeholder="Search documents..."
               value={docSearchTerm}
               onChange={(e) => setDocSearchTerm(e.target.value)}
-              className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              className={cn(fieldClass, "flex-1")}
             />
             <button
+              type="button"
               onClick={clearAllDocs}
-              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary transition-colors"
+              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary"
             >
               Clear
             </button>
           </div>
 
           <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={allVisibleSelected}
               onChange={(e) => selectAllVisibleDocs(e.target.checked)}
-              className="rounded border-border text-primary focus:ring-ring"
             />
-            Select all visible
+            Select all
           </label>
 
           <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border p-2">
@@ -371,35 +438,6 @@ export function AdvancedFilters({
           </div>
         </div>
       </FilterSection>
-    </div>
-  );
-}
-
-function FilterSection({
-  title,
-  expanded,
-  onToggle,
-  children,
-}: {
-  title: string;
-  expanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-b border-border pb-4 last:border-0">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center justify-between py-1 hover:text-primary transition-colors"
-      >
-        <span className="text-sm font-medium text-foreground">{title}</span>
-        {expanded ? (
-          <LuChevronUp className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <LuChevronDown className="h-4 w-4 text-muted-foreground" />
-        )}
-      </button>
-      {expanded && <div className="mt-3">{children}</div>}
     </div>
   );
 }

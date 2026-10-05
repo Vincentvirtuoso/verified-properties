@@ -1,4 +1,4 @@
-export const SIDEBAR_EXPANDED_WIDTH = 240;
+export const SIDEBAR_EXPANDED_WIDTH = 220;
 export const SIDEBAR_COLLAPSED_WIDTH = 72;
 
 import {
@@ -8,7 +8,7 @@ import {
   PropertyDocumentType,
   ListingPurpose,
 } from "@/types/property";
-import { AgentSubRole } from "@/types/user";
+import { AgentSubRole, Role } from "@/types/user";
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   singleFamilyHouse: "Single-family house",
@@ -209,10 +209,61 @@ export const NIGERIAN_STATES = [
   "Zamfara",
 ];
 
+export const MONTHS_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+export const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export const DAYS_OF_THE_WEEK = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 export const agentSubRoleLabels: Record<AgentSubRole, string> = {
   realtor: "Realtor",
   lawyer: "Lawyer",
   surveyor: "Surveyor",
   landlord: "Landlord",
   other: "Other",
+};
+
+export const roleLabels: Record<Role, string> = {
+  [Role.Viewer]: "Buyer",
+  [Role.Agent]: "Agent",
+  [Role.Company]: "Company",
+};
+
+export const roleDescriptions: Record<Role, string> = {
+  [Role.Viewer]: "Browse and save listings",
+  [Role.Agent]: "Manage your own listings",
+  [Role.Company]: "Manage your team workspace",
 };
