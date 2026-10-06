@@ -1,7 +1,22 @@
 import { notFound } from "next/navigation";
-import { properties } from "@/data/properties";
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { fetchPublicCompany } from "@/lib/supabase/publicDirectory";
 import CompanyClient from "../_components/CompanyClient";
-import { mockCompanies } from "@/data/companies";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await fetchPublicCompany(id, await createClient()).catch(() => null);
+  if (!data) return { title: "Company not found" };
+  return {
+    title: `${data.company.name} – Real Estate Company`,
+    description: `Browse live listings from ${data.company.name} and get in touch.`,
+  };
+}
 
 export default async function CompanyPage({
   params,
@@ -9,13 +24,9 @@ export default async function CompanyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const company = mockCompanies.find((c) => c._id === id);
+  const data = await fetchPublicCompany(decodeURIComponent(id), await createClient());
 
-  if (!company) notFound();
+  if (!data) notFound();
 
-  const listings = properties.filter(
-    (p) => p.ownerId?.companyId?._id === id && p.ownerType === "company",
-  );
-
-  return <CompanyClient company={company} listings={listings} />;
+  return <CompanyClient company={data.company} listings={data.listings} />;
 }

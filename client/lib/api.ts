@@ -1,21 +1,23 @@
-import { properties } from "@/data/properties";
+import {
+  fetchActiveProperties,
+  fetchPublicStats,
+} from "@/lib/supabase/publicProperties";
 import { PopulatedProperty, Stats, Testimonial } from "@/types";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export async function fetchFeaturedProperties(): Promise<PopulatedProperty[]> {
-  await delay(800);
-  return properties.filter((p) => p.tier === "featured");
+  return fetchActiveProperties({ tier: "featured", limit: 8 });
 }
 
 export async function fetchStats(): Promise<Stats> {
-  await delay(600);
+  const live = await fetchPublicStats();
   return {
-    totalProperties: properties.length,
-    cities: new Set(properties.map((p) => p.location.address.split(",")[0]))
-      .size,
+    totalProperties: live.totalProperties,
+    cities: live.cities,
+    // Marketing figure, not tracked in the database yet.
     happyClients: 1200,
-    owners: new Set(properties.map((p) => p.ownerId)).size,
+    owners: live.owners,
   };
 }
 

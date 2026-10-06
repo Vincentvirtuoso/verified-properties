@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SavedPropertiesProvider } from "@/contexts/SavedPropertiesContext";
 import { ConfirmationProvider } from "@/contexts/ConfirmDialog";
 import {
   SIDEBAR_COLLAPSED_WIDTH,
@@ -43,7 +44,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col antialiased selection:bg-primary/20">
         <AuthProvider>
+          <SavedPropertiesProvider>
           <ConfirmationProvider>{children}</ConfirmationProvider>
+        </SavedPropertiesProvider>
         </AuthProvider>
       </body>
     </html>

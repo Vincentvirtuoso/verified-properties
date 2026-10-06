@@ -9,7 +9,8 @@ import {
   useCallback,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { properties } from "@/data/properties";
+import { fetchActiveProperties } from "@/lib/supabase/publicProperties";
+import type { PopulatedProperty } from "@/types";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LuFilter, LuX, LuSearch } from "react-icons/lu";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -34,6 +35,28 @@ import { motion } from "framer-motion";
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [properties, setProperties] = useState<PopulatedProperty[]>([]);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchActiveProperties()
+      .then((rows) => {
+        if (!cancelled) setProperties(rows);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) setLoadError("Could not load properties. Please try again.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingProperties(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const {
     SORT_OPTIONS,
     LOCATIONS,
@@ -46,11 +69,16 @@ export default function PropertiesPage() {
     AREA_MAX,
     DEFAULT_FILTERS,
     ALL_DOCUMENTS,
-  } = useProperty();
+  } = useProperty(properties);
   const [isPending, startTransition] = useTransition();
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<PropertyFilterState>(DEFAULT_FILTERS);
+
+  // Price/area bounds come from the loaded listings; reset once they arrive.
+  useEffect(() => {
+    setFilters(DEFAULT_FILTERS);
+  }, [DEFAULT_FILTERS]);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
@@ -107,7 +135,7 @@ export default function PropertiesPage() {
       setSearchSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, properties]);
 
   const updateSearchParams = useCallback(
     (query: string) => {
@@ -277,7 +305,7 @@ export default function PropertiesPage() {
     });
 
     return { filteredProperties: filtered, sortedProperties: sorted };
-  }, [currentType, sortBy, filters, debouncedSearchQuery]);
+  }, [properties, currentType, sortBy, filters, debouncedSearchQuery]);
 
   const handleTypeChange = (type: FilterType) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -594,11 +622,25 @@ export default function PropertiesPage() {
               )}
             </div>
 
-            {isPending ? (
+            {isPending || isLoadingProperties ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <PropertyCardSkeleton key={i} />
                 ))}
+              </div>
+            ) : loadError ? (
+              <div
+                role="alert"
+                className="rounded-3xl border border-border bg-muted/20 py-20 text-center"
+              >
+                <p className="mb-4 font-semibold text-destructive">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-full border border-border bg-card px-6 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
+                >
+                  Try again
+                </button>
               </div>
             ) : (
               <>
@@ -618,7 +660,7 @@ export default function PropertiesPage() {
                         delay: Math.min(index * 0.04, 0.2),
                       }}
                     >
-                      <PropertyCard {...property} isSaved />
+                      <PropertyCard {...property} />
                     </motion.div>
                   ))}
                 </motion.div>

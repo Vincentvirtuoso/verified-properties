@@ -171,20 +171,14 @@ function CompleteRegistrationForm() {
         _id: companyId,
         name: companyData.companyName.trim(),
         slug: companyData.companyName.toLowerCase().replace(/\s+/g, "-"),
-        logo: companyLogoFile
-          ? URL.createObjectURL(companyLogoFile)
-          : undefined,
+        // Logo and CAC files are uploaded by completeRegistration().
+        logo: undefined,
         type: companyData.companyType,
         verificationStatus: "unverified",
         // CAC certificate and logo stored in onboardingDocs
         // Reviewed by admin before verificationStatus moves to "verified"
         onboardingDocs: {
-          cacCertificateUrl: cacCertFile
-            ? URL.createObjectURL(cacCertFile)
-            : "",
-          companyLogoUrl: companyLogoFile
-            ? URL.createObjectURL(companyLogoFile)
-            : undefined,
+          cacCertificateUrl: "",
         },
         features: {
           whatsappNotifications: false,
@@ -214,12 +208,18 @@ function CompleteRegistrationForm() {
     }
 
     try {
-      await completeRegistration(user._id, updates, companyPayload);
+      await completeRegistration(user._id, updates, companyPayload, {
+        logo: companyLogoFile,
+        cacCertificate: cacCertFile,
+      });
       router.push("/welcome");
     } catch (error) {
       console.error("Onboarding error:", error);
       setErrors({
-        submit: "An error occurred while saving your profile. Please retry.",
+        submit:
+          error instanceof Error && error.message
+            ? error.message
+            : "An error occurred while saving your profile. Please retry.",
       });
     }
   };

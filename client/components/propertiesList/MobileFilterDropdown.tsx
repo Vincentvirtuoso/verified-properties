@@ -1,7 +1,6 @@
 import { LuX } from "react-icons/lu";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { useProperty } from "@/hooks/useProperty";
 import {
   PropertyCategory,
   PropertyDocument,
@@ -18,6 +17,9 @@ export function MobileFilterDrawer({
   propertyTypes,
   priceRange,
   areaRange,
+  allCategories,
+  allFeatures,
+  allDocuments,
   onClose,
 }: {
   filters: PropertyFilterState;
@@ -32,7 +34,9 @@ export function MobileFilterDrawer({
   areaRange: [number, number];
 }) {
   const { bannerHeight } = useBannerHeightContext();
-  const { ALL_CATEGORIES, ALL_FEATURES, ALL_DOCUMENTS } = useProperty();
+  const ALL_CATEGORIES = allCategories;
+  const ALL_FEATURES = allFeatures;
+  const ALL_DOCUMENTS = allDocuments;
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">

@@ -2,14 +2,12 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import PropertyDetailClient from "./PropertyDetailClient";
 import { PopulatedProperty } from "@/types/property";
-import { properties } from "@/data/properties";
+import { createClient } from "@/lib/supabase/server";
+import { fetchPropertyBySlug } from "@/lib/supabase/publicProperties";
 
 async function getProperty(slug: string): Promise<PopulatedProperty | null> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const property = properties.find(
-    (p) => p.slug.toLowerCase() === slug.toLowerCase(),
-  );
-  return property || null;
+  const supabase = await createClient();
+  return fetchPropertyBySlug(slug, supabase);
 }
 
 interface PageProps {
@@ -24,10 +22,10 @@ export async function generateMetadata({
   if (!property) return { title: "Property Not Found" };
 
   return {
-    title: `${property.title} | ${property.location}`,
+    title: `${property.title} | ${property.location.city}, ${property.location.state}`,
     description:
       property.description?.slice(0, 160) ??
-      `${property.title} for ${property.listingPurpose} in ${property.location}`,
+      `${property.title} for ${property.listingPurpose} in ${property.location.city}, ${property.location.state}`,
     openGraph: {
       title: property.title,
       description: property.description?.slice(0, 160),

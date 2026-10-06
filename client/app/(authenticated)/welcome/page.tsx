@@ -47,7 +47,7 @@ const roleGuides: Record<Role, RoleGuide> = {
       {
         icon: <LuStar />,
         label: "Save your favourite listings",
-        href: "/favorites",
+        href: "/saved-properties",
       },
       {
         icon: <LuUserCheck />,
@@ -89,7 +89,7 @@ const roleGuides: Record<Role, RoleGuide> = {
       {
         icon: <LuMegaphone />,
         label: "Boost your listings",
-        href: "/dashboard/listings",
+        href: "/my-listings",
       },
       {
         icon: <LuUsers />,

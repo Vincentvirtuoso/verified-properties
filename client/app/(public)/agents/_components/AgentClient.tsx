@@ -1,6 +1,6 @@
 "use client";
 
-import { PopulatedUser } from "@/types";
+import { PopulatedProperty, PopulatedUser } from "@/types";
 import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
@@ -21,25 +21,20 @@ import {
   LuSwitchCamera,
   LuZap,
 } from "react-icons/lu";
-import { dummyUsers } from "@/data/users";
 import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
-import { populateProperty } from "@/lib/utils";
-import { properties } from "@/data/properties";
 
 export default function AgentClient({
   agent,
-  id,
+  listings,
+  closedDeals,
 }: {
   agent: PopulatedUser;
   id: string;
+  listings: PopulatedProperty[];
+  closedDeals: number;
 }) {
-  const listings = properties.filter(
-    (p) => p.ownerId._id === id && p.ownerType === "agent",
-  );
-  const populatedListings = listings.map((p) =>
-    populateProperty(p, dummyUsers),
-  );
+  const populatedListings = listings;
   const defaultAgentImage = "/placeholder_avatar.png";
   const [agentImageSrc, setAgentImageSrc] = useState(
     agent?.avatar || defaultAgentImage,
@@ -60,15 +55,13 @@ export default function AgentClient({
     },
     {
       label: "Closed Deals",
-      value: listings.filter(
-        (p) => p.status === "sold" || p.status === "rented",
-      ).length,
+      value: closedDeals,
       icon: LuSwitchCamera,
       accent: "destructive",
     },
     {
-      label: "Total Impressions",
-      value: listings.reduce((sum, p) => sum + p.totalInquiries, 0),
+      label: "Total Enquiries",
+      value: listings.reduce((sum, p) => sum + (p.totalInquiries || 0), 0),
       icon: LuInfo,
       accent: "info",
     },

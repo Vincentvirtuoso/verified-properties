@@ -2,7 +2,8 @@
 
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { PopulatedProperty } from "@/types/property";
-import { Company, companyTypeLabels } from "@/types/company";
+import { companyTypeLabels } from "@/types/company";
+import type { PublicCompany } from "@/lib/supabase/publicDirectory";
 import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { FiMail, FiPhone, FiUsers, FiMessageCircle } from "react-icons/fi";
@@ -11,14 +12,14 @@ import { useState } from "react";
 import { imageLoader } from "@/utils/helpers";
 import { RoleBadge, StatCard } from "@/components/ui";
 import { Role } from "@/types";
-import { LuClock, LuWallet, LuUsers, LuTrendingUp, LuBuilding } from "react-icons/lu";
+import { LuClock, LuUsers, LuTrendingUp, LuBuilding } from "react-icons/lu";
 import { Badge } from "@/components/ui/Badge";
 
 export default function CompanyPage({
   company,
   listings,
 }: {
-  company: Company;
+  company: PublicCompany;
   listings: PopulatedProperty[];
 }) {
   const defaultCompanyImage = "/placeholder_avatar.png";
@@ -36,25 +37,19 @@ export default function CompanyPage({
       accent: "success" as const,
     },
     {
-      label: "Total Remitted",
-      value: `₦${(company.totalRemitted ?? 0).toLocaleString()}`,
-      icon: LuWallet,
-      accent: "warning" as const,
-    },
-    {
-      label: "Closed Deals",
-      value: listings.filter((p) => p.status === "sold" || p.status === "rented").length,
+      label: "Cities",
+      value: company.cities.length,
       icon: LuTrendingUp,
       accent: "destructive" as const,
     },
     {
       label: "Team Size",
-      value: company.team.length,
+      value: company.teamSize,
       icon: LuUsers,
       accent: "info" as const,
     },
     {
-      label: "Total Impressions",
+      label: "Total Enquiries",
       value: listings.reduce((sum, p) => sum + (p.totalInquiries || 0), 0),
       icon: LuBuilding,
       accent: "info" as const,
@@ -68,7 +63,7 @@ export default function CompanyPage({
         <Breadcrumbs
           items={[
             { label: "Companies", href: "/companies" },
-            { label: company.name, href: `/companies/${company._id}` },
+            { label: company.name, href: `/companies/${company.slug}` },
           ]}
         />
       </div>
@@ -145,7 +140,7 @@ export default function CompanyPage({
 
               <div className="flex items-center gap-2">
                 <FiUsers className="w-4 h-4" />
-                {company.team.length} team member{company.team.length !== 1 ? "s" : ""}
+                {company.teamSize} team member{company.teamSize !== 1 ? "s" : ""}
               </div>
             </div>
 
@@ -185,23 +180,6 @@ export default function CompanyPage({
         )}
       </div>
 
-      {/* Optional: Team Section */}
-      {company.team.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
-          <h2 className="text-2xl font-semibold mb-6">Our Team</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {company.team.map((member, i) => (
-              <div key={i} className="bg-card border rounded-2xl p-5 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold mb-3">
-                  {member.userId.slice(0, 1).toUpperCase()}
-                </div>
-                <p className="font-medium">Team Member</p>
-                <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

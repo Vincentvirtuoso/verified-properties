@@ -28,7 +28,7 @@ const ALLOWED_TRANSITIONS: Record<Role, Role[]> = {
 };
 
 function AddRoleFormContent() {
-  const { user, updateUserRole, authLoading } = useAuth();
+  const { user, updateUserRole, authLoading, completeRegistration } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -127,12 +127,11 @@ function AddRoleFormContent() {
     };
 
     try {
-      await updateUserRole(user!._id, updatedProfile);
-      router.push("/welcome");
-    } catch (error) {
-      console.error("Agent package onboarding failed:", error);
-    }
-  };
+  await completeRegistration(user!._id, updatedProfile);
+  router.push("/welcome");
+} catch (error) {
+  console.error("Agent package onboarding failed:", error);
+}
 
   return (
     <AuthForm
@@ -239,7 +238,7 @@ function AddRoleFormContent() {
     </AuthForm>
   );
 }
-
+}
 export default function AddRolePage() {
   return (
     <Suspense fallback={<PageSpinner label="Loading upgrade options..." />}>

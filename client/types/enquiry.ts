@@ -38,6 +38,7 @@ export interface Enquiry {
   agentName: string;
   agentType: string;
   stage: "qualification" | "selection" | "inspection";
+  status?: "open" | "in_progress" | "deal_closed" | "cancelled";
   lastEventPreview: string;
   lastEventAt: Date;
   unreadCount: number;

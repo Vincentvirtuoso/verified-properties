@@ -1,5 +1,6 @@
 "use client";
 
+import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
@@ -51,6 +52,7 @@ interface ProfileModalProps {
 
 export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const { user, switchRole } = useAuth();
+  const { savedCount } = useSavedProperties();
   const [switchingTo, setSwitchingTo] = useState<Role | null>(null);
 
   const pathname = usePathname();
@@ -187,7 +189,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
             >
               <StatCard
                 label="Saved properties"
-                value={user.viewerProfile.savedListingIds?.length || 0}
+                value={savedCount}
                 icon={LuHeart}
                 accent="primary"
               />

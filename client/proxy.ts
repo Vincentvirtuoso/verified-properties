@@ -1,19 +1,23 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function proxy(request: NextRequest) {
-  const sessionCookie = request.cookies.get("session")?.value;
-  const isAuthenticated = sessionCookie === "true";
+export async function proxy(request: NextRequest) {
+  const { response, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;
 
   const protectedRoutes = [
     "/dashboard",
-    "/company/dashboard",
+    "/company",
     "/list-property",
+    "/profile",
     "/complete-registration",
     "/welcome",
     "/add-role",
+    "/my-listings",
+    "/admin",
+    "/enquiries",
+    "/saved-properties",
   ];
 
   const authRoutes = ["/login", "/register", "/forgot-password"];
@@ -26,37 +30,34 @@ export function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
-  if (isProtectedRoute) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
+  if (isProtectedRoute && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    return NextResponse.next();
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/company/dashboard/:path*",
+    "/company/:path*",
     "/complete-registration/:path*",
     "/welcome/:path*",
     "/list-property/:path*",
-
+    "/profile/:path*",
     "/login/:path*",
     "/register/:path*",
     "/forgot-password/:path*",
     "/add-role/:path*",
+    "/my-listings/:path*",
+    "/admin/:path*",
+    "/enquiries/:path*",
+    "/saved-properties/:path*",
   ],
 };
-

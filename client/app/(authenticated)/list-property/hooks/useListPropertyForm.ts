@@ -109,7 +109,8 @@ export function useListPropertyForm() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as ListPropertyFormData;
-          setFormData(parsed);
+          // Files cannot be serialised; they must be re-selected.
+          setFormData({ ...parsed, imageFiles: [], documentFiles: [] });
         } catch (e) {
           console.error(e, "Failed to parse saved form data");
         }
@@ -130,7 +131,11 @@ export function useListPropertyForm() {
 
   useEffect(() => {
     if (isInitialized && typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      // Draft text fields only; File objects cannot be stored.
+      const { imageFiles, documentFiles, ...rest } = formData;
+      void imageFiles;
+      void documentFiles;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rest));
     }
   }, [formData, isInitialized]);
 
