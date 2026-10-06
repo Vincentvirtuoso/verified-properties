@@ -1,5 +1,6 @@
 // app/companies/page.tsx
-import { getPublicCompanies } from "@/data/companies";
+import { createClient } from "@/lib/supabase/server";
+import { fetchPublicCompanies } from "@/lib/supabase/publicDirectory";
 import { Company } from "@/types";
 import { Metadata } from "next";
 import { CompanyDirectory } from "./_components/CompanyDirectory";
@@ -76,7 +77,8 @@ function CompaniesStructuredData({
 
 // ---------- Server Component ----------
 export default async function CompaniesPage() {
-  const companies = await getPublicCompanies(); // fetch verified companies, e.g.
+  // Verified companies, or ones with a live listing.
+  const companies = await fetchPublicCompanies(await createClient()).catch(() => []);
 
   return (
     <>

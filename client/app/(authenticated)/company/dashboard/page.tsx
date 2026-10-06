@@ -24,7 +24,12 @@ import { Button } from "@/components/ui/Button";
 import { CompanyMember, companyTypeLabels, PopulatedUser } from "@/types";
 import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  fetchCompanyDashboardStats,
+  fetchTeamProfiles,
+  type CompanyDashboardStats,
+} from "@/lib/supabase/companies";
 import { imageLoader } from "@/utils/helpers";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
@@ -53,6 +58,28 @@ export default function CompanyDashboardPage() {
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
   const company = companies.find((c) => c._id === companyId);
+  const [stats, setStats] = useState<CompanyDashboardStats | null>(null);
+  const [names, setNames] = useState<Map<string, { name: string }>>(new Map());
+  const memberKey = company?.team.map((m) => m.userId).join(",") ?? "";
+
+  // Live numbers + teammate names from the database.
+  useEffect(() => {
+    if (!companyId || !memberKey) return;
+    let cancelled = false;
+    Promise.all([
+      fetchCompanyDashboardStats(companyId),
+      fetchTeamProfiles(memberKey.split(",")),
+    ])
+      .then(([s, n]) => {
+        if (cancelled) return;
+        setStats(s);
+        setNames(n);
+      })
+      .catch((err) => console.error("Failed to load company stats:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, memberKey]);
 
   if (!user) {
     return (
@@ -101,27 +128,24 @@ export default function CompanyDashboardPage() {
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatsCard
-          icon={<LuBanknote className="h-5 w-5" />}
-          label="Total Remitted"
-          value={`₦${company.totalRemitted.toLocaleString()}`}
+          icon={<LuBuilding2 className="h-5 w-5" />}
+          label="Live Listings"
+          value={stats ? `${stats.activeListings}` : "…"}
         />
         <StatsCard
-          icon={<LuBuilding2 className="h-5 w-5" />}
-          label="Active Listings"
-          value={company.activeListings}
+          icon={<LuClock className="h-5 w-5" />}
+          label="Drafts"
+          value={stats ? stats.draftListings : "…"}
+        />
+        <StatsCard
+          icon={<LuMessageCircle className="h-5 w-5" />}
+          label="Open Enquiries"
+          value={stats ? stats.openEnquiries : "…"}
         />
         <StatsCard
           icon={<LuUsers className="h-5 w-5" />}
           label="Team Members"
-          value={company.team.length}
-        />
-        <StatsCard
-          icon={<LuClock className="h-5 w-5" />}
-          label="Member Since"
-          value={new Date(company.createdAt).toLocaleDateString("en-NG", {
-            year: "numeric",
-            month: "short",
-          })}
+          value={stats?.teamSize ?? company.team.length}
         />
       </motion.div>
 
@@ -155,6 +179,26 @@ export default function CompanyDashboardPage() {
                   mono
                 />
               )}
+              <InfoRow
+                icon={LuBanknote}
+                label="Total Remitted"
+                value={`₦${company.totalRemitted.toLocaleString()}`}
+              />
+              {stats && (
+                <InfoRow
+                  icon={LuBanknote}
+                  label="Value of live listings"
+                  value={`₦${stats.liveValue.toLocaleString()}`}
+                />
+              )}
+              <InfoRow
+                icon={LuClock}
+                label="Member Since"
+                value={new Date(company.createdAt).toLocaleDateString("en-NG", {
+                  year: "numeric",
+                  month: "short",
+                })}
+              />
               {company.remittanceDetails && (
                 <>
                   <InfoRow
@@ -240,6 +284,7 @@ export default function CompanyDashboardPage() {
                     key={member.userId}
                     member={member}
                     user={user}
+                    name={names.get(member.userId)?.name}
                   />
                 ))
               )}
@@ -251,17 +296,17 @@ export default function CompanyDashboardPage() {
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
             <div className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
+              <Button className="w-full justify-start" variant="outline" href="/company/listings">
                 <LuBuilding2 className="mr-2 h-4 w-4" />
                 Manage Listings
                 <LuChevronRight className="ml-auto h-4 w-4" />
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button className="w-full justify-start" variant="outline" href="/company/team">
                 <LuUsers className="mr-2 h-4 w-4" />
                 Manage Team
                 <LuChevronRight className="ml-auto h-4 w-4" />
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button className="w-full justify-start" variant="outline" href="/support">
                 <LuHeadphones className="mr-2 h-4 w-4" />
                 Contact Support
                 <LuChevronRight className="ml-auto h-4 w-4" />
@@ -275,16 +320,24 @@ export default function CompanyDashboardPage() {
                 <LuShield className="h-8 w-8 text-amber-600" />
                 <div>
                   <h3 className="font-semibold text-amber-800 dark:text-amber-400">
-                    Verification Pending
+                    {company.verificationStatus === "pending"
+                      ? "Verification Pending"
+                      : company.verificationStatus === "rejected"
+                        ? "Verification Declined"
+                        : "Not Verified Yet"}
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-500">
-                    Complete verification to unlock all features.
+                    {company.verificationStatus === "pending"
+                      ? "Our team is reviewing your documents. You can publish listings once approved."
+                      : "Upload your CAC certificate to get verified and publish listings."}
                   </p>
                 </div>
               </div>
-              <Button size="sm" className="mt-4 w-full">
-                Verify Now
-              </Button>
+              {company.verificationStatus !== "pending" && (
+                <Button size="sm" className="mt-4 w-full" href="/complete-registration">
+                  Verify Now
+                </Button>
+              )}
             </div>
           )}
         </motion.div>
@@ -359,20 +412,23 @@ function FeatureItem({
 function TeamMemberRow({
   member,
   user,
+  name,
 }: {
   member: CompanyMember;
   user: PopulatedUser;
+  name?: string;
 }) {
+  const displayName = name ?? "Team member";
   const isCurrentUser = user._id === member.userId;
   return (
     <div className="flex items-center justify-between py-3 gap-4">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {member.userId.slice(0, 2).toUpperCase()}
+          {displayName.slice(0, 2).toUpperCase()}
         </div>
         <div>
           <p className="text-sm font-medium">
-            {member.userId}{" "}
+            {displayName}{" "}
             {isCurrentUser && <Badge className="ml-2 text-[10px]">YOU</Badge>}
           </p>
           <p className="text-xs text-muted">

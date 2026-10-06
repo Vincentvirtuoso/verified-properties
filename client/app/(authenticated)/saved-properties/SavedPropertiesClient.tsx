@@ -216,7 +216,7 @@ export default function SavedPropertiesClient({
                       delay: Math.min(index * 0.04, 0.2),
                     }}
                   >
-                    <PropertyCard {...property} isSaved />
+                    <PropertyCard {...property} />
                   </motion.div>
                 ))}
               </motion.div>

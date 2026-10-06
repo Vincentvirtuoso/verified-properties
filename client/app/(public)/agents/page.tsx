@@ -27,77 +27,37 @@ import {
   DropdownItem,
 } from "@/components/ui/Dropdown";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { fetchDirectoryAgents, type DirectoryAgent } from "@/lib/supabase/publicDirectory";
 
-export type Agent = {
-  id: string;
-  name: string;
-  image?: string;
-  company?: string;
-  phone?: string;
-  verified: boolean;
-  locations: string[];
-  propertyTypes: string[];
-  activeListings: number;
-  totalListings: number;
-  totalValue: number; // in NGN
-};
-
-const mockAgents: Agent[] = [
-  {
-    id: "a1",
-    name: "Amina Okafor",
-    image: "/agents/amina.jpg",
-    company: "Okafor Realty",
-    phone: "+234 800 000 0001",
-    verified: true,
-    locations: ["Lagos", "Abuja"],
-    propertyTypes: ["Apartment", "Detached Duplex"],
-    activeListings: 12,
-    totalListings: 45,
-    totalValue: 520_000_000,
-  },
-  {
-    id: "a2",
-    name: "Chidi Eze",
-    image: undefined,
-    company: "Eze & Partners",
-    phone: "+234 800 000 0002",
-    verified: true,
-    locations: ["Enugu", "Port Harcourt"],
-    propertyTypes: ["Land", "Commercial"],
-    activeListings: 7,
-    totalListings: 30,
-    totalValue: 340_000_000,
-  },
-  {
-    id: "a3",
-    name: "Folake Adesina",
-    image: "/agents/folake.jpg",
-    phone: "+234 800 000 0003",
-    verified: false,
-    locations: ["Lagos"],
-    propertyTypes: ["Shortlet"],
-    activeListings: 3,
-    totalListings: 15,
-    totalValue: 85_000_000,
-  },
-  // … add more mock agents as needed
-];
+export type Agent = DirectoryAgent;
 
 const defaultAgentImage = "/placeholder_avatar.png";
-
-// Pre‑compute filter options
-const allLocations = [
-  ...new Set(mockAgents.flatMap((a) => a.locations)),
-].sort();
-const allSpecializations = [
-  ...new Set(mockAgents.flatMap((a) => a.propertyTypes)),
-].sort();
 
 type SortOption = "name" | "listings" | "experience" | "value";
 type ViewMode = "grid" | "list";
 
 export default function AgentsPage() {
+  const [agents, setAgents] = useState<Agent[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDirectoryAgents()
+      .then((rows) => !cancelled && setAgents(rows))
+      .catch(() => !cancelled && setLoadError("Couldn't load agents. Please refresh."));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const allLocations = useMemo(
+    () => [...new Set((agents ?? []).flatMap((a) => a.locations))].sort(),
+    [agents],
+  );
+  const allSpecializations = useMemo(
+    () => [...new Set((agents ?? []).flatMap((a) => a.propertyTypes))].sort(),
+    [agents],
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedSpecialization, setSelectedSpecialization] = useState("all");
@@ -118,7 +78,7 @@ export default function AgentsPage() {
   }, [selectedLocation, selectedSpecialization, verifiedOnly, searchQuery]);
 
   const filteredAgents = useMemo(() => {
-    let filtered = mockAgents;
+    let filtered = [...(agents ?? [])];
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -169,6 +129,7 @@ export default function AgentsPage() {
     selectedSpecialization,
     verifiedOnly,
     sortBy,
+    agents,
   ]);
 
   const clearAllFilters = () => {
@@ -392,7 +353,11 @@ export default function AgentsPage() {
         </div>
 
         {/* Agent List */}
-        {filteredAgents.length > 0 ? (
+        {loadError ? (
+          <p role="alert" className="py-16 text-center text-destructive">{loadError}</p>
+        ) : !agents ? (
+          <p className="py-16 text-center text-muted-foreground">Loading agents…</p>
+        ) : filteredAgents.length > 0 ? (
           <div
             className={cn(
               viewMode === "grid"

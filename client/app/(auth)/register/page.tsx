@@ -58,6 +58,7 @@ function RegisterForm() {
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -101,7 +102,7 @@ function RegisterForm() {
       email: formData.email.trim(),
       phone: formData.phone.trim(),
       whatsappNumber: formData.phone.trim(),
-      passwordHash: "hashed_" + formData.password,
+      passwordHash: "",
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       avatar: avatarFile ? URL.createObjectURL(avatarFile) : undefined,
       isEmailVerified: false,
@@ -117,15 +118,27 @@ function RegisterForm() {
     };
 
     try {
-      await register(newUser);
-    } catch (error) {
-      console.log(error);
-    }
+      const next =
+        role === Role.Viewer ? "/" : `/complete-registration?role=${role}`;
+      const signedIn = await register(newUser, formData.password, undefined, {
+        next,
+      });
 
-    if (role === Role.Viewer) {
-      router.replace("/");
-    } else {
-      router.replace(`/complete-registration?role=${role}`);
+      if (!signedIn) {
+        // Email confirmation required: the link brings them back to `next`.
+        setNotice(
+          "Account created. Check your email and click the confirmation link to continue.",
+        );
+        return;
+      }
+
+      router.replace(next);
+    } catch (error) {
+      console.error(error);
+      setErrors({
+        submit:
+          error instanceof Error ? error.message : "Registration failed.",
+      });
     }
   };
 
@@ -276,6 +289,19 @@ function RegisterForm() {
           </p>
         )}
       </div>
+      {notice && (
+        <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-3">
+          <p className="text-sm text-green-700 dark:text-green-400">{notice}</p>
+        </div>
+      )}
+
+      {errors.submit && (
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl p-3">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {errors.submit}
+          </p>
+        </div>
+      )}
     </AuthForm>
   );
 }

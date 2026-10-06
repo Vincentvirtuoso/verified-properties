@@ -29,6 +29,7 @@ export default function ListPropertyPage() {
     goPrev,
     handleNext,
     validateStep,
+    resetForm,
   } = useListPropertyForm();
 
   const markCompleted = (step: ListPropertyStep) => {
@@ -98,12 +99,19 @@ export default function ListPropertyPage() {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to submit listing");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to submit listing");
+      }
 
-      const data = await res.json();
-      router.push(`/dashboard/listings/${data.slug ?? data._id}`);
+      // Saved as a draft; it appears under "Your Recent Listings".
+      resetForm();
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
+      window.alert(
+        err instanceof Error ? err.message : "Failed to submit listing",
+      );
     } finally {
       setIsSubmitting(false);
     }

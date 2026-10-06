@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
 import { EnquiryThread } from "@/components/enquiries/EnquiryThread";
-import { mockEnquiries } from "@/data/enquiries";
+import { fetchMyEnquiries } from "@/lib/supabase/enquiries";
+import type { Enquiry } from "@/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { PageSpinner } from "@/components/ui/Spinner";
 
@@ -40,16 +41,44 @@ export default function EnquiriesPage() {
   const isAgentSide =
     user?.activeRole === Role.Agent || user?.activeRole === Role.Company;
 
-  const enquiries = useMemo(() => {
-    if (!user) return [];
-    return isAgentSide
-      ? mockEnquiries.filter((e) => e.agentId === user._id)
-      : mockEnquiries.filter((e) => e.buyerId === user._id);
-  }, [user, isAgentSide]);
+  const userId = user?._id;
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+
+  const loadEnquiries = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setEnquiries(await fetchMyEnquiries(userId, isAgentSide));
+      setListError(null);
+    } catch {
+      setListError("Couldn't load your enquiries. Please refresh.");
+    } finally {
+      setListLoading(false);
+    }
+  }, [userId, isAgentSide]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    fetchMyEnquiries(userId, isAgentSide)
+      .then((rows) => {
+        if (!cancelled) setEnquiries(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setListError("Couldn't load your enquiries. Please refresh.");
+      })
+      .finally(() => {
+        if (!cancelled) setListLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, isAgentSide]);
 
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
-  if (isLoading) {
+  if (isLoading || (user && listLoading)) {
     return <PageSpinner label="Loading your enquiries…" />;
   }
 
@@ -72,6 +101,9 @@ export default function EnquiriesPage() {
               : "Your conversations about properties you've enquired on"}
           </p>
         </div>
+        {listError && (
+          <p className="px-4 py-3 text-sm text-destructive">{listError}</p>
+        )}
         <EnquiryList
           enquiries={enquiries}
           selectedId={selected?.id}
@@ -85,9 +117,11 @@ export default function EnquiriesPage() {
       >
         {selected ? (
           <EnquiryThread
+            key={selected.id}
             enquiry={selected}
             isAgentSide={isAgentSide}
             onBack={() => setSelectedId(null)}
+            onChanged={loadEnquiries}
           />
         ) : (
           <div className="flex-1 hidden md:flex items-center justify-center text-sm text-muted-foreground">

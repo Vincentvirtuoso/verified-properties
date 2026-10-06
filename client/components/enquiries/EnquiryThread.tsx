@@ -12,11 +12,22 @@ import {
 import type { Enquiry, ThreadEvent } from "@/types/enquiry";
 import { format } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { createClient } from "@/lib/supabase/client";
+import {
+  fetchEnquiryMessages,
+  sendEnquiryMessage,
+  updateEnquiryStage,
+  type EnquiryStage,
+} from "@/lib/supabase/enquiries";
+
+const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
 
 interface EnquiryThreadProps {
   enquiry: Enquiry;
   isAgentSide: boolean;
   onBack: () => void;
+  onChanged?: () => void;
 }
 
 type EventGroup = {
@@ -75,32 +86,89 @@ export function EnquiryThread({
   enquiry,
   isAgentSide,
   onBack,
+  onChanged,
 }: EnquiryThreadProps) {
+  const { user } = useAuth();
   const [draft, setDraft] = useState("");
-  const [events, setEvents] = useState(enquiry.events);
+  const [events, setEvents] = useState<ThreadEvent[]>(enquiry.events);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<EnquiryStage>(enquiry.stage);
+  const isClosed = enquiry.status === "cancelled" || enquiry.status === "deal_closed";
 
   useEffect(() => {
-    setEvents(enquiry.events);
-  }, [enquiry.id, enquiry.events]);
+    // Remounted per enquiry (key), so loading/error start fresh.
+    let cancelled = false;
+    fetchEnquiryMessages(enquiry.id)
+      .then((rows) => !cancelled && setEvents(rows))
+      .catch(() => !cancelled && setError("Couldn't load this conversation."))
+      .finally(() => !cancelled && setLoading(false));
+
+    // Live: show new messages from the other side as they arrive.
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`enquiry-${enquiry.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "inquiry_messages",
+          filter: `inquiry_id=eq.${enquiry.id}`,
+        },
+        () => {
+          fetchEnquiryMessages(enquiry.id)
+            .then((rows) => !cancelled && setEvents(rows))
+            .catch(() => {});
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [enquiry.id]);
 
   const groupedEvents = useMemo(() => groupEvents(events), [events]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const text = draft.trim();
-    if (!text) return;
+    if (!text || !user || sending) return;
+    if (text.length > 2000) {
+      setError("Messages can be up to 2000 characters.");
+      return;
+    }
 
-    const newMessage: ThreadEvent = {
-      type: "message",
-      id: `local_${Date.now()}`,
-      sender: isAgentSide ? "agent" : "buyer",
-      text,
-      timestamp: new Date(),
-    };
+    setSending(true);
+    setError(null);
+    try {
+      const saved = await sendEnquiryMessage(enquiry.id, user._id, text);
+      setEvents((prev) =>
+        prev.some((ev) => ev.id === saved.id) ? prev : [...prev, saved],
+      );
+      setDraft("");
+      onChanged?.();
+    } catch {
+      setError("Message not sent. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
 
-    setEvents((prev) => [...prev, newMessage]);
-    setDraft("");
+  const handleStage = async (next: EnquiryStage) => {
+    const prev = stage;
+    setStage(next);
+    try {
+      await updateEnquiryStage(enquiry.id, next);
+      onChanged?.();
+    } catch {
+      setStage(prev);
+      setError("Couldn't update the stage.");
+    }
   };
 
   return (
@@ -122,17 +190,43 @@ export function EnquiryThread({
 
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {enquiry.propertyTitle}
+              {isAgentSide && enquiry.buyerPhone && (
+                <>
+                  {" · "}
+                  <a href={`tel:${enquiry.buyerPhone}`} className="text-primary hover:underline">
+                    {enquiry.buyerPhone}
+                  </a>
+                </>
+              )}
             </p>
           </div>
 
-          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary">
-            {enquiry.stage}
-          </span>
+          {isAgentSide && !isClosed ? (
+            <select
+              value={stage}
+              onChange={(e) => handleStage(e.target.value as EnquiryStage)}
+              aria-label="Enquiry stage"
+              className="shrink-0 rounded-full border-0 bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {STAGES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary">
+              {isClosed ? enquiry.status?.replace("_", " ") : stage}
+            </span>
+          )}
         </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-3xl space-y-6">
+          {loading && events.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground">Loading messages…</p>
+          )}
           {groupedEvents.map((group) => (
             <section key={group.key}>
               <div className="mb-5 flex items-center gap-3">
@@ -148,7 +242,7 @@ export function EnquiryThread({
               <div className="space-y-3">
                 {group.events.map((event) =>
                   event.type === "message" ? (
-                    <MessageBubble key={event.id} event={event} />
+                    <MessageBubble key={event.id} event={event} isAgentSide={isAgentSide} />
                   ) : (
                     <CallCard key={event.id} event={event} />
                   ),
@@ -160,21 +254,28 @@ export function EnquiryThread({
       </div>
 
       <div className="px-4 py-3 border-t border-border sticky bottom-0 bg-card">
+        {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
+        {isClosed ? (
+          <p className="text-center text-xs text-muted-foreground">This enquiry is closed.</p>
+        ) : (
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Type a message…"
+            maxLength={2000}
             className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
             type="submit"
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || sending}
+            aria-label="Send message"
             className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
           >
             <LuSend className="h-4 w-4" />
           </button>
         </form>
+        )}
       </div>
     </div>
   );
@@ -182,10 +283,13 @@ export function EnquiryThread({
 
 function MessageBubble({
   event,
+  isAgentSide,
 }: {
   event: Extract<ThreadEvent, { type: "message" }>;
+  isAgentSide: boolean;
 }) {
-  const isBuyer = event.sender === "buyer";
+  // "Mine" bubbles sit on the right in the primary colour.
+  const isBuyer = isAgentSide ? event.sender === "agent" : event.sender === "buyer";
 
   return (
     <div

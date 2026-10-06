@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaBed, FaBath, FaExpand, FaFire } from "react-icons/fa";
 import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
 import { RiHeartLine, RiHeartFill } from "react-icons/ri";
+import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { LuFileText, LuImage, LuMapPin, LuVideo } from "react-icons/lu";
 
 import { Badge } from "@/components/ui";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 const defaultImage = "/placeholder-property.png";
 
 export function PropertyCard({
+  _id,
   slug,
   title,
   location,
@@ -39,12 +41,12 @@ export function PropertyCard({
   ownerType,
   ownerId,
   status,
-  isSaved = false,
-}: PopulatedProperty & { isSaved?: boolean }) {
+}: PopulatedProperty) {
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState(image || defaultImage);
   const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(isSaved ?? false);
+  const { isSaved, toggleSaved } = useSavedProperties();
+  const isLiked = isSaved(_id);
 
   const discountedPrice = useMemo(() => {
     if (discount?.percentage)
@@ -108,7 +110,9 @@ export function PropertyCard({
 
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked((prev) => !prev);
+    toggleSaved(_id).then((ok) => {
+      if (!ok) router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+    });
   };
 
   const handleOwnerClick = (e: React.MouseEvent) => {

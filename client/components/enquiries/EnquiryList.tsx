@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { Enquiry } from "@/types/enquiry";
 import { formatRelativeTime } from "@/lib/formatters";
 import { Avatar } from "../ui/Avatar";

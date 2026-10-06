@@ -29,9 +29,12 @@ export interface Enquiry {
   buyerId: string;
   buyerName: string;
   buyerAvatar?: string;
+  /** Callback number the buyer left; only visible to the assigned agent. */
+  buyerPhone?: string;
   agentId: string;
   agentName: string;
-  stage: "qualification" | "selection" | "inspection"; 
+  stage: "qualification" | "selection" | "inspection";
+  status?: "open" | "in_progress" | "deal_closed" | "cancelled";
   lastEventPreview: string;
   lastEventAt: Date;
   unreadCount: number;

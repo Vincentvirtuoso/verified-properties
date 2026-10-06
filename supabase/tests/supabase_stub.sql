@@ -1,0 +1,13 @@
+create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
+create schema auth; create schema storage;
+grant usage on schema auth, storage to anon, authenticated, service_role;
+create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}', email_confirmed_at timestamptz);
+create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid $$;
+create function auth.role() returns text language sql stable as $$ select current_user::text $$;
+grant execute on all functions in schema auth to anon, authenticated;
+create table storage.buckets (id text primary key, name text, public boolean);
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+create function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name,'/') $$;
+grant execute on function storage.foldername(text) to anon, authenticated;
+alter table storage.objects enable row level security;
+grant select, insert, update, delete on storage.objects to authenticated; grant select on storage.objects to anon;

@@ -4,6 +4,7 @@ import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@/components/ui/Field";
 import { useState } from "react";
 import { FiMail } from "react-icons/fi";
+import { sendPasswordResetEmail } from "@/lib/supabase/auth";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -29,12 +30,14 @@ const ForgotPasswordPage = () => {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
+      await sendPasswordResetEmail(email.trim());
       setIsSubmitted(true);
-      console.log("Password reset link sent to:", email);
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +107,7 @@ const ForgotPasswordPage = () => {
       />
 
       <p className="text-xs text-gray-500 text-center mt-2">
-        We'll send a secure link to reset your password.
+        We&apos;ll send a secure link to reset your password.
       </p>
     </AuthForm>
   );

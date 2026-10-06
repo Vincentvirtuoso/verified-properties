@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchMyListings } from "@/lib/supabase/properties";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, PopulatedUser, PopulatedProperty } from "@/types";
@@ -29,9 +30,11 @@ import {
 } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   const recommended = properties.slice(0, 2);
+  const { savedCount } = useSavedProperties();
 
   return (
     <div className="space-y-8">
@@ -43,8 +46,8 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
         <DashboardCard
           icon={<LuHeart />}
           label="Saved Homes"
-          value={user.viewerProfile?.savedListingIds?.length ?? 0}
-          href="/favorites"
+          value={savedCount}
+          href="/saved-properties"
         />
         <DashboardCard
           icon={<LuHistory />}
@@ -77,13 +80,21 @@ const AgentDashboard = ({
   const agentProfile = user.agentProfile;
   const subRole = agentProfile?.subRole;
 
-  const agentListings = properties.filter(
-    (p) =>
-      p.ownerType === "agent" &&
-      (typeof p.ownerId === "string"
-        ? p.ownerId === user._id
-        : p.ownerId?._id === user._id),
-  );
+  // Real listings owned by this agent (drafts included).
+  const [agentListings, setAgentListings] = useState<PopulatedProperty[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyListings(user)
+      .then((rows) => {
+        if (!cancelled)
+          setAgentListings(rows.filter((p) => p.ownerType === "agent"));
+      })
+      .catch((error) => console.error("Failed to load listings:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const quickActions = [
     {

@@ -173,7 +173,15 @@ export default function PropertyDetailClient({
                   ownerType={property.ownerType}
                 />
               )}
-              <ContactForm propertyTitle={property.title} />
+              <ContactForm
+                propertyId={property._id}
+                propertyTitle={property.title}
+                ownerId={
+                  typeof property.ownerId === "string"
+                    ? property.ownerId
+                    : property.ownerId._id
+                }
+              />
             </div>
           </div>
         </div>

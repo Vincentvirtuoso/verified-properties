@@ -1,7 +1,22 @@
 import { notFound } from "next/navigation";
-import { Role } from "@/types/user";
-import { dummyUsers } from "@/data/users";
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { fetchPublicAgent } from "@/lib/supabase/publicDirectory";
 import AgentClient from "../_components/AgentClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await fetchPublicAgent(id, await createClient()).catch(() => null);
+  if (!data) return { title: "Agent not found" };
+  return {
+    title: `${data.agent.name} – Real Estate Agent`,
+    description: `View ${data.agent.name}'s live property listings and contact details.`,
+  };
+}
 
 export default async function AgentPage({
   params,
@@ -9,11 +24,16 @@ export default async function AgentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const agent = dummyUsers.find(
-    (u) => u._id === id && u.roles.includes(Role.Agent),
+  const data = await fetchPublicAgent(id, await createClient());
+
+  if (!data) notFound();
+
+  return (
+    <AgentClient
+      agent={data.agent}
+      id={id}
+      listings={data.listings}
+      closedDeals={data.closedDeals}
+    />
   );
-
-  if (!agent) notFound();
-
-  return <AgentClient agent={agent} id={id} />;
 }
