@@ -29,14 +29,19 @@ import { StatCard } from "@/components/ui";
 import { TagOverflow } from "@/components/ui/TagOverflow";
 import { DropdownItem, DropdownSeparator } from "@/components/ui/Dropdown";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
+import { PageSpinner } from "@/components/ui/Spinner";
 
 export default function CompanyTeamPage() {
-  const { user, companies } = useAuth();
+  const { user, companies, isLoading } = useAuth();
   // const [imageError, setImageError] = useState(false);
   const companyId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
   const company = companies.find((c) => c._id === companyId);
+
+  if (isLoading) {
+    return <PageSpinner label="Loading company team" />;
+  }
 
   if (!user) {
     return (

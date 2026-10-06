@@ -1,21 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { RiSendPlane2Line, RiCheckLine } from "react-icons/ri";
 import { LuPhoneCall } from "react-icons/lu";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ContactFormProps {
   propertyTitle: string;
 }
 
 export default function ContactForm({ propertyTitle }: ContactFormProps) {
+  const { user, isLoading } = useAuth();
+
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: "",
     phone: "",
     message: `Hi, I'm interested in "${propertyTitle}". Please contact me.`,
   });
+
+  const [touched, setTouched] = useState({ name: false, phone: false });
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+
+    setForm((prev) => ({
+      ...prev,
+      name: touched.name ? prev.name : (user.name ?? prev.name),
+      phone: touched.phone ? prev.phone : (user.phone ?? prev.phone),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +65,10 @@ export default function ContactForm({ propertyTitle }: ContactFormProps) {
               type="text"
               required
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                setTouched((t) => ({ ...t, name: true }));
+                setForm({ ...form, name: e.target.value });
+              }}
               placeholder="John Doe"
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
@@ -62,7 +81,10 @@ export default function ContactForm({ propertyTitle }: ContactFormProps) {
               type="tel"
               required
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => {
+                setTouched((t) => ({ ...t, phone: true }));
+                setForm({ ...form, phone: e.target.value });
+              }}
               placeholder="+234 800 000 0000"
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />

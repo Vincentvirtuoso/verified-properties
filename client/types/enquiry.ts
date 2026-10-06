@@ -29,9 +29,15 @@ export interface Enquiry {
   buyerId: string;
   buyerName: string;
   buyerAvatar?: string;
+  buyerEmail?: string;
+  buyerPhone?: string;
+  contactUserId?: string;
+  contactUserName?: string;
+  companyId?: string;
   agentId: string;
   agentName: string;
-  stage: "qualification" | "selection" | "inspection"; 
+  agentType: string;
+  stage: "qualification" | "selection" | "inspection";
   lastEventPreview: string;
   lastEventAt: Date;
   unreadCount: number;

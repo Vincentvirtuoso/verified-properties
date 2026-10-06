@@ -1,43 +1,43 @@
 "use client";
 
-import { Role } from "@/types";
+import { PopulatedUser, Role } from "@/types";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/Accordion";
 import {
   LuUserCheck,
   LuBuilding2,
   LuLayoutDashboard,
-  LuListChecks,
   LuTrendingUp,
   LuMegaphone,
   LuUsers,
   LuSearch,
   LuStar,
   LuCirclePlus,
+  LuInfo,
 } from "react-icons/lu";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { BsArrowRight } from "react-icons/bs";
 import RoleIcon from "@/components/ui/RoleIcon";
 
+interface Step {
+  icon: React.ReactNode;
+  label: string;
+  href?: string;
+}
+
 interface RoleGuide {
   title: string;
   description: string;
-  steps: { icon: React.ReactNode; label: string; href?: string }[];
-  extraInfo?: { label: string; content: string }[];
+  steps: Step[];
+  extraInfo?: { label: string; content: string };
 }
 
 const roleGuides: Record<Role, RoleGuide> = {
   [Role.Viewer]: {
     title: "Welcome, Explorer!",
     description:
-      "You’re browsing as a viewer. Discover properties and start your journey in real estate.",
+      "You're browsing as a viewer. Discover properties and start your journey in real estate.",
     steps: [
       {
         icon: <LuSearch />,
@@ -65,18 +65,16 @@ const roleGuides: Record<Role, RoleGuide> = {
         href: "/onboarding/list-property",
       },
     ],
-    extraInfo: [
-      {
-        label: "Why upgrade?",
-        content:
-          "As an Agent you can list properties, manage leads, and unlock premium features. It’s free to get started.",
-      },
-    ],
+    extraInfo: {
+      label: "Why upgrade?",
+      content:
+        "As an Agent you can list properties, manage leads, and unlock premium features. It's free to get started.",
+    },
   },
   [Role.Agent]: {
     title: "Welcome, Agent!",
     description:
-      "Manage your listings, connect with clients, and grow your portfolio. Your specific sub‑role (realtor, lawyer, surveyor, landlord, or other) gives you tailored tools.",
+      "Manage your listings, connect with clients, and grow your portfolio.",
     steps: [
       {
         icon: <LuLayoutDashboard />,
@@ -96,7 +94,7 @@ const roleGuides: Record<Role, RoleGuide> = {
       {
         icon: <LuUsers />,
         label: "Respond to inquiries",
-        href: "/dashboard/inquiries",
+        href: "/inquiries",
       },
       {
         icon: <LuTrendingUp />,
@@ -104,13 +102,11 @@ const roleGuides: Record<Role, RoleGuide> = {
         href: "/academy",
       },
     ],
-    extraInfo: [
-      {
-        label: "Need to verify your identity?",
-        content:
-          "Make sure your verification documents are submitted in your profile. Verified agents appear higher in search results.",
-      },
-    ],
+    extraInfo: {
+      label: "Get verified",
+      content:
+        "Submit your verification documents in your profile. Verified agents rank higher in search results.",
+    },
   },
   [Role.Company]: {
     title: "Welcome, Company!",
@@ -145,12 +141,83 @@ const roleGuides: Record<Role, RoleGuide> = {
   },
 };
 
-function Illustration({ label }: { label: string }) {
-  return (
-    <div className="flex items-center justify-center w-full h-32 bg-muted/20 rounded-2xl border border-muted/50">
-      <span className="text-xs text-muted">{label}</span>
-    </div>
-  );
+function formatRoleLabel(role: Role): string {
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+function getExtraInfo(
+  activeRole: Role,
+  user: PopulatedUser,
+): { label: string; content: string } | null {
+  if (activeRole === Role.Viewer) {
+    return {
+      label: "Why upgrade?",
+      content:
+        "As an Agent you can list properties, manage leads, and unlock premium features. It's free to get started.",
+    };
+  }
+
+  if (activeRole === Role.Agent) {
+    const status = user.agentProfile?.verificationStatus;
+
+    if (status === "verified") {
+      return {
+        label: "Want AI Calling?",
+        content:
+          "AI Calling is exclusive to Partnership accounts. Register your company to unlock automatic follow-up calls on every enquiry.",
+      };
+    }
+
+    if (status === "pending") {
+      return {
+        label: "Verification pending",
+        content:
+          "Your agent verification is under review. Verified agents rank higher in search results.",
+      };
+    }
+
+    // unverified / rejected / undefined
+    return {
+      label: "Get verified",
+      content:
+        "Submit your verification documents in your profile. Verified agents rank higher in search results.",
+    };
+  }
+
+  if (activeRole === Role.Company) {
+    const company = user.companyId;
+    const status = company?.verificationStatus;
+    const hasAiCalling = company?.features?.tier === "pro";
+
+    if (status !== "verified") {
+      return {
+        label:
+          status === "pending"
+            ? "Verification pending"
+            : "Complete verification",
+        content:
+          status === "pending"
+            ? "Your CAC verification is under review (2-5 business days). You can still configure your AI assistant in draft mode while you wait."
+            : "Upload your CAC certificate and company documents to unlock Partnership features, including AI Calling on the Pro tier.",
+      };
+    }
+
+    if (!hasAiCalling) {
+      return {
+        label: "Upgrade to Pro",
+        content:
+          "You're verified — upgrade to Pro to activate AI Calling and get automatic follow-up on every enquiry.",
+      };
+    }
+
+    return {
+      label: "AI Calling is live",
+      content:
+        "Your AI assistant is answering enquiries automatically. Check the Enquiries page to review call transcripts.",
+    };
+  }
+
+  return null;
 }
 
 export default function WelcomePage() {
@@ -162,163 +229,127 @@ export default function WelcomePage() {
 
   const activeRole = user.activeRole as Role;
   const guide = roleGuides[activeRole] ?? roleGuides[Role.Viewer];
-  // Only roles that actually exist in the system (Viewer, Agent, Company)
-  const allRoles = user.roles.filter((role) =>
-    [Role.Viewer, Role.Agent, Role.Company].includes(role),
-  );
+  const extraInfo = getExtraInfo(activeRole, user);
+
+  const initial = user.name?.charAt(0)?.toUpperCase() ?? "👤";
 
   return (
-    <main className="min-h-screen bg-background py-10">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-10">
-          <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <span className="text-2xl font-bold text-primary">
-              {user.name?.charAt(0)?.toUpperCase() || "👤"}
-            </span>
+    <main className="min-h-screen bg-background py-10 md:py-14">
+      <div className="mx-auto max-w-4xl px-4">
+        <header className="text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <span className="text-2xl font-bold text-primary">{initial}</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+
+          <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             {guide.title}
           </h1>
-          <p className="mt-2 text-muted max-w-xl mx-auto">
+
+          <p className="mx-auto mt-3 max-w-xl text-sm text-muted md:text-base">
             {guide.description}
           </p>
-        </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <Illustration label="Welcome illustration" />
-            <div className="mt-4 p-5 bg-card border border-border rounded-xl">
-              <h3 className="font-semibold flex items-center gap-2">
-                <LuListChecks className="h-4 w-4 text-primary" />
-                Quick Start
-              </h3>
-              <ul className="mt-3 space-y-3">
-                {guide.steps.slice(0, 3).map((step, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="shrink-0 mt-0.5 text-muted">
-                      {step.icon}
-                    </span>
-                    {step.href ? (
-                      <Link
-                        href={step.href}
-                        className="hover:text-primary transition-colors"
-                      >
-                        {step.label}
-                      </Link>
-                    ) : (
-                      <span>{step.label}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 w-full"
-                asChild
-              >
-                <Link href="/dashboard">Go to Dashboard</Link>
-              </Button>
+          <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted">
+            <RoleIcon role={activeRole} className="text-primary" />
+            Signed in as{" "}
+            <span className="capitalize text-foreground">{activeRole}</span>
+          </span>
+        </header>
+
+        <section className="mt-12">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Next steps
+          </h2>
+
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {guide.steps.map((step, i) => (
+              <li key={i}>
+                <StepCard step={step} />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {extraInfo && (
+          <section className="mt-8">
+            <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
+              <span className="mt-0.5 shrink-0 text-primary">
+                <LuInfo className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {extraInfo.label}
+                </h3>
+                <p className="mt-1 text-sm text-muted">{extraInfo.content}</p>
+              </div>
             </div>
-          </div>
+          </section>
+        )}
 
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="text-xl font-semibold">
-                Your role{allRoles.length > 1 ? "s" : ""}
-              </h2>
-              <p className="text-sm text-muted mt-1">
-                You’re currently using the{" "}
-                <strong className="capitalize">{activeRole}</strong> profile.
-              </p>
-
-              <Accordion className="mt-4">
-                {allRoles.map((role) => {
-                  const roleGuide = roleGuides[role] ?? roleGuides[Role.Viewer];
-                  return (
-                    <AccordionItem key={role} value={role}>
-                      <AccordionTrigger>
-                        <RoleIcon
-                          role={role}
-                          className="inline-flex mr-2 text-primary"
-                        />
-                        {role.charAt(0).toUpperCase() + role.slice(1)} Guide
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4">
-                          <p className="text-sm text-muted">
-                            {roleGuide.description}
-                          </p>
-                          <ul className="grid sm:grid-cols-2 gap-2">
-                            {roleGuide.steps.map((step, i) => (
-                              <li
-                                key={i}
-                                className="flex items-center gap-3 text-sm"
-                              >
-                                <span className="text-muted">{step.icon}</span>
-                                {step.href ? (
-                                  <Link
-                                    href={step.href}
-                                    className="hover:text-primary transition-colors"
-                                  >
-                                    {step.label}
-                                  </Link>
-                                ) : (
-                                  <span>{step.label}</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                          {roleGuide.extraInfo?.map((info, i) => (
-                            <div
-                              key={i}
-                              className="mt-4 p-3 bg-muted/20 rounded-lg"
-                            >
-                              <h4 className="font-medium text-sm">
-                                {info.label}
-                              </h4>
-                              <p className="text-xs text-muted mt-1">
-                                {info.content}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4">
-              {guide.steps.slice(0, 4).map((step, i) => (
-                <div
-                  key={i}
-                  className="p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-colors duration-500"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      {step.icon}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{step.label}</p>
-                      {step.href && (
-                        <Link
-                          href={step.href}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Get started{" "}
-                          <BsArrowRight className="inline-flex ml-1" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mt-10 flex justify-center">
+          <Button asChild size="lg">
+            <Link href="/dashboard">
+              Go to Dashboard
+              <BsArrowRight className="ml-2 inline-flex" />
+            </Link>
+          </Button>
         </div>
       </div>
     </main>
+  );
+}
+
+function StepCard({
+  step,
+  compact = false,
+}: {
+  step: Step;
+  compact?: boolean;
+}) {
+  const inner = (
+    <div
+      className={
+        compact
+          ? "group flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-border hover:bg-background"
+          : "group flex h-full items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
+      }
+    >
+      <span
+        className={
+          compact
+            ? "flex h-6 w-6 shrink-0 items-center justify-center text-muted"
+            : "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+        }
+      >
+        {step.icon}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p
+          className={
+            compact
+              ? "truncate text-foreground"
+              : "text-sm font-medium text-foreground"
+          }
+        >
+          {step.label}
+        </p>
+
+        {!compact && step.href && (
+          <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary">
+            Get started
+            <BsArrowRight className="transition-transform group-hover:translate-x-0.5" />
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!step.href) return inner;
+
+  return (
+    <Link href={step.href} className={compact ? "block" : "block h-full"}>
+      {inner}
+    </Link>
   );
 }

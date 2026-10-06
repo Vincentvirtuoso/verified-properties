@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LuArrowLeft,
   LuChevronDown,
@@ -12,6 +12,7 @@ import {
 import type { Enquiry, ThreadEvent } from "@/types/enquiry";
 import { format } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { Textarea } from "../ui/Textarea";
 
 interface EnquiryThreadProps {
   enquiry: Enquiry;
@@ -159,23 +160,7 @@ export function EnquiryThread({
         </div>
       </div>
 
-      <div className="px-4 py-3 border-t border-border sticky bottom-0 bg-card">
-        <form onSubmit={handleSend} className="flex items-center gap-2">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type a message…"
-            className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim()}
-            className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
-          >
-            <LuSend className="h-4 w-4" />
-          </button>
-        </form>
-      </div>
+      <ChatComposer onSend={handleSend} />
     </div>
   );
 }
@@ -188,19 +173,14 @@ function MessageBubble({
   const isBuyer = event.sender === "buyer";
 
   return (
-    <div
-      className={cn(
-        "flex",
-        isBuyer ? "justify-end" : "justify-start",
-      )}
-    >
+    <div className={cn("flex", isBuyer ? "justify-end" : "justify-start")}>
       <div className="max-w-[78%] sm:max-w-[65%]">
         <div
           className={cn(
             "px-4 py-3 text-sm leading-relaxed shadow-sm",
             isBuyer
-              ? "rounded-2xl rounded-br-md bg-primary text-primary-foreground"
-              : "rounded-2xl rounded-bl-md border border-border bg-card text-foreground",
+              ? "rounded-2xl rounded-br-xs bg-primary text-primary-foreground"
+              : "rounded-2xl rounded-bl-xs border border-border bg-card text-foreground",
           )}
         >
           <p className="whitespace-pre-wrap">{event.text}</p>
@@ -255,9 +235,7 @@ function CallCard({
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-foreground">
-              {event.caller === "assistant"
-                ? "Assistant call"
-                : "Agent call"}
+              {event.caller === "assistant" ? "Assistant call" : "Agent call"}
               {isMissed && (
                 <span className="font-medium text-destructive">
                   {" · Missed"}
@@ -304,6 +282,111 @@ function CallCard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface ChatComposerProps {
+  onSend: (e: React.FormEvent) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  minRows?: number;
+  maxRows?: number;
+  className?: string;
+}
+
+const LINE_HEIGHT = 20;
+const VERTICAL_PADDING = 20;
+
+function ChatComposer({
+  onSend,
+  placeholder = "Type a message…",
+  disabled = false,
+  minRows = 1,
+  maxRows = 5,
+  className,
+}: ChatComposerProps) {
+  const [draft, setDraft] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const minHeight = LINE_HEIGHT * minRows + VERTICAL_PADDING;
+  const maxHeight = LINE_HEIGHT * maxRows + VERTICAL_PADDING;
+
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = `${next}px`;
+
+    setIsOverflowing(el.scrollHeight > maxHeight);
+  }, [draft, maxHeight]);
+
+  const submit = (e: React.FormEvent) => {
+    const text = draft.trim();
+    if (!text || disabled) return;
+    onSend(e);
+    setDraft("");
+
+    const el = textareaRef.current;
+    if (el) el.style.height = `${minHeight}px`;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submit(e);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submit(e);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "border-t border-border bg-card px-4 py-3 sticky bottom-0",
+        className,
+      )}
+    >
+      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={minRows}
+          style={{ minHeight, maxHeight }}
+          className={cn(
+            "flex-1 resize-none rounded-2xl border border-border",
+            isOverflowing ? "overflow-y-auto" : "overflow-hidden",
+            "bg-background px-4 py-2.5 text-sm leading-5 text-foreground",
+            "placeholder:text-muted-foreground",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+          )}
+        />
+
+        <button
+          type="submit"
+          disabled={!draft.trim() || disabled}
+          aria-label="Send message"
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "bg-primary text-primary-foreground transition-opacity",
+            "disabled:opacity-40",
+          )}
+        >
+          <LuSend className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 }

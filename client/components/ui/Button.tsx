@@ -14,6 +14,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
   href?: string;
   showArrow?: boolean;
+  disableFocus?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -32,13 +33,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       asChild = false,
       href,
       showArrow,
+      disableFocus = false,
       ...props
     },
     ref,
   ) => {
     const baseStyles = cn(
       "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 group",
-      "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring",
+      !disableFocus &&
+        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
       "active:scale-95",
       {

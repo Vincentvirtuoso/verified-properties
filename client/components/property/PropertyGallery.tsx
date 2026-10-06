@@ -219,7 +219,7 @@ export default function PropertyGallery({
               <RiArrowRightLine size={20} aria-hidden="true" />
             </button>
 
-            <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2 px-6 overflow-x-auto pb-2">
+            <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2 px-6 overflow-x-auto py-2">
               {images.map((img, i) => (
                 <button
                   key={i}

@@ -20,6 +20,7 @@ import {
 } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Avatar } from "./Avatar";
 
 export interface FileWithMeta {
   id: string;
@@ -276,6 +277,10 @@ export default function FileUpload({
   if (variant === "avatar") {
     const currentFile = files[0];
     const displayUrl = currentFile?.previewUrl ?? currentImageUrl;
+    const avatarSrc =
+      currentFile?.previewUrl && currentFile.status !== "error"
+        ? currentFile.previewUrl
+        : (displayUrl ?? null);
 
     return (
       <div className={cn("flex flex-col items-center gap-3", className)}>
@@ -285,7 +290,7 @@ export default function FileUpload({
         <div
           onClick={triggerFileInput}
           className={cn(
-            "relative w-28 h-28 rounded-full border-2 border-dashed cursor-pointer overflow-hidden group transition-all",
+            "relative w-28 h-28 rounded-full border-2 border-dashed cursor-pointer overflow-hidden group transition-all flex items-center justify-center",
             isDragging
               ? "border-primary bg-primary/10"
               : "border-border hover:border-primary/50",
@@ -302,26 +307,19 @@ export default function FileUpload({
             className="hidden"
             accept={accept || effectiveAllowedTypes.join(",")}
           />
-          {currentFile?.previewUrl && currentFile.status !== "error" ? (
-            <Image
-              fill
-              src={currentFile.previewUrl}
-              alt="Avatar preview"
-              className="w-full h-full object-cover"
-            />
-          ) : displayUrl ? (
-            <Image
-              fill
-              src={displayUrl}
-              alt="Current avatar"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted">
-              <FiCamera className="w-6 h-6 mb-1" />
-              <span className="text-[10px]">Upload logo</span>
-            </div>
-          )}
+          <Avatar
+            src={avatarSrc}
+            name="Unknown"
+            alt={label ? label : "Avatar image"}
+            size={96}
+            shape="circle"
+            fallbackIcon={
+              <div className="flex flex-col items-center justify-center text-muted">
+                <FiCamera className="h-6 w-6 mb-1" />
+                <span className="text-[10px]">Upload image</span>
+              </div>
+            }
+          />
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <FiUploadCloud className="w-5 h-5 text-white" />
           </div>

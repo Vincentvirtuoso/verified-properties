@@ -7,6 +7,7 @@ import {
   RiMailLine,
   RiWhatsappLine,
   RiBuildingLine,
+  RiArrowRightLine,
 } from "react-icons/ri";
 import Link from "next/link";
 import { useState } from "react";
@@ -46,13 +47,9 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
     ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`
     : null;
 
-  let profileHref = "#";
-  if (isCompany) {
-    profileHref = `/companies/${owner._id}`;
-  } else {
-    const user = owner;
-    profileHref = `/agents/${user._id}`;
-  }
+  const profileHref = isCompany
+    ? `/companies/${owner._id}`
+    : `/agents/${owner._id}`;
 
   const displayRoleLabel = isCompany
     ? "Company"
@@ -62,12 +59,12 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
 
   const companyObj = isCompany
     ? null
-    : owner.companyId
-      ? typeof owner.companyId === "object"
-        ? (owner.companyId as Company)
-        : null
+    : owner.companyId && typeof owner.companyId === "object"
+      ? (owner.companyId as Company)
       : null;
-  const affiliatedCompanyName = companyObj ? companyObj.name : undefined;
+  const affiliatedCompanyName = companyObj?.name;
+
+  const hasContactActions = Boolean(phone) || Boolean(whatsappUrl);
 
   return (
     <motion.div
@@ -76,97 +73,87 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 }}
     >
-      <div className="h-1.5 bg-linear-to-r from-violet-500 to-violet-700" />
 
-      <div className="p-5 flex flex-col gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-subtle mb-3">
-            Listed by
-          </p>
+      <div className="p-5 space-y-4">
+        <div className="flex items-center gap-3.5">
+          <div
+            className={`relative w-14 h-14 shrink-0 overflow-hidden bg-muted/10 ring-2 ring-violet-100 dark:ring-violet-900 ${
+              isCompany ? "rounded-xl" : "rounded-full"
+            }`}
+          >
+            <Image
+              src={imgSrc}
+              alt={name || "Owner image"}
+              fill
+              sizes="56px"
+              loader={imageLoader}
+              onError={() => setImgSrc(isCompany ? defaultLogo : defaultAvatar)}
+              className="object-cover"
+            />
+          </div>
 
-          <div className="flex items-center gap-3">
-            <div
-              className={`relative w-14 h-14 ${
-                isCompany ? "rounded-xl" : "rounded-full"
-              } overflow-hidden bg-muted/10 shrink-0 ring-2 ring-violet-100 dark:ring-violet-900`}
-            >
-              <Image
-                src={imgSrc}
-                alt={name || "Owner image"}
-                fill
-                sizes="56px"
-                loader={imageLoader}
-                onError={() =>
-                  setImgSrc(isCompany ? defaultLogo : defaultAvatar)
-                }
-                className="object-cover"
-              />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className="font-bold text-foreground truncate">{name}</p>
+              {isVerified && <VerifiedBadge size="sm" showText={false} />}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="font-bold text-neutral-900 dark:text-neutral-100 truncate">
-                  {name}
-                </p>
-                {isVerified && <VerifiedBadge size="sm" showText={false} />}
-              </div>
+            <p className="text-xs font-medium text-violet-600 dark:text-violet-400 mt-0.5">
+              {displayRoleLabel}
+            </p>
 
-              {affiliatedCompanyName && (
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
-                  <RiBuildingLine size={13} className="shrink-0" />
-                  {affiliatedCompanyName}
-                </p>
-              )}
-
-              <p className="text-xs text-violet-600 dark:text-violet-400 font-medium mt-0.5">
-                {displayRoleLabel}
+            {affiliatedCompanyName && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+                <RiBuildingLine size={12} className="shrink-0" />
+                <span className="truncate">{affiliatedCompanyName}</span>
               </p>
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          {email && (
-            <a
-              href={`mailto:${email}`}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium transition-all duration-200"
-            >
-              <RiMailLine size={14} className="shrink-0 text-violet-500" />
-              <span className="truncate">{email}</span>
-            </a>
-          )}
-        </div>
+        {hasContactActions && (
+          <div className="flex gap-2">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                className="flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+              >
+                <RiPhoneLine size={14} />
+                Call
+              </a>
+            )}
 
-        <div className="flex items-center gap-2 mt-1">
-          {phone && (
-            <a
-              href={`tel:${phone}`}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs transition-all duration-200 min-w-0 flex-1"
-            >
-              <RiPhoneLine size={14} className="shrink-0" />
-              <span className="truncate">{phone}</span>
-            </a>
-          )}
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              >
+                <RiWhatsappLine size={14} />
+                WhatsApp
+              </a>
+            )}
+          </div>
+        )}
 
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all duration-200 shrink-0"
-              title="Chat on WhatsApp"
-            >
-              <RiWhatsappLine size={15} className="shrink-0" />
-            </a>
-          )}
+        <Link
+          href={profileHref}
+          className="flex items-center justify-center gap-1.5 w-full px-4 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted/50 font-semibold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+        >
+          View Profile
+          <RiArrowRightLine size={14} />
+        </Link>
 
-          <Link
-            href={profileHref}
-            className="flex items-center justify-center border border-primary/30 text-primary dark:text-primary-foreground hover:bg-primary/5 py-2.5 px-3.5 text-xs font-bold rounded-xl transition-all duration-200 shrink-0"
+        {email && (
+          <a
+            href={`mailto:${email}`}
+            className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors truncate pt-0.5"
           >
-            View Profile
-          </Link>
-        </div>
+            <RiMailLine size={13} className="shrink-0" />
+            <span className="truncate">{email}</span>
+          </a>
+        )}
       </div>
     </motion.div>
   );

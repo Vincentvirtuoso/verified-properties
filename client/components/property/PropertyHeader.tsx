@@ -8,9 +8,16 @@ import {
   RiHeartFill,
   RiStarLine,
 } from "react-icons/ri";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PopulatedProperty, PropertyStatus } from "@/types/property";
 import { PROPERTY_TYPE_LABELS } from "@/utils/constants";
+import {
+  SAVED_PROPERTIES_EVENT,
+  SAVED_PROPERTIES_STORAGE_KEY,
+  isPropertySaved,
+  toggleSavedProperty,
+} from "@/lib/saved-properties-storage";
+import { Button } from "../ui/Button";
 
 const statusConfig: Record<
   PropertyStatus,
@@ -51,6 +58,28 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Hydrate the saved state from localStorage on mount.
+  useEffect(() => {
+    setSaved(isPropertySaved(property.slug));
+  }, [property.slug]);
+
+  // Keep in sync with other tabs and other components in the same tab.
+  useEffect(() => {
+    const sync = () => setSaved(isPropertySaved(property.slug));
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === SAVED_PROPERTIES_STORAGE_KEY) sync();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(SAVED_PROPERTIES_EVENT, sync);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(SAVED_PROPERTIES_EVENT, sync);
+    };
+  }, [property.slug]);
+
   const status = property.status ? statusConfig[property.status] : null;
   const discountedPrice = property.discount?.amount
     ? property.price - property.discount.amount
@@ -61,13 +90,37 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
   const displayPrice = discountedPrice ?? property.price;
 
   const handleShare = async () => {
+    const url = window.location.href;
+    const shareData: ShareData = {
+      title: property.title,
+      text: `Check out this property: ${property.title}`,
+      url,
+    };
+
+    // Prefer the native share sheet when the browser supports it.
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (error) {
+        // User dismissed the sheet — don't fall through to clipboard.
+        if ((error as Error)?.name === "AbortError") return;
+        // Otherwise fall through to clipboard copy.
+      }
+    }
+
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* noop */
+      /* clipboard unavailable — nothing more we can do */
     }
+  };
+
+  const handleToggleSave = () => {
+    const next = toggleSavedProperty(property.slug);
+    setSaved(next);
   };
 
   return (
@@ -143,17 +196,20 @@ export default function PropertyHeader({ property }: PropertyHeaderProps) {
             <RiShareLine size={16} />
             {copied ? "Copied!" : "Share"}
           </button>
-          <button
-            onClick={() => setSaved((s) => !s)}
-            className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl border transition-all duration-200 ${
+          <Button
+            variant="outline"
+            onClick={handleToggleSave}
+            aria-pressed={saved}
+            size="sm"
+            className={`rounded-xl border transition-all duration-200 focus ${
               saved
                 ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800 dark:text-red-400"
-                : "border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                : ""
             }`}
           >
             {saved ? <RiHeartFill size={16} /> : <RiHeartLine size={16} />}
             {saved ? "Saved" : "Save"}
-          </button>
+          </Button>
         </div>
       </div>
     </motion.div>

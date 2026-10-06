@@ -6,7 +6,6 @@ import {
   LuBuilding2,
   LuUsers,
   LuBanknote,
-  LuBadgeCheck,
   LuClock,
   LuShield,
   LuPhone,
@@ -17,26 +16,25 @@ import {
   LuHeadphones,
   LuUserCheck,
   LuSettings,
+  LuPhoneCall,
+  LuSparkles,
 } from "react-icons/lu";
 import { InfoRow } from "@/components/ui/InfoRow";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CompanyMember, companyTypeLabels, PopulatedUser } from "@/types";
-import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { useState } from "react";
-import { imageLoader } from "@/utils/helpers";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
 import UserHeaderCard from "@/components/cards/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { PageSpinner } from "@/components/ui/Spinner";
+import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
@@ -45,14 +43,17 @@ const itemVariants = {
 };
 
 export default function CompanyDashboardPage() {
-  const { user, companies } = useAuth();
-  const [imageError, setImageError] = useState(false);
+  const { user, companies, isLoading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const companyId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
   const company = companies.find((c) => c._id === companyId);
+
+  if (isLoading) {
+    return <PageSpinner label="Loading company dashboard" />;
+  }
 
   if (!user) {
     return (
@@ -69,9 +70,9 @@ export default function CompanyDashboardPage() {
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center min-h-[60vh] space-y-4"
       >
-        <LuBuilding2 className="w-16 h-16 text-muted/40" />
+        <LuBuilding2 className="h-16 w-16 text-muted/40" />
         <h2 className="text-xl font-semibold">No Company Found</h2>
-        <p className="text-muted text-center max-w-md">
+        <p className="max-w-md text-center text-muted">
           You are not associated with any company. Create one to get started.
         </p>
         <Button>Create Company</Button>
@@ -79,13 +80,9 @@ export default function CompanyDashboardPage() {
     );
   }
 
-  const verificationVariant =
-    company.verificationStatus === "rejected"
-      ? "destructive"
-      : company.verificationStatus === "pending"
-        ? "warning"
-        : "neutral";
   const isVerified = company.verificationStatus === "verified";
+  const isPending = company.verificationStatus === "pending";
+  const isPro = company.features.tier === "pro";
 
   return (
     <motion.div
@@ -127,6 +124,14 @@ export default function CompanyDashboardPage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <motion.section variants={itemVariants}>
+            <AICallingCard
+              isVerified={isVerified}
+              isPending={isPending}
+              isPro={isPro}
+            />
+          </motion.section>
+
           <motion.section
             variants={itemVariants}
             className="rounded-2xl border border-border bg-card p-5 shadow-sm"
@@ -213,16 +218,16 @@ export default function CompanyDashboardPage() {
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Team Members</h2>
-              <div>
+              <div className="flex items-center gap-2">
                 <Badge variant="secondary">
                   {company.team.length} member
-                  {company.team.length > 1 ? "s" : ""}
+                  {company.team.length !== 1 ? "s" : ""}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="xs"
                   href="/company/team"
-                  className="hover:bg-transparent py-0"
+                  className="py-0 hover:bg-transparent"
                   leftIcon={<LuSettings />}
                 >
                   Manage
@@ -269,22 +274,26 @@ export default function CompanyDashboardPage() {
             </div>
           </div>
 
-          {company.verificationStatus !== "verified" && (
+          {!isVerified && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-900/20">
               <div className="flex items-center gap-3">
-                <LuShield className="h-8 w-8 text-amber-600" />
+                <LuShield className="h-8 w-8 shrink-0 text-amber-600" />
                 <div>
                   <h3 className="font-semibold text-amber-800 dark:text-amber-400">
-                    Verification Pending
+                    {isPending ? "Verification Pending" : "Verification Needed"}
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-500">
-                    Complete verification to unlock all features.
+                    {isPending
+                      ? "Under review (2-5 business days). You can configure your AI assistant in draft mode while you wait."
+                      : "Complete verification to unlock Partnership features, including AI Calling on Pro."}
                   </p>
                 </div>
               </div>
-              <Button size="sm" className="mt-4 w-full">
-                Verify Now
-              </Button>
+              {!isPending && (
+                <Button size="sm" className="mt-4 w-full">
+                  Verify Now
+                </Button>
+              )}
             </div>
           )}
         </motion.div>
@@ -356,6 +365,71 @@ function FeatureItem({
   );
 }
 
+function AICallingCard({
+  isVerified,
+  isPending,
+  isPro,
+}: {
+  isVerified: boolean;
+  isPending: boolean;
+  isPro: boolean;
+}) {
+  if (isVerified && isPro) {
+    return (
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <LuPhoneCall className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">AI Calling</h2>
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                Live
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-muted">
+              Every new enquiry gets an automatic follow-up call. Review
+              transcripts and outcomes in Enquiries.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" href="/enquiries">
+            View Enquiries
+            <LuChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isVerified && !isPro) {
+    return <UpgradeToProCTA variant="card" />;
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/30 text-muted">
+          <LuPhoneCall className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold text-muted">AI Calling</h2>
+          <p className="mt-1 text-sm text-muted">
+            {isPending
+              ? "You can start configuring your AI assistant now in draft mode. Activation unlocks once verification clears."
+              : "Available on the Pro tier once your company is verified."}
+          </p>
+        </div>
+        {isPending && (
+          <Button variant="outline" size="sm">
+            Configure Draft
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TeamMemberRow({
   member,
   user,
@@ -365,7 +439,7 @@ function TeamMemberRow({
 }) {
   const isCurrentUser = user._id === member.userId;
   return (
-    <div className="flex items-center justify-between py-3 gap-4">
+    <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
           {member.userId.slice(0, 2).toUpperCase()}
@@ -381,11 +455,11 @@ function TeamMemberRow({
         </div>
       </div>
       <div className="flex-1">
-        <p className="text-right text-[11px] mb-1 text-muted font-bold">
-          {isCurrentUser ? "My " : ""} Role
+        <p className="mb-1 text-right text-[11px] font-bold text-muted">
+          {isCurrentUser ? "My " : ""}Role
           {member.permissions.length > 1 ? "s" : ""}
         </p>
-        <div className="place-content-end flex gap-1 flex-wrap">
+        <div className="flex flex-wrap place-content-end gap-1">
           {member.permissions.map((perm) => (
             <Badge key={perm} variant="secondary" className="text-[10px]">
               {perm.replace(/_/g, " ")}

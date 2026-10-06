@@ -17,10 +17,7 @@ export default function EnquiriesPage() {
 
   useEffect(() => {
     const updateStickyTop = () => {
-      const header = document.querySelector("header");
-      const headerHeight = header?.getBoundingClientRect().height || 0;
-
-      const topOffset = headerHeight + bannerHeight;
+      const topOffset = 10 + bannerHeight;
 
       document.documentElement.style.setProperty(
         "--banner-navbar-height",
@@ -42,9 +39,14 @@ export default function EnquiriesPage() {
 
   const enquiries = useMemo(() => {
     if (!user) return [];
-    return isAgentSide
-      ? mockEnquiries.filter((e) => e.agentId === user._id)
-      : mockEnquiries.filter((e) => e.buyerId === user._id);
+
+    if (!isAgentSide) {
+      return mockEnquiries.filter((e) => e.buyerId === user._id);
+    }
+
+    return mockEnquiries.filter(
+      (e) => e.agentId === user._id || e.contactUserId === user._id,
+    );
   }, [user, isAgentSide]);
 
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;

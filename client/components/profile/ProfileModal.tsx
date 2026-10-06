@@ -19,9 +19,11 @@ import {
   LuBriefcase,
   LuCheck,
   LuLoader,
+  LuArrowRight,
 } from "react-icons/lu";
 import { FiAlertCircle } from "react-icons/fi";
 import { roleLabels, roleDescriptions } from "@/utils/constants";
+import { usePathname } from "next/navigation";
 
 const agentSubRoleLabels: Record<AgentSubRole, string> = {
   realtor: "Realtor",
@@ -50,6 +52,8 @@ interface ProfileModalProps {
 export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const { user, switchRole } = useAuth();
   const [switchingTo, setSwitchingTo] = useState<Role | null>(null);
+
+  const pathname = usePathname();
 
   if (!user) return null;
 
@@ -300,17 +304,19 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
             />
           </div>
 
-          <Link
-            href="/company/dashboard"
-            onClick={onClose}
-            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-          >
-            Open company dashboard
-            <LuArrowUpRight
-              aria-hidden="true"
-              className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-            />
-          </Link>
+          {pathname !== "/company/dashboard" && (
+            <Link
+              href="/company/dashboard"
+              onClick={onClose}
+              className="group inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            >
+              Open company dashboard
+              <LuArrowRight
+                aria-hidden="true"
+                className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              />
+            </Link>
+          )}
         </section>
       )}
 

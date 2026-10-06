@@ -13,12 +13,12 @@ export const mockCompanies: Company[] = [
       prioritySupport: true,
       dedicatedAccountManager: true,
       whiteLabel: false,
-      tier: "pro",
+      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
     team: [
       {
-        userId: "agent-1",
+        userId: "user_007",
         role: "admin",
         permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
@@ -165,7 +165,7 @@ export const mockCompanies: Company[] = [
 
     team: [
       {
-        userId: "user_015",
+        userId: "user_011",
         role: "admin",
         permissions: ["manage_listings", "manage_members"],
       },
@@ -194,7 +194,7 @@ export const mockCompanies: Company[] = [
 
     team: [
       {
-        userId: "user_022",
+        userId: "user_012",
         role: "admin",
         permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
@@ -227,7 +227,7 @@ export const mockCompanies: Company[] = [
     onboardingDocs: { cacCertificateUrl: "" },
     team: [
       {
-        userId: "user_031",
+        userId: "user_013",
         role: "admin",
         permissions: ["manage_listings"],
       },
