@@ -39,7 +39,7 @@ export default function SavedPropertiesPage() {
   // Hide a listing as soon as it is un-hearted on this page.
   return (
     <SavedPropertiesClient
-      properties={
+      initialProperties={
         isLoaded ? properties.filter((p) => savedIds.has(p._id)) : properties
       }
     />

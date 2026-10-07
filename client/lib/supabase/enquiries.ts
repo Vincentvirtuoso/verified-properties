@@ -55,6 +55,7 @@ export async function fetchMyEnquiries(
         buyerPhone: r.contact_phone ?? undefined,
         agentId: r.agent_id,
         agentName: r.agent_name ?? "Agent",
+        agentType: r.agent_type ?? "cs_agent",
         stage: r.stage,
         status: r.status,
         lastEventPreview: previewFor(r, isAgentSide),
