@@ -9,7 +9,6 @@ import {
   RiHome4Line,
 } from "react-icons/ri";
 import { PopulatedProperty } from "@/types/property";
-
 import PropertyGallery from "@/components/property/PropertyGallery";
 import PropertyHeader from "@/components/property/PropertyHeader";
 import PropertyStats from "@/components/property/PropertyStats";

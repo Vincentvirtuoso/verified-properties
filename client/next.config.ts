@@ -13,7 +13,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.facebook.com" },
       { protocol: "https", hostname: "www.google.com" },
     ],
+    minimumCacheTTL: 60 * 60 * 24,
   },
+  experimental: {},
 };
 
 export default nextConfig;

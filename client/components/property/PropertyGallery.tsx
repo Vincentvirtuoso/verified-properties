@@ -19,6 +19,12 @@ interface PropertyGalleryProps {
   title: string;
 }
 
+const FALLBACK = "/placeholder-property.png";
+
+function isUnsplash(url?: string) {
+  return !!url?.includes("images.unsplash.com");
+}
+
 export default function PropertyGallery({
   mainImage,
   gallery = [],
@@ -26,6 +32,7 @@ export default function PropertyGallery({
 }: PropertyGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
   const allImages: PropertyImage[] = [
     ...(mainImage ? [{ url: mainImage, alt: title }] : []),
@@ -49,6 +56,13 @@ export default function PropertyGallery({
   );
 
   const images = allImages.length > 0 ? allImages : placeholderImages;
+
+  const getSrc = (url?: string) =>
+    !url || failedUrls.has(url) ? FALLBACK : url;
+
+  const handleError = (url?: string) => {
+    if (url) setFailedUrls((prev) => new Set(prev).add(url));
+  };
 
   const openLightbox = useCallback((index: number) => {
     setActiveIndex(index);
@@ -74,7 +88,6 @@ export default function PropertyGallery({
       if (e.key === "ArrowRight") next();
     };
 
-    // Lock body scroll
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
@@ -100,11 +113,13 @@ export default function PropertyGallery({
           aria-label="View full main image"
         >
           <Image
-            src={images[0]?.url || "/placeholder-property.png"}
+            src={getSrc(images[0]?.url)}
             alt={images[0]?.alt || title}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             priority
+            unoptimized={isUnsplash(images[0]?.url)}
+            onError={() => handleError(images[0]?.url)}
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -129,10 +144,12 @@ export default function PropertyGallery({
               aria-label={`View image ${realIndex + 1}`}
             >
               <Image
-                src={img.url || "/placeholder-property.png"}
+                src={getSrc(img.url)}
                 alt={img.alt || `Image ${realIndex + 1}`}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
+                unoptimized={isUnsplash(img.url)}
+                onError={() => handleError(img.url)}
               />
               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               {isLast && remaining > 0 && (
@@ -196,11 +213,13 @@ export default function PropertyGallery({
               transition={{ duration: 0.25 }}
             >
               <Image
-                src={images[activeIndex]?.url || "/placeholder-property.png"}
+                src={getSrc(images[activeIndex]?.url)}
                 alt={images[activeIndex]?.alt || `Image ${activeIndex + 1}`}
                 fill
                 className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 1024px"
+                unoptimized={isUnsplash(images[activeIndex]?.url)}
+                onError={() => handleError(images[activeIndex]?.url)}
               />
             </motion.div>
 
@@ -233,11 +252,13 @@ export default function PropertyGallery({
                   }`}
                 >
                   <Image
-                    src={img.url || "/placeholder-property.png"}
+                    src={getSrc(img.url)}
                     alt={img.alt || `Thumb ${i + 1}`}
                     fill
                     className="object-cover"
                     sizes="56px"
+                    unoptimized={isUnsplash(img.url)}
+                    onError={() => handleError(img.url)}
                   />
                 </button>
               ))}
