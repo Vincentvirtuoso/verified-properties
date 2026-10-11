@@ -107,3 +107,37 @@ Still open: Enquiries and Saved Properties use sample data; welcome page links t
 - `lib/supabase/publicProperties.ts`: added fetchActivePropertiesByIds.
 - Tests: `supabase/tests/saved_properties.test.sql`.
 - Note: the old `viewer_profile.savedListingIds` field is no longer used for saving.
+
+## Step 7 — Admin approvals, audit log, video review (013_admin_moderation.sql)
+
+Run `013_admin_moderation.sql` in the Supabase SQL Editor after 012.
+
+**What admins now control (Admin page → tabs)**
+- **Listings**: Publish now means "Submit for review". A listing goes live only when an admin approves it. Every property document must be approved first. Changing price, location or listing type, or adding/replacing/removing documents, takes a live listing down and sends it back to review. Title/description edits don't. Owners can hide and re-show an approved listing without a new review.
+- **Verification**: agents upload a government ID (NIN, passport, driver's licence, voter's card) on `/verification`. Admins review ID cards, company CAC documents and agents/companies themselves. An agent can't be approved until their ID is approved.
+- **Videos**: owners upload a video file per listing on My Listings (up to 500 MB; your Supabase plan's upload limit also applies, 50 MB on Free). Admins watch it, then Approve / Reject / Request changes. Only videos for approved, live listings from verified owners can be approved. Approved videos are posted to the Affilhomes YouTube channel. When a listing is sold, rented or hidden, its video switches to unlisted. Rejected video files are deleted after 30 days unless an appeal is open.
+- **JV**: JV listings can't go live without admin approval. Key changes send them back to review.
+- **Accounts**: suspend or unsuspend a user or a company. Suspension hides all their live listings and JV listings, blocks publishing and removes them from the public directory.
+- **Appeals**: rejected users get an Appeal button (listing, document, video, ID, verification, suspension). Accepting an appeal puts the item back in the review queue, or lifts the suspension. "Contact support" is always shown as the fallback.
+- **Support**: the support form now saves real tickets. Admins close them with a note.
+- **Audit log**: every admin action is recorded with who, what, when and the reason. Rows can't be edited or deleted, not even by admins. Earlier verification decisions were copied in.
+
+Every decision needs a reason. The database enforces this too.
+
+**Also connected**: company enquiries (teammates can read conversations; only the assigned agent can reply), JV pages (live data), an Admin link in the menu (admins only).
+
+**Files**: `supabase/migrations/013_admin_moderation.sql`, `supabase/tests/admin_moderation.test.sql`, `client/lib/supabase/{admin,moderation,jv}.ts`, `client/lib/youtube.ts`, `client/app/api/admin/videos/[id]/publish/route.ts`, `client/app/api/cron/videos/route.ts`, `client/app/(authenticated)/admin/*`, `my-listings`, `(auth)/verification`, `company/enquiries`, `company/listings`, `list-property`, JV pages, support form, UserMenu, EnquiryThread, publicProperties/properties mapping, `proxy.ts` (`/verification` requires login).
+
+**Environment variables (server only, never NEXT_PUBLIC_)**
+- `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`: from a Google Cloud OAuth client with the YouTube Data API v3 enabled, authorised by the Affilhomes Google account that owns the channel (scopes `youtube.upload` and `youtube`). Until these are set, approved videos wait, and nothing breaks.
+- `CRON_SECRET`: any long random string.
+- `SUPABASE_SERVICE_ROLE_KEY`: used **only** by `/api/cron/videos`, which runs with no user signed in.
+- `NEXT_PUBLIC_SITE_URL`: e.g. https://affilhomes.com (used in YouTube descriptions).
+
+**Schedule** `GET /api/cron/videos` every 15 minutes with header `Authorization: Bearer <CRON_SECRET>` (Vercel Cron, cron-job.org, etc.). It retries YouTube posts, keeps video privacy in sync with listing status, and deletes rejected files after 30 days.
+
+**YouTube limits**: new Google projects get roughly 6 uploads a day (10,000 quota units; one upload costs 1,600) and uploads start as private until Google audits the app. Request an audit and higher quota in Google Cloud Console before launch.
+
+**Tests**: `admin_moderation.test.sql` covers 21 rules, all passing. All earlier tests still pass. `admin_publishing.test.sql` is noted as partly superseded, because owners can no longer publish directly.
+
+**Not built yet**: team invites, unread message counts, AI call recordings/summaries, a form for owners to create JV listings (the database is ready; JV rows can be added in Supabase for now).

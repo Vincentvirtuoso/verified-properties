@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createSupportTicket } from "@/lib/supabase/moderation";
 import {
   FaWhatsapp,
   FaEnvelope,
@@ -124,25 +125,27 @@ export default function SupportClient() {
       return;
     }
 
-    // Simulate API call – replace with actual fetch
     try {
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulate random failure (optional)
-          if (Math.random() < 0.1) reject(new Error("Network error"));
-          else resolve(true);
-        }, 1500);
-      });
+      await createSupportTicket(form);
       alert(
         "Support request sent successfully! Our team will respond shortly.",
       );
       setForm({ name: "", email: "", subject: "", message: "" });
-    } catch (error) {
+    } catch {
       alert("Something went wrong. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Prefill the subject when coming from an "Contact support" link.
+  useEffect(() => {
+    const subject = new URLSearchParams(window.location.search).get("subject");
+    if (!subject) return;
+    Promise.resolve().then(() =>
+      setForm((prev) => (prev.subject ? prev : { ...prev, subject: subject.slice(0, 200) })),
+    );
+  }, []);
 
   return (
     <div className="bg-background text-foreground ">

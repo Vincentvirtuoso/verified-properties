@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
 import { EnquiryThread } from "@/components/enquiries/EnquiryThread";
-import { mockEnquiries } from "@/data/enquiries";
+import { fetchCompanyEnquiries } from "@/lib/supabase/enquiries";
+import type { Enquiry } from "@/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { LuChevronDown } from "react-icons/lu";
@@ -42,10 +43,19 @@ export default function CompanyEnquiriesPage() {
 
   const company = companies.find((c) => c._id === companyId);
 
-  const companyEnquiries = useMemo(() => {
-    if (!company) return [];
-    return mockEnquiries.filter((e) => e.companyId === company._id);
-  }, [company]);
+  const [companyEnquiries, setCompanyEnquiries] = useState<Enquiry[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!company?._id) return;
+    let cancelled = false;
+    fetchCompanyEnquiries(company._id)
+      .then((rows) => !cancelled && setCompanyEnquiries(rows))
+      .catch(() => !cancelled && setLoadError("Couldn't load team enquiries."));
+    return () => {
+      cancelled = true;
+    };
+  }, [company?._id]);
 
   const agentOptions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -91,7 +101,7 @@ export default function CompanyEnquiriesPage() {
   return (
     <div className="h-[calc(100dvh-var(--banner-navbar-height,80px)-70px)] flex">
       <div
-        className={`w-full md:w-[360px] md:shrink-0 border-r border-border flex flex-col ${
+        className={`w-full md:w-90 md:shrink-0 border-r border-border flex flex-col ${
           selected ? "hidden md:flex" : "flex"
         }`}
       >
@@ -122,6 +132,11 @@ export default function CompanyEnquiriesPage() {
               <LuChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
           )}
+          {loadError && (
+            <p role="alert" className="text-sm text-destructive">
+              {loadError}
+            </p>
+          )}
           <div className="px-4 pt-3">
             <UpgradeToProCTA variant="banner" />
           </div>
@@ -140,8 +155,10 @@ export default function CompanyEnquiriesPage() {
       >
         {selected ? (
           <EnquiryThread
+            key={selected.id}
             enquiry={selected}
             isAgentSide
+            readOnly={selected.agentId !== user._id}
             onBack={() => setSelectedId(null)}
           />
         ) : (

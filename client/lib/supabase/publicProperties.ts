@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { mapPropertyRow } from "@/lib/supabase/properties";
+import { fetchPublicVideoIds } from "@/lib/supabase/moderation";
 import type { PopulatedProperty, PopulatedUser } from "@/types";
 
 /**
@@ -86,6 +87,8 @@ async function hydrate(
   ]);
   if (owners.error) throw owners.error;
   if (docs.error) throw docs.error;
+  // Only videos reviewed and posted to the Affilhomes YouTube channel.
+  const videoMap = await fetchPublicVideoIds(rows.map((r) => r.id), supabase);
 
   const ownerMap = new Map<string, PopulatedUser>(
     (owners.data ?? []).map((o: any) => [o.id, mapPublicOwner(o)]),
@@ -97,12 +100,13 @@ async function hydrate(
     docMap.set(d.property_id, list);
   }
 
-  return rows.map((row) =>
-    mapPropertyRow(
+  return rows.map((row) => ({
+    ...mapPropertyRow(
       { ...row, property_documents: docMap.get(row.id) ?? [] },
       ownerMap.get(row.owner_id) ?? unknownOwner(row.owner_id),
     ),
-  );
+    videoLinks: videoMap.get(row.id) ?? [],
+  }));
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 

@@ -66,6 +66,40 @@ export async function fetchMyEnquiries(
     );
 }
 
+/** Every enquiry on the company's listings (company members, read-only for teammates). */
+export async function fetchCompanyEnquiries(
+  companyId: string,
+  client?: SupabaseClient,
+): Promise<Enquiry[]> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc("get_company_enquiries", { _company_id: companyId });
+  if (error) throw error;
+  return (data ?? []).map(
+    (r: any): Enquiry => ({
+      id: r.id,
+      propertyId: r.listing_id,
+      propertyTitle: r.listing_title,
+      propertyImage: r.listing_image ?? "",
+      buyerId: r.viewer_id,
+      buyerName: r.viewer_name ?? "Buyer",
+      buyerAvatar: r.viewer_avatar ?? undefined,
+      buyerPhone: r.contact_phone ?? undefined,
+      agentId: r.agent_id,
+      agentName: r.agent_name ?? "Agent",
+      agentType: "cs_agent",
+      companyId,
+      contactUserId: r.agent_id ?? undefined,
+      contactUserName: r.agent_name ?? undefined,
+      stage: r.stage,
+      status: r.status,
+      lastEventPreview: previewFor(r, true),
+      lastEventAt: new Date(r.last_event_at),
+      unreadCount: 0,
+      events: [],
+    }),
+  );
+}
+
 export async function fetchEnquiryMessages(
   enquiryId: string,
   client?: SupabaseClient,

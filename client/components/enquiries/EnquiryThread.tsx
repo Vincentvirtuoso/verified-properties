@@ -29,6 +29,8 @@ interface EnquiryThreadProps {
   isAgentSide: boolean;
   onBack: () => void;
   onChanged?: () => void;
+  /** Teammates watching a colleague's conversation can read but not reply. */
+  readOnly?: boolean;
 }
 
 type EventGroup = {
@@ -85,6 +87,7 @@ export function EnquiryThread({
   isAgentSide,
   onBack,
   onChanged,
+  readOnly = false,
 }: EnquiryThreadProps) {
   const { user } = useAuth();
   const [events, setEvents] = useState<ThreadEvent[]>(enquiry.events);
@@ -207,7 +210,7 @@ export function EnquiryThread({
             </p>
           </div>
 
-          {isAgentSide && !isClosed ? (
+          {isAgentSide && !isClosed && !readOnly ? (
             <select
               value={stage}
               onChange={(e) => handleStage(e.target.value as EnquiryStage)}
@@ -264,10 +267,12 @@ export function EnquiryThread({
         </div>
       </div>
 
-      {isClosed ? (
+      {isClosed || readOnly ? (
         <div className="shrink-0 border-t border-border bg-card px-4 py-3">
           <p className="text-center text-xs text-muted-foreground">
-            This enquiry is closed.
+            {isClosed
+              ? "This enquiry is closed."
+              : `Only ${enquiry.agentName} can reply to this conversation.`}
           </p>
         </div>
       ) : (

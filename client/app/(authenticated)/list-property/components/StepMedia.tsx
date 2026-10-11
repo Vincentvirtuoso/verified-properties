@@ -84,23 +84,6 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
     );
   };
 
-  const updateVideoLink = (index: number, value: string) => {
-    const next = [...formData.videoLinks];
-    next[index] = value;
-    updateField("videoLinks", next);
-  };
-
-  const addVideoLink = () => {
-    updateField("videoLinks", [...formData.videoLinks, ""]);
-  };
-
-  const removeVideoLink = (index: number) => {
-    updateField(
-      "videoLinks",
-      formData.videoLinks.filter((_, i) => i !== index),
-    );
-  };
-
   const handleDocFiles = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const incoming = Array.from(e.target.files).map((file) => ({
@@ -193,45 +176,9 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
       <section>
         <SectionHeader
           icon={LuVideo}
-          title="Video Tours (Optional)"
-          description="Add YouTube or other video links to give a virtual tour"
+          title="Video Tour (Optional)"
+          description="After saving, upload a video file from My Listings. Our team reviews every video before it's posted on the Affilhomes YouTube channel."
         />
-        <div className="space-y-3">
-          {formData.videoLinks.map((link, i) => (
-            <div key={i} className="flex gap-2">
-              <div className="flex-1">
-                <Field
-                  label={i === 0 ? "Video URL" : ""}
-                  name={`video_${i}`}
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={link}
-                  onChange={(e) => updateVideoLink(i, e.target.value)}
-                />
-              </div>
-              {formData.videoLinks.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeVideoLink(i)}
-                  className={`self-end mb-0 p-2.5 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors ${i === 0 ? "mt-7" : ""}`}
-                  aria-label="Remove video"
-                >
-                  <LuX className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          ))}
-          {formData.videoLinks.length < 5 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              leftIcon={<LuPlus className="h-4 w-4" />}
-              onClick={addVideoLink}
-            >
-              Add video link
-            </Button>
-          )}
-        </div>
       </section>
 
       <section>

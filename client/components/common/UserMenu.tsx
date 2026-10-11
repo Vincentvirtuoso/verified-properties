@@ -14,6 +14,7 @@ import {
   LuUserRoundPlus,
   LuRepeat,
   LuUserRound,
+  LuShieldCheck,
 } from "react-icons/lu";
 import { Button } from "../ui/Button";
 import { PopulatedUser, Role } from "@/types";
@@ -24,7 +25,8 @@ import {
   DropdownSeparator,
   DropdownTrigger,
 } from "../ui/Dropdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isAdmin } from "@/lib/supabase/admin";
 import { Badge } from "../ui";
 import RoleIcon from "../ui/RoleIcon";
 import { BsBuildingAdd } from "react-icons/bs";
@@ -55,6 +57,15 @@ const ProfileMenu = ({
   const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
   const [isAddRoleDropdownOpen, setIsAddRoleDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  // Only a convenience: the admin page and every admin action re-check the role in the database.
+  const [showAdmin, setShowAdmin] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    isAdmin().then((ok) => !cancelled && setShowAdmin(ok));
+    return () => {
+      cancelled = true;
+    };
+  }, [user._id]);
 
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
@@ -74,6 +85,9 @@ const ProfileMenu = ({
     },
   ];
   const dashboardNavLink = navLinks[0];
+  if (showAdmin) {
+    navLinks.push({ label: "Admin", href: "/admin", icon: LuShieldCheck });
+  }
 
   const contextActions = [];
 

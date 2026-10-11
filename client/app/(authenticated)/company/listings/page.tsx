@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { fetchTeamProfiles } from "@/lib/supabase/companies";
-import { canPublishListings, setListingStatus } from "@/lib/supabase/admin";
+import { canPublishListings, errorText, setListingStatus } from "@/lib/supabase/admin";
 import { formatPrice } from "@/lib/formatters";
 import { Button } from "@/components/ui/Button";
 import { PageSpinner } from "@/components/ui/Spinner";
@@ -116,13 +116,20 @@ export default function CompanyListingsPage() {
     setBusyId(r.id);
     setError(null);
     try {
-      await setListingStatus(r.id, next);
-      setRows((all) => all?.map((x) => (x.id === r.id ? { ...x, status: next } : x)) ?? null);
-    } catch {
+      const result = await setListingStatus(r.id, next);
+      if (result === "pending") {
+        setError("Sent for review. It goes live after our team approves it.");
+      } else {
+        setRows((all) => all?.map((x) => (x.id === r.id ? { ...x, status: result } : x)) ?? null);
+      }
+    } catch (e) {
       setError(
-        next === "active"
-          ? "Couldn't publish. Your company must be verified first."
-          : "Couldn't hide this listing.",
+        errorText(
+          e,
+          next === "active"
+            ? "Couldn't submit. Your company must be verified first."
+            : "Couldn't hide this listing.",
+        ),
       );
     } finally {
       setBusyId(null);

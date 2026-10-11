@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { PopulatedProperty, PopulatedUser } from "@/types";
 
 export const PROPERTY_SELECT =
-  "*, property_images(url, alt, sort_order), property_documents(id, document_type, title, file_url, uploaded_at)";
+  "*, property_images(url, alt, sort_order), property_documents(id, document_type, title, file_url, uploaded_at, review_status, review_note)";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function mapPropertyRow(
@@ -47,13 +47,18 @@ export function mapPropertyRow(
     area: Number(row.area),
     image: gallery[0]?.url,
     gallery,
-    videoLinks: row.video_links ?? [],
+    // Pasted links are no longer shown; videos are reviewed and posted by Affilhomes.
+    videoLinks: [],
+    reviewStatus: row.review_status ?? "none",
+    reviewNote: row.review_note ?? undefined,
     documents: (row.property_documents ?? []).map((d: any) => ({
       id: d.id,
       type: d.document_type,
       title: d.title ?? undefined,
       fileUrl: d.file_url,
       uploadedAt: d.uploaded_at,
+      reviewStatus: d.review_status ?? undefined,
+      reviewNote: d.review_note ?? undefined,
     })),
     totalInquiries: row.total_inquiries,
     totalClosedDeals: row.total_closed_deals,

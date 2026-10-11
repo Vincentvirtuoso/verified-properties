@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
     "/admin",
     "/enquiries",
     "/saved-properties",
+    "/verification",
   ];
 
   const authRoutes = ["/login", "/register", "/forgot-password"];
@@ -59,5 +60,6 @@ export const config = {
     "/admin/:path*",
     "/enquiries/:path*",
     "/saved-properties/:path*",
+    "/verification/:path*",
   ],
 };
