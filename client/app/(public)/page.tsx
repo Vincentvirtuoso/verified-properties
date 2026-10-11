@@ -4,17 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { FaSearch, FaArrowDown, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import {
-  fetchFeaturedProperties,
-  fetchStats,
-  fetchTestimonials,
-} from "@/lib/api";
+import { fetchFeaturedProperties, fetchStats } from "@/lib/api";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { PopulatedProperty, Stats, Testimonial } from "@/types";
+import { PopulatedProperty, Stats } from "@/types";
 import StatsAndPartners from "@/components/home/StatsAndPatners";
 import QuickActions from "@/components/home/QuickActions";
 import { FeaturedProperties } from "@/components/home/FeaturedProperties";
 import { AICallingSpotlight } from "@/components/home/AICallingSpotlight";
+import { properties } from "@/data/properties";
 
 export default function HomePage() {
   const router = useRouter();
@@ -32,7 +29,13 @@ export default function HomePage() {
     const loadFeatured = async () => {
       try {
         const data = await fetchFeaturedProperties();
-        setFeaturedProperties(data);
+        if (data.length === 0) {
+          setFeaturedProperties(
+            properties.filter((property) => property.tier === "featured"),
+          );
+        } else {
+          setFeaturedProperties(data);
+        }
       } catch (err) {
         setPropertyError(
           "Could not load featured properties. Please try again.",
@@ -53,7 +56,6 @@ export default function HomePage() {
         setIsLoadingStats(false);
       }
     };
-
 
     loadFeatured();
     loadStats();
@@ -76,7 +78,6 @@ export default function HomePage() {
     },
     [searchQuery, router],
   );
-
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -116,7 +117,6 @@ export default function HomePage() {
         propertyError={propertyError}
         isLoading={isLoadingProperties}
       />
-
 
       {showScrollButton && (
         <button

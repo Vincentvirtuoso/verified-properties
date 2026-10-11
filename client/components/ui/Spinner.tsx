@@ -17,7 +17,7 @@ const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
   default: "border-primary-200 border-t-primary-800",
   gold: "border-amber-200  border-t-amber-500",
   white: "border-white/20 border-t-white",
-  muted: "border-border-border border-t-muted",
+  muted: "border-border border-t-muted",
 };
 
 interface SpinnerProps {

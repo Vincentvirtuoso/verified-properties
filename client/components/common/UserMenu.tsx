@@ -31,12 +31,14 @@ import { BsBuildingAdd } from "react-icons/bs";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { Avatar } from "../ui/Avatar";
 import { UpgradeToProCTA } from "./UpgradeToProCTA";
+import { Spinner } from "../ui/Spinner";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
   user?: PopulatedUser | null;
   onLogout?: () => void;
   onSwitch: (role: Role, activeRole: Role) => void;
+  isLoading: boolean;
 }
 
 const ProfileMenu = ({
@@ -269,6 +271,7 @@ export function UserMenu({
   user,
   onLogout,
   onSwitch,
+  isLoading,
 }: UserMenuProps) {
   if (isAuthenticated && user) {
     return (
@@ -308,7 +311,7 @@ export function UserMenu({
         className="md:hidden p-2 rounded-full hover:bg-sidebar-hover-bg text-navbar-foreground"
         title="Log in"
       >
-        <LuUser className="w-6 h-6" />
+        {isLoading ? <Spinner variant="muted" /> : <LuUser className="w-6 h-6" />}
       </Link>
     </div>
   );

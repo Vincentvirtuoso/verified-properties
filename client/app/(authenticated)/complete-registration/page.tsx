@@ -33,8 +33,6 @@ function CompleteRegistrationForm() {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
 
-  // Derive initial role strictly from the two valid packages
-  // Any other value (old landlord/developer routes) is treated as invalid
   let initialRole: Role | null = null;
   if (roleParam === Role.Agent) initialRole = Role.Agent;
   else if (roleParam === Role.Company) initialRole = Role.Company;
@@ -171,12 +169,9 @@ function CompleteRegistrationForm() {
         _id: companyId,
         name: companyData.companyName.trim(),
         slug: companyData.companyName.toLowerCase().replace(/\s+/g, "-"),
-        // Logo and CAC files are uploaded by completeRegistration().
         logo: undefined,
         type: companyData.companyType,
         verificationStatus: "unverified",
-        // CAC certificate and logo stored in onboardingDocs
-        // Reviewed by admin before verificationStatus moves to "verified"
         onboardingDocs: {
           cacCertificateUrl: "",
         },

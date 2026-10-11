@@ -39,11 +39,7 @@ export function AuthForm({
     <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-200">
       <div className={cn("w-full max-w-md animate-fade-in", className)}>
         <div className="text-center mb-10">
-          <Brandmark
-            logoSize={50}
-            href={null}
-            className="mb-4"
-          />
+          <Brandmark logoSize={50} href={null} className="mb-4" />
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             {title}
           </h1>
@@ -116,10 +112,6 @@ export function AuthForm({
             </p>
           </form>
         </div>
-
-        <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 mt-8">
-          Your information is safe and secure
-        </p>
       </div>
     </div>
   );

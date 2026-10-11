@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import PropertiesContent from "./PropertiesContent";
 import { PageSpinner } from "@/components/ui/Spinner";
+import { PropertiesPage } from "@/components/propertiesList/PropertiesPage";
 
 export const metadata: Metadata = {
   title: "Verified Real Estate Listings | Find Your Next Property",
@@ -35,12 +35,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PropertiesPage() {
+export default function Page() {
   return (
     <Suspense
       fallback={<PageSpinner label="Loading properties page content..." />}
     >
-      <PropertiesContent />
+      <PropertiesPage />
     </Suspense>
   );
 }

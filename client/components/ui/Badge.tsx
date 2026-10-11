@@ -8,7 +8,6 @@ import {
   companyTypeLabels,
   Company,
 } from "@/types";
-import { LuShield } from "react-icons/lu";
 
 export type BadgeVariant =
   | "default"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, ReactElement } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LuHousePlus, LuMenu } from "react-icons/lu";
@@ -11,14 +11,13 @@ import { Brandmark } from "./BrandMark";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@/types";
-import { IconType } from "react-icons";
 import { LuBuilding, LuBriefcase, LuUsers } from "react-icons/lu";
 import { BsBookmarkStar, BsBuildings } from "react-icons/bs";
 
 export interface NavLink {
   href: string;
   label: string;
-  icon: IconType;
+  icon: ReactElement;
 }
 
 export function getNavLinks(
@@ -75,7 +74,13 @@ export function Navbar() {
   const { bannerHeight } = useBannerHeightContext();
   const { toggleOpen, isCollapsed } = useSidebar();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const { user, isAuthenticated, logout, switchRole } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    switchRole,
+    isLoading: isAuthLoading,
+  } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -158,6 +163,7 @@ export function Navbar() {
             user={user}
             onLogout={handleLogout}
             onSwitch={handleSwitchRole}
+            isLoading={isAuthLoading}
           />
         </div>
       </div>
