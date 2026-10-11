@@ -9,6 +9,7 @@ interface EnquiryListProps {
   selectedId?: string;
   onSelect: (id: string) => void;
   isAgentSide: boolean;
+  showAgentName?: boolean;
 }
 
 export function EnquiryList({
@@ -16,6 +17,7 @@ export function EnquiryList({
   selectedId,
   onSelect,
   isAgentSide,
+  showAgentName = false,
 }: EnquiryListProps) {
   if (enquiries.length === 0) {
     return (
@@ -47,14 +49,6 @@ export function EnquiryList({
               size={50}
               shape="square"
             />
-            {/* <div className="relative h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-muted">
-              <Image
-                src={enquiry.propertyImage}
-                alt={enquiry.propertyTitle}
-                fill
-                className="object-cover"
-              />
-            </div> */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground truncate">
@@ -67,6 +61,11 @@ export function EnquiryList({
               <p className="text-xs text-muted-foreground truncate mt-0.5">
                 {isAgentSide ? enquiry.propertyTitle : enquiry.agentName}
               </p>
+              {showAgentName && (
+                <p className="text-[11px] font-medium text-primary truncate mt-0.5">
+                  {enquiry.agentName}
+                </p>
+              )}
               <div className="flex items-center gap-1.5 mt-1">
                 <p className="text-xs text-muted-foreground truncate flex-1">
                   {enquiry.lastEventPreview}

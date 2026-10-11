@@ -6,7 +6,6 @@ import {
   LuBuilding2,
   LuUsers,
   LuBanknote,
-  LuBadgeCheck,
   LuClock,
   LuShield,
   LuPhone,
@@ -17,31 +16,25 @@ import {
   LuHeadphones,
   LuUserCheck,
   LuSettings,
+  LuPhoneCall,
+  LuSparkles,
 } from "react-icons/lu";
 import { InfoRow } from "@/components/ui/InfoRow";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CompanyMember, companyTypeLabels, PopulatedUser } from "@/types";
-import Image from "next/image";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
-import { useEffect, useState } from "react";
-import {
-  fetchCompanyDashboardStats,
-  fetchTeamProfiles,
-  type CompanyDashboardStats,
-} from "@/lib/supabase/companies";
-import { imageLoader } from "@/utils/helpers";
+import { useState } from "react";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
 import UserHeaderCard from "@/components/cards/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { PageSpinner } from "@/components/ui/Spinner";
+import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
@@ -50,36 +43,17 @@ const itemVariants = {
 };
 
 export default function CompanyDashboardPage() {
-  const { user, companies } = useAuth();
-  const [imageError, setImageError] = useState(false);
+  const { user, companies, isLoading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const companyId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
   const company = companies.find((c) => c._id === companyId);
-  const [stats, setStats] = useState<CompanyDashboardStats | null>(null);
-  const [names, setNames] = useState<Map<string, { name: string }>>(new Map());
-  const memberKey = company?.team.map((m) => m.userId).join(",") ?? "";
 
-  // Live numbers + teammate names from the database.
-  useEffect(() => {
-    if (!companyId || !memberKey) return;
-    let cancelled = false;
-    Promise.all([
-      fetchCompanyDashboardStats(companyId),
-      fetchTeamProfiles(memberKey.split(",")),
-    ])
-      .then(([s, n]) => {
-        if (cancelled) return;
-        setStats(s);
-        setNames(n);
-      })
-      .catch((err) => console.error("Failed to load company stats:", err));
-    return () => {
-      cancelled = true;
-    };
-  }, [companyId, memberKey]);
+  if (isLoading) {
+    return <PageSpinner label="Loading company dashboard" />;
+  }
 
   if (!user) {
     return (
@@ -96,9 +70,9 @@ export default function CompanyDashboardPage() {
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center min-h-[60vh] space-y-4"
       >
-        <LuBuilding2 className="w-16 h-16 text-muted/40" />
+        <LuBuilding2 className="h-16 w-16 text-muted/40" />
         <h2 className="text-xl font-semibold">No Company Found</h2>
-        <p className="text-muted text-center max-w-md">
+        <p className="max-w-md text-center text-muted">
           You are not associated with any company. Create one to get started.
         </p>
         <Button>Create Company</Button>
@@ -106,13 +80,9 @@ export default function CompanyDashboardPage() {
     );
   }
 
-  const verificationVariant =
-    company.verificationStatus === "rejected"
-      ? "destructive"
-      : company.verificationStatus === "pending"
-        ? "warning"
-        : "neutral";
   const isVerified = company.verificationStatus === "verified";
+  const isPending = company.verificationStatus === "pending";
+  const isPro = company.features.tier === "pro";
 
   return (
     <motion.div
@@ -128,29 +98,40 @@ export default function CompanyDashboardPage() {
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatsCard
+          icon={<LuBanknote className="h-5 w-5" />}
+          label="Total Remitted"
+          value={`₦${company.totalRemitted.toLocaleString()}`}
+        />
+        <StatsCard
           icon={<LuBuilding2 className="h-5 w-5" />}
-          label="Live Listings"
-          value={stats ? `${stats.activeListings}` : "…"}
-        />
-        <StatsCard
-          icon={<LuClock className="h-5 w-5" />}
-          label="Drafts"
-          value={stats ? stats.draftListings : "…"}
-        />
-        <StatsCard
-          icon={<LuMessageCircle className="h-5 w-5" />}
-          label="Open Enquiries"
-          value={stats ? stats.openEnquiries : "…"}
+          label="Active Listings"
+          value={company.activeListings}
         />
         <StatsCard
           icon={<LuUsers className="h-5 w-5" />}
           label="Team Members"
-          value={stats?.teamSize ?? company.team.length}
+          value={company.team.length}
+        />
+        <StatsCard
+          icon={<LuClock className="h-5 w-5" />}
+          label="Member Since"
+          value={new Date(company.createdAt).toLocaleDateString("en-NG", {
+            year: "numeric",
+            month: "short",
+          })}
         />
       </motion.div>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <motion.section variants={itemVariants}>
+            <AICallingCard
+              isVerified={isVerified}
+              isPending={isPending}
+              isPro={isPro}
+            />
+          </motion.section>
+
           <motion.section
             variants={itemVariants}
             className="rounded-2xl border border-border bg-card p-5 shadow-sm"
@@ -179,26 +160,6 @@ export default function CompanyDashboardPage() {
                   mono
                 />
               )}
-              <InfoRow
-                icon={LuBanknote}
-                label="Total Remitted"
-                value={`₦${company.totalRemitted.toLocaleString()}`}
-              />
-              {stats && (
-                <InfoRow
-                  icon={LuBanknote}
-                  label="Value of live listings"
-                  value={`₦${stats.liveValue.toLocaleString()}`}
-                />
-              )}
-              <InfoRow
-                icon={LuClock}
-                label="Member Since"
-                value={new Date(company.createdAt).toLocaleDateString("en-NG", {
-                  year: "numeric",
-                  month: "short",
-                })}
-              />
               {company.remittanceDetails && (
                 <>
                   <InfoRow
@@ -257,16 +218,16 @@ export default function CompanyDashboardPage() {
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Team Members</h2>
-              <div>
+              <div className="flex items-center gap-2">
                 <Badge variant="secondary">
                   {company.team.length} member
-                  {company.team.length > 1 ? "s" : ""}
+                  {company.team.length !== 1 ? "s" : ""}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="xs"
                   href="/company/team"
-                  className="hover:bg-transparent py-0"
+                  className="py-0 hover:bg-transparent"
                   leftIcon={<LuSettings />}
                 >
                   Manage
@@ -284,7 +245,6 @@ export default function CompanyDashboardPage() {
                     key={member.userId}
                     member={member}
                     user={user}
-                    name={names.get(member.userId)?.name}
                   />
                 ))
               )}
@@ -296,17 +256,17 @@ export default function CompanyDashboardPage() {
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
             <div className="space-y-3">
-              <Button className="w-full justify-start" variant="outline" href="/company/listings">
+              <Button className="w-full justify-start" variant="outline">
                 <LuBuilding2 className="mr-2 h-4 w-4" />
                 Manage Listings
                 <LuChevronRight className="ml-auto h-4 w-4" />
               </Button>
-              <Button className="w-full justify-start" variant="outline" href="/company/team">
+              <Button className="w-full justify-start" variant="outline">
                 <LuUsers className="mr-2 h-4 w-4" />
                 Manage Team
                 <LuChevronRight className="ml-auto h-4 w-4" />
               </Button>
-              <Button className="w-full justify-start" variant="outline" href="/support">
+              <Button className="w-full justify-start" variant="outline">
                 <LuHeadphones className="mr-2 h-4 w-4" />
                 Contact Support
                 <LuChevronRight className="ml-auto h-4 w-4" />
@@ -314,27 +274,23 @@ export default function CompanyDashboardPage() {
             </div>
           </div>
 
-          {company.verificationStatus !== "verified" && (
+          {!isVerified && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-900/20">
               <div className="flex items-center gap-3">
-                <LuShield className="h-8 w-8 text-amber-600" />
+                <LuShield className="h-8 w-8 shrink-0 text-amber-600" />
                 <div>
                   <h3 className="font-semibold text-amber-800 dark:text-amber-400">
-                    {company.verificationStatus === "pending"
-                      ? "Verification Pending"
-                      : company.verificationStatus === "rejected"
-                        ? "Verification Declined"
-                        : "Not Verified Yet"}
+                    {isPending ? "Verification Pending" : "Verification Needed"}
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-500">
-                    {company.verificationStatus === "pending"
-                      ? "Our team is reviewing your documents. You can publish listings once approved."
-                      : "Upload your CAC certificate to get verified and publish listings."}
+                    {isPending
+                      ? "Under review (2-5 business days). You can configure your AI assistant in draft mode while you wait."
+                      : "Complete verification to unlock Partnership features, including AI Calling on Pro."}
                   </p>
                 </div>
               </div>
-              {company.verificationStatus !== "pending" && (
-                <Button size="sm" className="mt-4 w-full" href="/complete-registration">
+              {!isPending && (
+                <Button size="sm" className="mt-4 w-full">
                   Verify Now
                 </Button>
               )}
@@ -409,26 +365,88 @@ function FeatureItem({
   );
 }
 
+function AICallingCard({
+  isVerified,
+  isPending,
+  isPro,
+}: {
+  isVerified: boolean;
+  isPending: boolean;
+  isPro: boolean;
+}) {
+  if (isVerified && isPro) {
+    return (
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <LuPhoneCall className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">AI Calling</h2>
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                Live
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-muted">
+              Every new enquiry gets an automatic follow-up call. Review
+              transcripts and outcomes in Enquiries.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" href="/enquiries">
+            View Enquiries
+            <LuChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isVerified && !isPro) {
+    return <UpgradeToProCTA variant="card" />;
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/30 text-muted">
+          <LuPhoneCall className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold text-muted">AI Calling</h2>
+          <p className="mt-1 text-sm text-muted">
+            {isPending
+              ? "You can start configuring your AI assistant now in draft mode. Activation unlocks once verification clears."
+              : "Available on the Pro tier once your company is verified."}
+          </p>
+        </div>
+        {isPending && (
+          <Button variant="outline" size="sm">
+            Configure Draft
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TeamMemberRow({
   member,
   user,
-  name,
 }: {
   member: CompanyMember;
   user: PopulatedUser;
-  name?: string;
 }) {
-  const displayName = name ?? "Team member";
   const isCurrentUser = user._id === member.userId;
   return (
-    <div className="flex items-center justify-between py-3 gap-4">
+    <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {displayName.slice(0, 2).toUpperCase()}
+          {member.userId.slice(0, 2).toUpperCase()}
         </div>
         <div>
           <p className="text-sm font-medium">
-            {displayName}{" "}
+            {member.userId}{" "}
             {isCurrentUser && <Badge className="ml-2 text-[10px]">YOU</Badge>}
           </p>
           <p className="text-xs text-muted">
@@ -437,11 +455,11 @@ function TeamMemberRow({
         </div>
       </div>
       <div className="flex-1">
-        <p className="text-right text-[11px] mb-1 text-muted font-bold">
-          {isCurrentUser ? "My " : ""} Role
+        <p className="mb-1 text-right text-[11px] font-bold text-muted">
+          {isCurrentUser ? "My " : ""}Role
           {member.permissions.length > 1 ? "s" : ""}
         </p>
-        <div className="place-content-end flex gap-1 flex-wrap">
+        <div className="flex flex-wrap place-content-end gap-1">
           {member.permissions.map((perm) => (
             <Badge key={perm} variant="secondary" className="text-[10px]">
               {perm.replace(/_/g, " ")}

@@ -106,6 +106,8 @@ export type PropertyDocument = {
   title?: string;
   fileUrl: string;
   uploadedAt?: string;
+  reviewStatus?: "pending" | "approved" | "rejected" | "more_info";
+  reviewNote?: string;
 };
 
 export type PropertyOwnerType = "agent" | "company";
@@ -149,6 +151,9 @@ export type Property<Populated extends boolean = false> = {
   image?: string;
   gallery?: PropertyImage[];
   videoLinks?: string[];
+  /** Admin review state (013). */
+  reviewStatus?: "none" | "pending" | "approved" | "rejected" | "changes_requested";
+  reviewNote?: string;
   documents?: PropertyDocument[];
 
   totalInquiries: number;

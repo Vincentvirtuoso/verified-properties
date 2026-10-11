@@ -18,10 +18,7 @@ export default function EnquiriesPage() {
 
   useEffect(() => {
     const updateStickyTop = () => {
-      const header = document.querySelector("header");
-      const headerHeight = header?.getBoundingClientRect().height || 0;
-
-      const topOffset = headerHeight + bannerHeight;
+      const topOffset = 10 + bannerHeight;
 
       document.documentElement.style.setProperty(
         "--banner-navbar-height",

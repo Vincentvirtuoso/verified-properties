@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LuArrowLeft,
   LuChevronDown,
@@ -22,12 +22,15 @@ import {
 } from "@/lib/supabase/enquiries";
 
 const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
+const MAX_MESSAGE_LENGTH = 2000;
 
 interface EnquiryThreadProps {
   enquiry: Enquiry;
   isAgentSide: boolean;
   onBack: () => void;
   onChanged?: () => void;
+  /** Teammates watching a colleague's conversation can read but not reply. */
+  readOnly?: boolean;
 }
 
 type EventGroup = {
@@ -46,7 +49,6 @@ function isSameDay(a: Date, b: Date) {
 
 function getDateGroupLabel(date: Date) {
   const today = new Date();
-
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
@@ -57,23 +59,21 @@ function getDateGroupLabel(date: Date) {
 }
 
 function groupEvents(events: ThreadEvent[]): EventGroup[] {
-  const groups = events.reduce<Map<string, EventGroup>>((groups, event) => {
-    const date = new Date(event.timestamp);
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
 
+  const groups = sorted.reduce<Map<string, EventGroup>>((groups, event) => {
+    const date = new Date(event.timestamp);
     if (Number.isNaN(date.getTime())) return groups;
 
     const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-
     const existing = groups.get(key);
 
     if (existing) {
       existing.events.push(event);
     } else {
-      groups.set(key, {
-        key,
-        label: getDateGroupLabel(date),
-        events: [event],
-      });
+      groups.set(key, { key, label: getDateGroupLabel(date), events: [event] });
     }
 
     return groups;
@@ -87,25 +87,29 @@ export function EnquiryThread({
   isAgentSide,
   onBack,
   onChanged,
+  readOnly = false,
 }: EnquiryThreadProps) {
   const { user } = useAuth();
-  const [draft, setDraft] = useState("");
   const [events, setEvents] = useState<ThreadEvent[]>(enquiry.events);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<EnquiryStage>(enquiry.stage);
-  const isClosed = enquiry.status === "cancelled" || enquiry.status === "deal_closed";
+
+  const isClosed =
+    enquiry.status === "cancelled" || enquiry.status === "deal_closed";
 
   useEffect(() => {
-    // Remounted per enquiry (key), so loading/error start fresh.
+    setStage(enquiry.stage);
+  }, [enquiry.stage]);
+
+  useEffect(() => {
     let cancelled = false;
     fetchEnquiryMessages(enquiry.id)
       .then((rows) => !cancelled && setEvents(rows))
       .catch(() => !cancelled && setError("Couldn't load this conversation."))
       .finally(() => !cancelled && setLoading(false));
 
-    // Live: show new messages from the other side as they arrive.
     const supabase = createClient();
     const channel = supabase
       .channel(`enquiry-${enquiry.id}`)
@@ -133,27 +137,27 @@ export function EnquiryThread({
 
   const groupedEvents = useMemo(() => groupEvents(events), [events]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSend = async (text: string): Promise<boolean> => {
+    if (!text || !user || sending) return false;
 
-    const text = draft.trim();
-    if (!text || !user || sending) return;
-    if (text.length > 2000) {
-      setError("Messages can be up to 2000 characters.");
-      return;
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      setError(`Messages can be up to ${MAX_MESSAGE_LENGTH} characters.`);
+      return false;
     }
 
     setSending(true);
     setError(null);
+
     try {
       const saved = await sendEnquiryMessage(enquiry.id, user._id, text);
       setEvents((prev) =>
         prev.some((ev) => ev.id === saved.id) ? prev : [...prev, saved],
       );
-      setDraft("");
       onChanged?.();
+      return true;
     } catch {
       setError("Message not sent. Please try again.");
+      return false;
     } finally {
       setSending(false);
     }
@@ -170,6 +174,8 @@ export function EnquiryThread({
       setError("Couldn't update the stage.");
     }
   };
+
+  const closedLabel = enquiry.status?.replaceAll("_", " ");
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -193,7 +199,10 @@ export function EnquiryThread({
               {isAgentSide && enquiry.buyerPhone && (
                 <>
                   {" · "}
-                  <a href={`tel:${enquiry.buyerPhone}`} className="text-primary hover:underline">
+                  <a
+                    href={`tel:${enquiry.buyerPhone}`}
+                    className="text-primary hover:underline"
+                  >
                     {enquiry.buyerPhone}
                   </a>
                 </>
@@ -201,7 +210,7 @@ export function EnquiryThread({
             </p>
           </div>
 
-          {isAgentSide && !isClosed ? (
+          {isAgentSide && !isClosed && !readOnly ? (
             <select
               value={stage}
               onChange={(e) => handleStage(e.target.value as EnquiryStage)}
@@ -216,7 +225,7 @@ export function EnquiryThread({
             </select>
           ) : (
             <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary">
-              {isClosed ? enquiry.status?.replace("_", " ") : stage}
+              {isClosed ? closedLabel : stage}
             </span>
           )}
         </div>
@@ -225,24 +234,29 @@ export function EnquiryThread({
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-3xl space-y-6">
           {loading && events.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground">Loading messages…</p>
+            <p className="text-center text-sm text-muted-foreground">
+              Loading messages…
+            </p>
           )}
+
           {groupedEvents.map((group) => (
             <section key={group.key}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
-
                 <span className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[10px] font-medium text-muted-foreground shadow-sm">
                   {group.label}
                 </span>
-
                 <div className="h-px flex-1 bg-border" />
               </div>
 
               <div className="space-y-3">
                 {group.events.map((event) =>
                   event.type === "message" ? (
-                    <MessageBubble key={event.id} event={event} isAgentSide={isAgentSide} />
+                    <MessageBubble
+                      key={event.id}
+                      event={event}
+                      isAgentSide={isAgentSide}
+                    />
                   ) : (
                     <CallCard key={event.id} event={event} />
                   ),
@@ -253,30 +267,17 @@ export function EnquiryThread({
         </div>
       </div>
 
-      <div className="px-4 py-3 border-t border-border sticky bottom-0 bg-card">
-        {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
-        {isClosed ? (
-          <p className="text-center text-xs text-muted-foreground">This enquiry is closed.</p>
-        ) : (
-        <form onSubmit={handleSend} className="flex items-center gap-2">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type a message…"
-            maxLength={2000}
-            className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim() || sending}
-            aria-label="Send message"
-            className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
-          >
-            <LuSend className="h-4 w-4" />
-          </button>
-        </form>
-        )}
-      </div>
+      {isClosed || readOnly ? (
+        <div className="shrink-0 border-t border-border bg-card px-4 py-3">
+          <p className="text-center text-xs text-muted-foreground">
+            {isClosed
+              ? "This enquiry is closed."
+              : `Only ${enquiry.agentName} can reply to this conversation.`}
+          </p>
+        </div>
+      ) : (
+        <ChatComposer onSend={handleSend} disabled={sending} error={error} />
+      )}
     </div>
   );
 }
@@ -289,22 +290,19 @@ function MessageBubble({
   isAgentSide: boolean;
 }) {
   // "Mine" bubbles sit on the right in the primary colour.
-  const isBuyer = isAgentSide ? event.sender === "agent" : event.sender === "buyer";
+  const isMine = isAgentSide
+    ? event.sender === "agent"
+    : event.sender === "buyer";
 
   return (
-    <div
-      className={cn(
-        "flex",
-        isBuyer ? "justify-end" : "justify-start",
-      )}
-    >
+    <div className={cn("flex", isMine ? "justify-end" : "justify-start")}>
       <div className="max-w-[78%] sm:max-w-[65%]">
         <div
           className={cn(
             "px-4 py-3 text-sm leading-relaxed shadow-sm",
-            isBuyer
-              ? "rounded-2xl rounded-br-md bg-primary text-primary-foreground"
-              : "rounded-2xl rounded-bl-md border border-border bg-card text-foreground",
+            isMine
+              ? "rounded-2xl rounded-br-xs bg-primary text-primary-foreground"
+              : "rounded-2xl rounded-bl-xs border border-border bg-card text-foreground",
           )}
         >
           <p className="whitespace-pre-wrap">{event.text}</p>
@@ -312,7 +310,7 @@ function MessageBubble({
           <div
             className={cn(
               "mt-1.5 flex items-center gap-1 text-[10px]",
-              isBuyer
+              isMine
                 ? "justify-end text-primary-foreground/65"
                 : "text-muted-foreground",
             )}
@@ -335,7 +333,6 @@ function CallCard({
 
   const minutes = Math.floor(event.durationSeconds / 60);
   const seconds = event.durationSeconds % 60;
-
   const isMissed = event.outcome === "missed";
 
   return (
@@ -359,9 +356,7 @@ function CallCard({
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-foreground">
-              {event.caller === "assistant"
-                ? "Assistant call"
-                : "Agent call"}
+              {event.caller === "assistant" ? "Assistant call" : "Agent call"}
               {isMissed && (
                 <span className="font-medium text-destructive">
                   {" · Missed"}
@@ -371,7 +366,6 @@ function CallCard({
 
             <p className="mt-0.5 text-[11px] text-muted-foreground">
               {format(event.timestamp, "EEE, do MMMM yyyy · HH:mm")}
-
               {event.outcome === "answered" &&
                 ` · ${minutes}:${String(seconds).padStart(2, "0")}`}
             </p>
@@ -408,6 +402,125 @@ function CallCard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface ChatComposerProps {
+  /** Returns `false` (or a rejected promise) if the send failed. */
+  onSend: (text: string) => Promise<boolean> | boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  minRows?: number;
+  maxRows?: number;
+  className?: string;
+  error?: string | null;
+}
+
+const LINE_HEIGHT = 20;
+const VERTICAL_PADDING = 20;
+
+function ChatComposer({
+  onSend,
+  placeholder = "Type a message…",
+  disabled = false,
+  minRows = 1,
+  maxRows = 5,
+  className,
+  error,
+}: ChatComposerProps) {
+  const [draft, setDraft] = useState("");
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const minHeight = LINE_HEIGHT * minRows + VERTICAL_PADDING;
+  const maxHeight = LINE_HEIGHT * maxRows + VERTICAL_PADDING;
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = `${next}px`;
+    setIsOverflowing(el.scrollHeight > maxHeight);
+  }, [draft, maxHeight]);
+
+  const resetHeight = () => {
+    const el = textareaRef.current;
+    if (el) el.style.height = `${minHeight}px`;
+  };
+
+  const submit = async () => {
+    const text = draft.trim();
+    if (!text || disabled) return;
+
+    const ok = await onSend(text);
+    if (ok === false) return; // keep the draft so the user can retry
+
+    setDraft("");
+    resetHeight();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void submit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void submit();
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "shrink-0 border-t border-border bg-card px-4 py-3",
+        className,
+      )}
+    >
+      {error && (
+        <p role="alert" className="mb-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={minRows}
+          maxLength={MAX_MESSAGE_LENGTH}
+          style={{ minHeight, maxHeight }}
+          className={cn(
+            "flex-1 resize-none rounded-2xl border border-border",
+            isOverflowing ? "overflow-y-auto" : "overflow-hidden",
+            "bg-background px-4 py-2.5 text-sm leading-5 text-foreground",
+            "placeholder:text-muted-foreground",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+          )}
+        />
+
+        <button
+          type="submit"
+          disabled={!draft.trim() || disabled}
+          aria-label="Send message"
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "bg-primary text-primary-foreground transition-opacity",
+            "disabled:opacity-40",
+          )}
+        >
+          <LuSend className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 }

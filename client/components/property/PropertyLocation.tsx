@@ -1,7 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { LuMapPin, LuExternalLink } from "react-icons/lu";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PropertyLocation } from "@/types/property";
 
@@ -10,10 +10,9 @@ interface LocationPlaceholderProps {
   showMap?: boolean;
   className?: string;
   zoom?: number;
-  mapWidth?: number;
   mapHeight?: number;
-  useGoogleMaps?: boolean;
-  googleMapsApiKey?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export function LocationPlaceholder({
@@ -21,12 +20,12 @@ export function LocationPlaceholder({
   showMap = true,
   className,
   zoom = 14,
-  mapWidth = 400,
   mapHeight = 200,
-  useGoogleMaps = false,
-  googleMapsApiKey,
+  latitude,
+  longitude,
 }: LocationPlaceholderProps) {
-  // Format display string: "address, city, state, country"
+  const [mapFailed, setMapFailed] = useState(false);
+
   const displayLocation = [
     location.address,
     location.city,
@@ -39,10 +38,71 @@ export function LocationPlaceholder({
   const encodedLocation = encodeURIComponent(displayLocation);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
 
-  const staticMapUrl =
-    useGoogleMaps && googleMapsApiKey
-      ? `https://maps.googleapis.com/maps/api/staticmap?center=${encodedLocation}&zoom=${zoom}&size=${mapWidth}x${mapHeight}&markers=color:red%7C${encodedLocation}&key=${googleMapsApiKey}`
-      : `https://staticmap.openstreetmap.de/staticmap.php?center=${encodedLocation}&zoom=${zoom}&size=${mapWidth}x${mapHeight}&maptype=mapnik&markers=${encodedLocation}`;
+  const hasCoords =
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
+
+  const staticMapUrl = useMemo(() => {
+    if (!hasCoords) return null;
+    const width = 600;
+    const height = 400;
+    return `https://maps.wikimedia.org/img/osm-intl,${zoom},${latitude},${longitude},${width}x${height}.png`;
+  }, [hasCoords, latitude, longitude, zoom]);
+
+  const embedUrl = useMemo(() => {
+    if (hasCoords) {
+      const d = 0.01; 
+      const bbox = [
+        longitude - d,
+        latitude - d,
+        longitude + d,
+        latitude + d,
+      ].join("%2C");
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+    }
+    return `https://maps.google.com/maps?q=${encodedLocation}&z=${zoom}&output=embed`;
+  }, [hasCoords, latitude, longitude, encodedLocation, zoom]);
+
+  const renderMap = () => {
+    if (mapFailed) {
+      return (
+        <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+          Map preview unavailable
+        </div>
+      );
+    }
+
+    if (staticMapUrl) {
+      return (
+        <div className="relative h-full w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={staticMapUrl}
+            alt={`Map of ${displayLocation}`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setMapFailed(true)}
+          />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <LuMapPin className="h-8 w-8 text-red-600 drop-shadow-md" />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <iframe
+        title={`Map of ${displayLocation}`}
+        src={embedUrl}
+        className="h-full w-full border-0"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        onError={() => setMapFailed(true)}
+      />
+    );
+  };
 
   return (
     <div
@@ -52,17 +112,17 @@ export function LocationPlaceholder({
       )}
     >
       <div className="flex items-start gap-3">
-        <LuMapPin className="mt-0.5 h-5 w-5 text-primary shrink-0" />
+        <LuMapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">Location</h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             {displayLocation}
           </p>
           <a
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
             View on Maps <LuExternalLink className="h-3 w-3" />
           </a>
@@ -71,29 +131,8 @@ export function LocationPlaceholder({
 
       {showMap && (
         <div className="mt-4 overflow-hidden rounded-lg border border-border">
-          <div
-            className="relative"
-            style={{ width: "100%", height: mapHeight }}
-          >
-            <Image
-              src={staticMapUrl}
-              alt={`Map of ${displayLocation}`}
-              fill
-              className="object-cover"
-              unoptimized
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = "none";
-                const parent = target.parentElement;
-                if (parent) {
-                  const fallback = document.createElement("div");
-                  fallback.className =
-                    "flex items-center justify-center h-full bg-muted text-muted-foreground text-sm";
-                  fallback.innerText = "Map preview unavailable";
-                  parent.appendChild(fallback);
-                }
-              }}
-            />
+          <div className="relative w-full" style={{ height: mapHeight }}>
+            {renderMap()}
           </div>
         </div>
       )}

@@ -20,6 +20,7 @@ export interface AvatarProps {
   initials?: string;
   maxInitials?: 1 | 2;
   quality?: number;
+  fallbackIcon?: React.ReactNode;
 }
 
 function getInitials(name: string, maxInitials: 1 | 2 = 2): string {
@@ -28,9 +29,7 @@ function getInitials(name: string, maxInitials: 1 | 2 = 2): string {
   if (parts.length === 0) return "?";
   if (maxInitials === 1) return parts[0].charAt(0).toUpperCase();
 
-  return (
-    parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
-  ).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 export function Avatar({
@@ -45,15 +44,17 @@ export function Avatar({
   fallbackSrc = DEFAULT_FALLBACK,
   priority = false,
   quality = 90,
+  fallbackIcon,
 }: AvatarProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(Boolean(src));
 
+  const effectiveImageFallback = fallbackIcon ? null : fallbackSrc;
   const resolvedSrc =
     src && failedSrc !== src
       ? src
-      : fallbackSrc && failedSrc !== fallbackSrc
-        ? fallbackSrc
+      : effectiveImageFallback && failedSrc !== effectiveImageFallback
+        ? effectiveImageFallback
         : null;
 
   const box = {
@@ -63,17 +64,32 @@ export function Avatar({
 
   const label = alt ?? name;
 
-  const radius =
-    shape === "circle" ? "rounded-full" : "rounded-xl";
+  const radius = shape === "circle" ? "rounded-full" : "rounded-xl";
 
-  const displayInitials =
-    initials ?? getInitials(name, maxInitials);
+  const displayInitials = initials ?? getInitials(name, maxInitials);
 
   useEffect(() => {
     setIsLoading(Boolean(resolvedSrc));
   }, [resolvedSrc]);
 
   if (!resolvedSrc) {
+    if (fallbackIcon) {
+      return (
+        <span
+          role="img"
+          aria-label={label}
+          style={box}
+          className={cn(
+            "inline-flex shrink-0 select-none items-center justify-center",
+            radius,
+            "bg-subtle text-muted-foreground",
+            className,
+          )}
+        >
+          {fallbackIcon}
+        </span>
+      );
+    }
     return (
       <span
         role="img"

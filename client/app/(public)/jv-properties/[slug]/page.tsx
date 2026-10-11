@@ -2,7 +2,9 @@
 
 import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
-import { MOCK_JV_PROPERTIES } from "@/data/mock-jv-properties";
+import { useEffect, useState } from "react";
+import { fetchJVBySlug } from "@/lib/supabase/jv";
+import type { JVProperty } from "@/types";
 import { imageLoader } from "@/utils/helpers";
 import {
   LuMapPin,
@@ -20,7 +22,21 @@ export default function JvPropertyDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const property = MOCK_JV_PROPERTIES.find((p) => p.slug === slug);
+  const [property, setProperty] = useState<JVProperty | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchJVBySlug(slug)
+      .then((p) => !cancelled && setProperty(p))
+      .catch(() => !cancelled && setProperty(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  if (property === undefined) {
+    return <p className="p-10 text-center text-sm text-muted-foreground">Loading…</p>;
+  }
   if (!property) return notFound();
 
   return (

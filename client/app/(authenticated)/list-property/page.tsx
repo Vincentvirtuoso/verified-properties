@@ -84,9 +84,6 @@ export default function ListPropertyPage() {
         payload.append("images", file);
       });
 
-      const filteredVideos = formData.videoLinks.filter(Boolean);
-      payload.append("videoLinks", JSON.stringify(filteredVideos));
-
       formData.documentFiles.forEach((doc, i) => {
         payload.append(`document_${i}`, doc.file);
         payload.append(`documentType_${i}`, doc.type);
@@ -104,9 +101,10 @@ export default function ListPropertyPage() {
         throw new Error(data?.error ?? "Failed to submit listing");
       }
 
-      // Saved as a draft; it appears under "Your Recent Listings".
+      // Saved as a draft. On My Listings the owner submits it for review
+      // and uploads a video tour.
       resetForm();
-      router.push("/dashboard");
+      router.push("/my-listings");
     } catch (err) {
       console.error(err);
       window.alert(

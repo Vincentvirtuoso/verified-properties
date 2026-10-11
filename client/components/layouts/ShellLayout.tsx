@@ -10,7 +10,7 @@ export default function ShellLayout({
   return (
     <Providers>
       <Navbar />
-      {children}
+      <div className="min-h-[80vh]">{children}</div>
       <Footer />
     </Providers>
   );

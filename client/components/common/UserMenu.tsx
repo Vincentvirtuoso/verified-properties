@@ -14,6 +14,7 @@ import {
   LuUserRoundPlus,
   LuRepeat,
   LuUserRound,
+  LuShieldCheck,
 } from "react-icons/lu";
 import { Button } from "../ui/Button";
 import { PopulatedUser, Role } from "@/types";
@@ -24,14 +25,14 @@ import {
   DropdownSeparator,
   DropdownTrigger,
 } from "../ui/Dropdown";
-import { useMemo, useState } from "react";
-import { imageLoader } from "@/utils/helpers";
+import { useEffect, useState } from "react";
+import { isAdmin } from "@/lib/supabase/admin";
 import { Badge } from "../ui";
 import RoleIcon from "../ui/RoleIcon";
 import { BsBuildingAdd } from "react-icons/bs";
-import { getNavLinks } from "./Navbar";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { Avatar } from "../ui/Avatar";
+import { UpgradeToProCTA } from "./UpgradeToProCTA";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -52,22 +53,26 @@ const ProfileMenu = ({
   onSwitch: (role: Role, activeRole: Role) => void;
 }) => {
   const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
-  const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
   const [isAddRoleDropdownOpen, setIsAddRoleDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  const [userImageSrc, setUserImageSrc] = useState(
-    user?.avatar || "/placeholder_avatar.png",
-  );
+  // Only a convenience: the admin page and every admin action re-check the role in the database.
+  const [showAdmin, setShowAdmin] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    isAdmin().then((ok) => !cancelled && setShowAdmin(ok));
+    return () => {
+      cancelled = true;
+    };
+  }, [user._id]);
 
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
   const isCompanyUser = user.activeRole === Role.Company;
-  const hasAgentRole = user.roles.includes(Role.Agent);
+  // const hasAgentRole = user.roles.includes(Role.Agent);
   const isAgentActive = user.activeRole === Role.Agent;
 
-
-  const canAddAgent = !user.roles.includes(Role.Agent);
+  const canAddAgent =
+    !user.roles.includes(Role.Agent) && user.roles.includes(Role.Viewer);
   const addableRoles = canAddAgent ? [Role.Agent] : [];
 
   const navLinks = [
@@ -78,6 +83,9 @@ const ProfileMenu = ({
     },
   ];
   const dashboardNavLink = navLinks[0];
+  if (showAdmin) {
+    navLinks.push({ label: "Admin", href: "/admin", icon: LuShieldCheck });
+  }
 
   const contextActions = [];
 
@@ -118,7 +126,7 @@ const ProfileMenu = ({
         onClick={() => setIsProfileOpen(true)}
         title="Your Profile"
       >
-        <Avatar src={user.avatar} name={user.name} size={36} priority/>
+        <Avatar src={user.avatar} name={user.name} size={36} priority />
       </Button>
 
       <Dropdown
@@ -139,12 +147,15 @@ const ProfileMenu = ({
         </DropdownTrigger>
 
         <DropdownContent className="w-60 mt-2 p-1">
-          <div className="px-2 py-1.5 mb-1 text-xs">
-            <p className="font-semibold text-foreground truncate">
-              {user.name}
-              <Badge className="ml-2 capitalize">{user.activeRole}</Badge>
-            </p>
-            <p className="text-muted truncate text-[11px]">{user.email}</p>
+          <div className="mb-2">
+            <div className="px-2 py-1.5 mb-1 text-xs">
+              <p className="font-semibold text-foreground truncate">
+                {user.name}
+                <Badge className="ml-2 capitalize">{user.activeRole}</Badge>
+              </p>
+              <p className="text-muted truncate text-[11px]">{user.email}</p>
+            </div>
+            <UpgradeToProCTA variant="compact" />
           </div>
           <DropdownSeparator />
 
@@ -198,7 +209,6 @@ const ProfileMenu = ({
               </>
             )}
           </div>
-
 
           {addableRoles.length > 0 && (
             <>

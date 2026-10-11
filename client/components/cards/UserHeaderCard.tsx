@@ -1,14 +1,6 @@
 "use client";
-import Image from "next/image";
-import { useState } from "react";
-import {
-  LuUser,
-  LuMail,
-  LuPhone,
-  LuTriangleAlert,
-  LuLayoutDashboard,
-  LuUserRound,
-} from "react-icons/lu";
+import { useCallback, useEffect, useState } from "react";
+import { LuMail, LuPhone, LuTriangleAlert, LuUserRound } from "react-icons/lu";
 import { FiSettings } from "react-icons/fi";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -18,8 +10,12 @@ import { PopulatedUser, Role } from "@/types";
 import VerifiedBadge from "@/components/icons/VerifiedBadge";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { Modal } from "@/components/ui/Modal";
-import { imageLoader } from "@/utils/helpers";
 import FileUpload from "../ui/FileUpload";
+import { Avatar } from "../ui/Avatar";
+import { Logomark } from "../ui/LogoMark";
+import { useRouter, usePathname } from "next/navigation";
+
+const SETTINGS_HASH = "#settings";
 
 interface UserHeaderCardProps {
   user: PopulatedUser;
@@ -32,9 +28,31 @@ const UserHeaderCard = ({
   onProfileOpen,
   onUpdate,
 }: UserHeaderCardProps) => {
-  const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      setIsModalOpen(window.location.hash === SETTINGS_HASH);
+    };
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  const openSettings = useCallback(() => {
+    setIsModalOpen(true);
+    router.push(`${pathname}${SETTINGS_HASH}`, { scroll: false });
+  }, [pathname, router]);
+
+  const closeSettings = useCallback(() => {
+    setIsModalOpen(false);
+    router.replace(pathname, { scroll: false });
+  }, [pathname, router]);
 
   const isCompany = user.activeRole === Role.Company;
   const isAgent = user.activeRole === Role.Agent;
@@ -51,7 +69,6 @@ const UserHeaderCard = ({
 
   const greeting = `Welcome back, ${roleLabel ? roleLabel.charAt(0).toUpperCase() + roleLabel.slice(1) : ""} ${user.name.split(" ")[0]}!`;
 
-  // Profile fields
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || "");
   const [whatsappNumber, setWhatsappNumber] = useState(
@@ -59,7 +76,6 @@ const UserHeaderCard = ({
   );
   const [avatar, setAvatar] = useState(user.avatar || "");
 
-  // Agent fields
   const [licenseNumber, setLicenseNumber] = useState(
     user.agentProfile?.licenseNumber || "",
   );
@@ -73,7 +89,6 @@ const UserHeaderCard = ({
     user.agentProfile?.brokerage || "",
   );
 
-  // Company fields
   const [companyName, setCompanyName] = useState(company?.name || "");
   const [companySlug, setCompanySlug] = useState(company?.slug || "");
   const [companyLogo, setCompanyLogo] = useState(company?.logo || "");
@@ -125,7 +140,7 @@ const UserHeaderCard = ({
         };
       }
       await onUpdate(updated);
-      setIsModalOpen(false);
+      closeSettings();
     } catch (error) {
       console.error("Update failed", error);
     } finally {
@@ -147,31 +162,23 @@ const UserHeaderCard = ({
         <div className="relative px-6 pb-6 md:px-8 md:pb-8">
           <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-end -mt-8 mb-4">
             <div className="relative flex items-end gap-2">
-              <div className="relative h-24 w-24 md:h-28 md:w-28 shrink-0 shadow-xl rounded-full border-4 border-background bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-[1.02]">
-                {!imageError && user.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-                    fill
-                    sizes="112px"
-                    className="object-cover"
-                    loader={imageLoader}
-                    priority
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <LuUser className="h-12 w-12 text-neutral-400" />
-                )}
-              </div>
+              <Avatar
+                src={user.avatar}
+                alt={user.name}
+                name={user.name}
+                size={90}
+                shape="circle"
+                className="h-full w-full border-5 border-background"
+              />
               {company?.logo && (
-                <div className="relative h-12 w-12 rounded-full border-2 border-background bg-white overflow-hidden shadow-md -ml-8 mb-0">
-                  <Image
-                    src={company.logo}
-                    alt={company.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+                <Avatar
+                  src={company.logo}
+                  alt={company.name}
+                  name={company.name}
+                  shape="circle"
+                  className="object-cover z-1 border-3 border-card -ml-9"
+                  fallbackIcon={<Logomark size={28} />}
+                />
               )}
             </div>
 
@@ -192,9 +199,7 @@ const UserHeaderCard = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-4">
-                {user.roles.map((role: Role) => (
-                  <RoleBadge key={role} role={role} />
-                ))}
+                <RoleBadge role={user.activeRole} />
                 {isCompany && <LockedBadge company={company!} />}
               </div>
             </div>
@@ -253,7 +258,7 @@ const UserHeaderCard = ({
                 size="sm"
                 className="gap-2 py-2.5 ml-2"
                 aria-label="Settings"
-                onClick={() => setIsModalOpen(true)}
+                onClick={openSettings}
               >
                 {<FiSettings className="h-4 w-4" />}
               </Button>
@@ -274,7 +279,7 @@ const UserHeaderCard = ({
         </div>
       </div>
 
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} >
+      <Modal open={isModalOpen} onClose={closeSettings}>
         <div className="p-6">
           <h2 className="text-xl font-semibold mb-1">Edit Profile</h2>
           <p className="text-sm text-muted-foreground mb-6">
@@ -438,7 +443,7 @@ const UserHeaderCard = ({
           </div>
 
           <div className="flex justify-end gap-3 mt-6 py-4 border-t border-border sticky bottom-0 bg-card">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+            <Button variant="outline" onClick={closeSettings}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>

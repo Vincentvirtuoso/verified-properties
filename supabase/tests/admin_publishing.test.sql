@@ -1,4 +1,7 @@
 \set ON_ERROR_STOP 0
+-- NOTE: since 013, owners cannot publish directly (admin approval) and
+-- admin_set_verification takes (type, id, approve|reject|more_info, reason).
+-- See admin_moderation.test.sql for the current rules.
 -- Run on a fresh database after 001, 005, 006 ... 010.
 -- c1 = agent, c9 = admin, c3 = ordinary user.
 insert into auth.users(id,email,raw_user_meta_data) values

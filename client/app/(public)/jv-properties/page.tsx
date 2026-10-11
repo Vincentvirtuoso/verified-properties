@@ -1,12 +1,13 @@
 "use client";
 
-import { MOCK_JV_PROPERTIES } from "@/data/mock-jv-properties";
+import { useActiveJV } from "@/lib/supabase/jv";
 import Image from "next/image";
 import Link from "next/link";
 import { imageLoader } from "@/utils/helpers";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 
 export default function JvPropertiesPage() {
+  const { items, error } = useActiveJV();
   return (
     <main className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-10">
@@ -25,8 +26,13 @@ export default function JvPropertiesPage() {
           that matches your investment goals.
         </p>
 
+        {items === null && <p className="text-sm text-muted-foreground">Loading opportunities…</p>}
+        {error && <p className="text-sm text-destructive">Couldn&apos;t load JV opportunities.</p>}
+        {items?.length === 0 && !error && (
+          <p className="py-10 text-center text-muted-foreground">No joint-venture opportunities are live right now.</p>
+        )}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {MOCK_JV_PROPERTIES.map((property) => (
+          {(items ?? []).map((property) => (
             <Link
               key={property._id}
               href={`/jv-properties/${property.slug}`}

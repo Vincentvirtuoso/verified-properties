@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { z } from "zod";
@@ -27,7 +27,7 @@ const enquirySchema = z.object({
 });
 
 export default function ContactForm({ propertyId, propertyTitle, ownerId }: ContactFormProps) {
-  const { user } = useAuth();
+  const { user,isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sent, setSent] = useState(false);
@@ -39,6 +39,19 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
     phone: null,
     message: `Hi, I'm interested in "${propertyTitle}". Please contact me.`,
   });
+
+  const [touched, setTouched] = useState({ name: false, phone: false });
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+
+    setForm((prev) => ({
+      ...prev,
+      name: touched.name ? prev.name : (user.name ?? prev.name),
+      phone: touched.phone ? prev.phone : (user.phone ?? prev.phone),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isLoading]);
 
   const values = {
     name: form.name ?? user?.name ?? "",
@@ -114,7 +127,10 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
               type="text"
               required
               value={values.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                setTouched((t) => ({ ...t, name: true }));
+                setForm({ ...form, name: e.target.value });
+              }}
               placeholder="John Doe"
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
@@ -127,7 +143,10 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
               type="tel"
               required
               value={values.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => {
+                setTouched((t) => ({ ...t, phone: true }));
+                setForm({ ...form, phone: e.target.value });
+              }}
               placeholder="+234 800 000 0000"
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
@@ -139,8 +158,11 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
             <textarea
               rows={4}
               maxLength={2000}
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              value={values.message}
+              onChange={(e) => {
+                setTouched((t) => ({ ...t, message: true }));
+                setForm({ ...form, message: e.target.value });
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
             />
           </div>

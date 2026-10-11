@@ -6,7 +6,7 @@ import Link from "next/link";
 import { LuCheck, LuClock, LuBuilding2, LuArrowRight } from "react-icons/lu";
 import { Button } from "@/components/ui/Button";
 import { imageLoader } from "@/utils/helpers";
-import { MOCK_JV_PROPERTIES } from "@/data/mock-jv-properties";
+import { useActiveJV } from "@/lib/supabase/jv";
 
 const PLANS = [
   {
@@ -57,6 +57,7 @@ const PLANS = [
 
 export default function JvOpportunityPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>("monthly");
+  const jv = useActiveJV(8);
 
   return (
     <main className="min-h-screen">
@@ -166,7 +167,7 @@ export default function JvOpportunityPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {MOCK_JV_PROPERTIES.map((property) => (
+          {(jv.items ?? []).map((property) => (
             <Link
               key={property._id}
               href={`/jv-properties/${property.slug}`}

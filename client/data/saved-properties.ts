@@ -1,13 +1,16 @@
 import { properties } from "@/data/properties";
 import { SavedProperty } from "@/types";
+import {
+  getSavedEntries,
+  seedSavedEntries,
+  type SavedEntry,
+} from "@/lib/saved-properties-storage";
 
 export type SavedListingRecord = {
   userId: string;
   propertySlug: string;
   savedAt: string;
 };
-
-
 
 export const dummySavedProperties: SavedListingRecord[] = [
   {
@@ -51,43 +54,33 @@ const propertyBySlug = new Map(
   properties.map((property) => [property.slug, property]),
 );
 
-export const savedPropertiesByUser: Record<string, SavedProperty[]> =
-  dummySavedProperties.reduce<Record<string, SavedProperty[]>>(
-    (acc, record) => {
-      const property = propertyBySlug.get(record.propertySlug);
-
-      if (!property) return acc;
-
-      (acc[record.userId] ??= []).push({
-        ...property,
-        savedAt: record.savedAt,
-      });
-
-      return acc;
-    },
-    {},
-  );
-
-/**
- * Get the populated saved listings for a given user, newest save first.
- */
-export function getSavedPropertiesForUser(
-  userId: string,
-): SavedProperty[] {
-  const list = savedPropertiesByUser[userId] ?? [];
-
-  return [...list].sort(
-    (a, b) =>
-      new Date(b.savedAt).getTime() -
-      new Date(a.savedAt).getTime(),
+function ensureSeeded() {
+  if (typeof window === "undefined") return;
+  seedSavedEntries(
+    dummySavedProperties.map<SavedEntry>(({ propertySlug, savedAt }) => ({
+      slug: propertySlug,
+      savedAt,
+    })),
   );
 }
 
-/**
- * Convenience helper for the demo's current user.
- */
-export function getMockSavedProperties(
-  userId: string,
-): SavedProperty[] {
+export function getSavedPropertiesForUser(_userId: string): SavedProperty[] {
+  if (typeof window === "undefined") return [];
+
+  ensureSeeded();
+
+  return getSavedEntries()
+    .map(({ slug, savedAt }) => {
+      const property = propertyBySlug.get(slug);
+      if (!property) return null;
+      return { ...property, savedAt } as SavedProperty;
+    })
+    .filter((p): p is SavedProperty => p !== null)
+    .sort(
+      (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+    );
+}
+
+export function getMockSavedProperties(userId: string): SavedProperty[] {
   return getSavedPropertiesForUser(userId);
 }

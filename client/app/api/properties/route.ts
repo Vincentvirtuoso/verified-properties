@@ -129,7 +129,8 @@ export async function POST(request: Request) {
       bedrooms,
       bathrooms,
       area,
-      video_links: parseJsonArray(form.get("videoLinks")),
+      // Video tours are uploaded from My Listings and reviewed by admins.
+      video_links: [],
     })
     .select("id, slug")
     .single();
