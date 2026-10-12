@@ -38,8 +38,10 @@ const LoginForm = () => {
   };
 
   const safeCallbackUrl = getSafeRedirectUrl(callbackUrl);
+  console.log(user);
 
   useEffect(() => {
+    
     if (isAuthenticated && user) {
       if (safeCallbackUrl) {
         router.push(safeCallbackUrl);
@@ -129,6 +131,7 @@ const LoginForm = () => {
         name="password"
         type="password"
         placeholder="••••••••"
+        autoComplete="current-password"
         value={formData.password}
         onChange={handleChange}
         error={errors.password}

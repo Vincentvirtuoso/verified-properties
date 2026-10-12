@@ -1,94 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import {
+  forwardRef,
+  useId,
+  useState,
+  type InputHTMLAttributes,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
-import { IconType } from "react-icons";
 import { FieldLabel } from "./FieldLabel";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { Button } from "./Button";
 
-interface FieldProps {
+type NativeInputProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "className"
+>;
+
+export interface FieldProps extends NativeInputProps {
   label: string;
   name: string;
   type?: "text" | "email" | "password" | "tel" | "number";
-  placeholder?: string;
-  value?: string | number;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  icon?: IconType;
-  required?: boolean;
+  /** Decorative element rendered inside the input. */
+  icon?: ReactNode;
   error?: string;
+  /** Classes for the wrapper. */
   className?: string;
+  /** Classes for the <input> itself. */
+  inputClassName?: string;
 }
 
-export function Field({
-  label,
-  name,
-  type = "text",
-  placeholder,
-  value,
-  onChange,
-  icon: Icon,
-  required = false,
-  error,
-  className,
-}: FieldProps) {
+export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
+  {
+    label,
+    name,
+    type = "text",
+    placeholder,
+    icon,
+    required = false,
+    error,
+    className,
+    inputClassName,
+    id,
+    disabled,
+    ...inputProps
+  },
+  ref,
+) {
+  const generatedId = useId();
+  const inputId = id ?? `${name}-${generatedId}`;
+  const errorId = `${inputId}-error`;
+
   const [showPassword, setShowPassword] = useState(false);
 
-  const isPasswordType = type === "password";
+  const isPassword = type === "password";
+  const resolvedType = isPassword && showPassword ? "text" : type;
 
-  const inputType = isPasswordType && showPassword ? "text" : type;
-
-  const togglePasswordVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const togglePasswordVisibility = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setShowPassword((prev) => !prev);
   };
 
   return (
     <div className={cn("space-y-1", className)}>
-      <FieldLabel htmlFor={name} required={required}>
+      <FieldLabel htmlFor={inputId} required={required}>
         {label}
       </FieldLabel>
 
       <div className="relative">
-        {Icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <Icon size={18} />
-          </div>
+        {icon && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:h-4.5 [&_svg]:w-4.5">
+            {icon}
+          </span>
         )}
 
         <input
-          id={name}
+          {...inputProps}
+          ref={ref}
+          id={inputId}
           name={name}
-          type={inputType}
-          value={value}
-          onChange={onChange}
+          type={resolvedType}
+          value={inputProps.value}
+          defaultValue={inputProps.defaultValue}
+          onChange={inputProps.onChange}
           placeholder={placeholder}
           required={required}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={cn(
             "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground",
-            "focus:outline-none focus:border-primary focus:ring-1 focus:ring-ring transition-all",
-            Icon && "pl-10",
-            isPasswordType && "pr-10",
+            "transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+            icon && "pl-10",
+            isPassword && "pr-10",
             error &&
               "border-destructive focus:border-destructive focus:ring-destructive",
+            inputClassName,
           )}
         />
 
-        {isPasswordType && (
-          <Button
+        {isPassword && (
+          <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 h-auto min-w-0 focus:ring-0 focus:ring-offset-0"
-            size="sm"
-            variant="ghost"
             onClick={togglePasswordVisibility}
+            // Keeps focus in the input instead of stealing it on click.
+            onMouseDown={(e) => e.preventDefault()}
             aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-          </Button>
+          </button>
         )}
       </div>
 
-      {error && <p className="text-destructive text-xs mt-1">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="mt-1 text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
-}
+});

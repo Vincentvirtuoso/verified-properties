@@ -3,17 +3,31 @@
 import { Field } from "@/components/ui/Field";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { LuBanknote, LuLayoutGrid, LuStar } from "react-icons/lu";
+import {
+  LuBanknote,
+  LuLayoutGrid,
+  LuStar,
+  LuWarehouse,
+  LuBuilding,
+  LuTrees,
+  LuSmartphone,
+  LuSofa,
+  LuZap,
+} from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
 import type { PropertyFeature } from "@/types";
 
-const FEATURES: { value: PropertyFeature; label: string; emoji: string }[] = [
-  { value: "boysQuarters", label: "Boys Quarters (BQ)", emoji: "🏠" },
-  { value: "penthouse", label: "Penthouse", emoji: "🏙️" },
-  { value: "garden", label: "Garden", emoji: "🌿" },
-  { value: "smartHome", label: "Smart Home", emoji: "📱" },
-  { value: "furnished", label: "Furnished", emoji: "🛋️" },
-  { value: "serviced", label: "Serviced", emoji: "⚡" },
+const FEATURES: {
+  value: PropertyFeature;
+  label: string;
+  icon: React.ElementType;
+}[] = [
+  { value: "boysQuarters", label: "Boys Quarters (BQ)", icon: LuWarehouse },
+  { value: "penthouse", label: "Penthouse", icon: LuBuilding },
+  { value: "garden", label: "Garden", icon: LuTrees },
+  { value: "smartHome", label: "Smart Home", icon: LuSmartphone },
+  { value: "furnished", label: "Furnished", icon: LuSofa },
+  { value: "serviced", label: "Serviced", icon: LuZap },
 ];
 
 const CURRENCIES = ["NGN", "USD", "GBP", "EUR"];
@@ -135,27 +149,31 @@ export function StepDetails({
           description="Select all features that apply to this property"
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {FEATURES.map((feature) => (
-            <label
-              key={feature.value}
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                formData.features.includes(feature.value)
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-muted-foreground/30"
-              }`}
-            >
-              <Checkbox
-                checked={formData.features.includes(feature.value)}
-                onChange={() => toggleFeature(feature.value)}
-              />
-              <span className="text-lg" aria-hidden="true">
-                {feature.emoji}
-              </span>
-              <span className="text-sm font-medium text-foreground">
-                {feature.label}
-              </span>
-            </label>
-          ))}
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon;
+            const isSelected = formData.features.includes(feature.value);
+            return (
+              <label
+                key={feature.value}
+                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-muted-foreground/30"
+                }`}
+              >
+                <Checkbox
+                  checked={isSelected}
+                  onChange={() => toggleFeature(feature.value)}
+                />
+                <Icon
+                  className={`h-4.5 w-4.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <span className="text-sm font-medium text-foreground">
+                  {feature.label}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </section>
     </div>

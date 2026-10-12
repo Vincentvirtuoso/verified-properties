@@ -1,10 +1,28 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Field } from "@/components/ui/Field";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LuMapPin } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
 import { NIGERIAN_STATES } from "@/utils/constants";
+import { PageSpinner } from "@/components/ui/Spinner";
+
+const LocationPicker = dynamic(
+  () =>
+    import("../../../../components/common/LocationPicker").then(
+      (m) => m.LocationPicker,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <PageSpinner
+        label="Loading map…"
+      />
+    ),
+  },
+);
 
 interface StepLocationProps {
   formData: ListPropertyFormData;
@@ -15,11 +33,25 @@ interface StepLocationProps {
   ) => void;
 }
 
+// Nigeria's rough centre — used as the map's starting view when no
+// pin has been placed yet.
+const DEFAULT_CENTER: [number, number] = [9.082, 8.6753];
+
 export function StepLocation({
   formData,
   errors,
   updateField,
 }: StepLocationProps) {
+  const [mapTouched, setMapTouched] = useState(Boolean(formData.coordinates));
+
+  const handlePin = useCallback(
+    (lat: number, lng: number) => {
+      updateField("coordinates", { lat, lng });
+      setMapTouched(true);
+    },
+    [updateField],
+  );
+
   return (
     <div className="space-y-8">
       <section>
@@ -86,12 +118,34 @@ export function StepLocation({
       </section>
 
       <section>
-        <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 h-48 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <LuMapPin className="h-8 w-8 opacity-40" />
-          <p className="text-sm font-medium">Map pin (optional)</p>
-          <p className="text-xs opacity-70">
-            Connect a map provider to let sellers pin exact coordinates
-          </p>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-foreground">
+            Pin on Map{" "}
+            <span className="text-muted-foreground font-normal">
+              (optional)
+            </span>
+          </label>
+          {mapTouched && formData.coordinates && (
+            <span className="text-xs text-muted-foreground">
+              {formData.coordinates.lat.toFixed(5)},{" "}
+              {formData.coordinates.lng.toFixed(5)}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Drag the pin to the exact spot. This helps buyers find the property
+          and isn&apos;t required to publish your listing.
+        </p>
+        <div className="rounded-xl overflow-hidden border border-border">
+          <LocationPicker
+            center={
+              formData.coordinates
+                ? [formData.coordinates.lat, formData.coordinates.lng]
+                : DEFAULT_CENTER
+            }
+            hasPin={Boolean(formData.coordinates)}
+            onPick={handlePin}
+          />
         </div>
       </section>
     </div>

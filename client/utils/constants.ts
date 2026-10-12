@@ -69,6 +69,45 @@ export const DOCUMENT_TYPE_LABELS: Record<PropertyDocumentType, string> = {
     "Certificate of Statutory Right of Occupancy",
 };
 
+export const DOCUMENT_TYPES: { value: PropertyDocumentType; label: string }[] = [
+  {
+    value: "certificateOfOccupancy",
+    label: "Certificate of Occupancy (C of O)",
+  },
+  { value: "governorsConsent", label: "Governor's Consent" },
+  { value: "deedOfAssignment", label: "Deed of Assignment" },
+  { value: "surveyPlan", label: "Survey Plan" },
+  { value: "approvedBuildingPlan", label: "Approved Building Plan" },
+  { value: "contractOfSale", label: "Contract of Sale" },
+  { value: "powerOfAttorney", label: "Power of Attorney" },
+  { value: "landPurchaseAgreement", label: "Land Purchase Agreement" },
+  { value: "taxClearanceCertificate", label: "Tax Clearance Certificate" },
+  { value: "gazette", label: "Gazette" },
+  { value: "letterOfAllocation", label: "Letter of Allocation" },
+  { value: "receiptOfPaymentForLand", label: "Receipt of Payment for Land" },
+  { value: "excisionDocument", label: "Excision Document" },
+  { value: "deedOfSublease", label: "Deed of Sublease" },
+  { value: "deedOfMortgage", label: "Deed of Mortgage" },
+  { value: "registeredSurveyPlan", label: "Registered Survey Plan" },
+  {
+    value: "certificateOfStatutoryRightOfOccupancy",
+    label: "Statutory Right of Occupancy",
+  },
+  { value: "affidavitOfLoss", label: "Affidavit of Loss" },
+  {
+    value: "probateLetterOfAdministration",
+    label: "Probate / Letter of Administration",
+  },
+  {
+    value: "irrevocablePowerOfAttorney",
+    label: "Irrevocable Power of Attorney",
+  },
+  { value: "deedOfLease", label: "Deed of Lease" },
+  { value: "deedOfSurrender", label: "Deed of Surrender" },
+  { value: "deedOfGift", label: "Deed of Gift" },
+  { value: "deedOfConveyance", label: "Deed of Conveyance" },
+];
+
 export const PROPERTY_CATEGORY_LABELS: Record<PropertyCategory, string> = {
   residential: "Residential",
   commercial: "Commercial",

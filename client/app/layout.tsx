@@ -9,6 +9,7 @@ import {
   SIDEBAR_EXPANDED_WIDTH,
 } from "@/utils/constants";
 import { CSSProperties } from "react";
+import "leaflet/dist/leaflet.css";
 
 const lato = Lato({
   variable: "--font-lato-sans",

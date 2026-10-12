@@ -9,9 +9,29 @@ import { StepLocation } from "./components/StepLocation";
 import { StepMedia } from "./components/StepMedia";
 import { StepReview } from "./components/StepReview";
 import { StepNav } from "./components/StepNav";
+import { FeatureTour } from "@/components/common/FeatureTour";
 import { useListPropertyForm, STEPS } from "./hooks/useListPropertyForm";
 import type { ListPropertyStep } from "./hooks/useListPropertyForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
+import { LuX } from "react-icons/lu";
+
+const LIST_PROPERTY_TOUR_STEPS = [
+  {
+    title: "Welcome to the listing wizard",
+    description:
+      "We'll walk you through five short steps. Your progress is saved automatically, so you can leave and come back anytime.",
+  },
+  {
+    title: "Documents? Just tell us what you have",
+    description:
+      "No need to upload anything now. Select which ownership documents exist for this property — our team will reach out separately to collect copies.",
+  },
+  {
+    title: "Verification doesn't block you",
+    description:
+      "Your listing goes live right away without a verified badge. Declaring documents starts the verification process, it doesn't delay publishing.",
+  },
+];
 
 export default function ListPropertyPage() {
   const router = useRouter();
@@ -30,6 +50,10 @@ export default function ListPropertyPage() {
     handleNext,
     validateStep,
     resetForm,
+    draftAvailable,
+    draftDismissed,
+    discardDraft,
+    keepDraft,
   } = useListPropertyForm();
 
   const markCompleted = (step: ListPropertyStep) => {
@@ -79,16 +103,20 @@ export default function ListPropertyPage() {
       payload.append("city", formData.city);
       payload.append("state", formData.state);
       payload.append("country", formData.country);
+      if (formData.coordinates) {
+        payload.append("coordinates", JSON.stringify(formData.coordinates));
+      }
 
       formData.imageFiles.forEach((file) => {
         payload.append("images", file);
       });
 
-      formData.documentFiles.forEach((doc, i) => {
-        payload.append(`document_${i}`, doc.file);
-        payload.append(`documentType_${i}`, doc.type);
-      });
-      payload.append("documentCount", String(formData.documentFiles.length));
+      const filteredVideos = formData.videoLinks.filter(Boolean);
+      payload.append("videoLinks", JSON.stringify(filteredVideos));
+
+      // Declared document types only — no files. Verification team
+      // follows up separately to collect copies.
+      payload.append("documentTypes", JSON.stringify(formData.documentTypes));
 
       const res = await fetch("/api/properties", {
         method: "POST",
@@ -101,10 +129,8 @@ export default function ListPropertyPage() {
         throw new Error(data?.error ?? "Failed to submit listing");
       }
 
-      // Saved as a draft. On My Listings the owner submits it for review
-      // and uploads a video tour.
       resetForm();
-      router.push("/my-listings");
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       window.alert(
@@ -138,6 +164,38 @@ export default function ListPropertyPage() {
       </div>
 
       <div className="px-4 sm:px-6 py-8 space-y-8">
+        {draftAvailable && !draftDismissed && (
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-sm text-foreground">
+              You have an unfinished listing. Continue where you left off?
+            </p>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={discardDraft}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Start fresh
+              </button>
+              <button
+                type="button"
+                onClick={keepDraft}
+                className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
+              >
+                Continue draft
+              </button>
+              <button
+                type="button"
+                onClick={keepDraft}
+                aria-label="Dismiss"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LuX className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <PropertyStepper
           currentStep={currentStep}
           completedSteps={completedSteps}
@@ -185,6 +243,8 @@ export default function ListPropertyPage() {
           />
         </div>
       </div>
+
+      <FeatureTour tourId="list-property" steps={LIST_PROPERTY_TOUR_STEPS} />
     </div>
   );
 }

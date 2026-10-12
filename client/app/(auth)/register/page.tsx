@@ -136,8 +136,7 @@ function RegisterForm() {
     } catch (error) {
       console.error(error);
       setErrors({
-        submit:
-          error instanceof Error ? error.message : "Registration failed.",
+        submit: error instanceof Error ? error.message : "Registration failed.",
       });
     }
   };
@@ -240,6 +239,7 @@ function RegisterForm() {
           name="password"
           type="password"
           placeholder="••••••••"
+          autoComplete="current-password"
           value={formData.password}
           onChange={handleInputChange}
           error={errors.password}
@@ -251,6 +251,7 @@ function RegisterForm() {
           name="repeatPassword"
           type="password"
           placeholder="••••••••"
+          autoComplete="new-password"
           value={formData.repeatPassword}
           onChange={handleInputChange}
           error={errors.repeatPassword}

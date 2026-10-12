@@ -70,7 +70,6 @@ const ProfileMenu = ({
   const isPureViewer =
     user.roles.length === 1 && user.roles.includes(Role.Viewer);
   const isCompanyUser = user.activeRole === Role.Company;
-  // const hasAgentRole = user.roles.includes(Role.Agent);
   const isAgentActive = user.activeRole === Role.Agent;
 
   const canAddAgent =

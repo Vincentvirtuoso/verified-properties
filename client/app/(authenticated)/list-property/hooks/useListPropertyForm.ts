@@ -33,7 +33,7 @@ export interface ListPropertyFormData {
   category: PropertyCategory | "";
   type: PropertyType | "";
   description: string;
-  ownerType: "agent" | "company" | ""; // Removed "landlord" — now under agent
+  ownerType: "agent" | "company" | "";
 
   price: string;
   currency: string;
@@ -47,10 +47,13 @@ export interface ListPropertyFormData {
   city: string;
   state: string;
   country: string;
+  coordinates: { lat: number; lng: number } | null;
 
   imageFiles: File[];
   videoLinks: string[];
-  documentFiles: { file: File; type: PropertyDocumentType | "" }[];
+  // Declared only — no file upload at listing time. Admin team collects
+  // the actual files separately once a document type is declared.
+  documentTypes: PropertyDocumentType[];
 }
 
 const STORAGE_KEY = "listPropertyFormData";
@@ -75,10 +78,22 @@ const getDefaultData = (
   city: "",
   state: "",
   country: "Nigeria",
+  coordinates: null,
   imageFiles: [],
   videoLinks: [""],
-  documentFiles: [],
+  documentTypes: [],
 });
+
+// Fields worth treating form state as "non-empty" when deciding whether
+// to offer draft restoration — i.e. the user actually typed something.
+function hasMeaningfulContent(data: ListPropertyFormData): boolean {
+  return Boolean(
+    data.title.trim() ||
+    data.description.trim() ||
+    data.address.trim() ||
+    data.price.trim(),
+  );
+}
 
 export function useListPropertyForm() {
   const { user } = useAuth();
@@ -90,17 +105,19 @@ export function useListPropertyForm() {
     Partial<Record<keyof ListPropertyFormData, string>>
   >({});
   const [isInitialized, setIsInitialized] = useState(false);
+  // Set once, on mount, if a meaningful draft was found — lets the page
+  // show a "Continue where you left off?" prompt instead of silently
+  // dropping the user back into a half-filled form.
+  const [draftAvailable, setDraftAvailable] = useState(false);
+  const [draftDismissed, setDraftDismissed] = useState(false);
 
   const stepIndex = STEPS.indexOf(currentStep);
 
-  // Determine ownerType based on activeRole
   const userOwnerType = ((): ListPropertyFormData["ownerType"] => {
     if (!user?.activeRole) return "";
-
     if (user.activeRole === Role.Agent) return "agent";
     if (user.activeRole === Role.Company) return "company";
-
-    return ""; // Viewer cannot list directly
+    return "";
   })();
 
   useEffect(() => {
@@ -109,8 +126,15 @@ export function useListPropertyForm() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as ListPropertyFormData;
-          // Files cannot be serialised; they must be re-selected.
-          setFormData({ ...parsed, imageFiles: [], documentFiles: [] });
+          const restored: ListPropertyFormData = {
+            ...getDefaultData(),
+            ...parsed,
+            imageFiles: [],
+          };
+          if (hasMeaningfulContent(restored)) {
+            setFormData(restored);
+            setDraftAvailable(true);
+          }
         } catch (e) {
           console.error(e, "Failed to parse saved form data");
         }
@@ -131,10 +155,10 @@ export function useListPropertyForm() {
 
   useEffect(() => {
     if (isInitialized && typeof window !== "undefined") {
-      // Draft text fields only; File objects cannot be stored.
-      const { imageFiles, documentFiles, ...rest } = formData;
+      // Draft text/selection fields only — File objects can't be
+      // serialised and must be re-selected on return.
+      const { imageFiles, ...rest } = formData;
       void imageFiles;
-      void documentFiles;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(rest));
     }
   }, [formData, isInitialized]);
@@ -209,10 +233,20 @@ export function useListPropertyForm() {
     setFormData(defaultData);
     setCurrentStep("basic");
     setErrors({});
+    setDraftAvailable(false);
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [userOwnerType]);
+
+  const discardDraft = useCallback(() => {
+    resetForm();
+    setDraftDismissed(true);
+  }, [resetForm]);
+
+  const keepDraft = useCallback(() => {
+    setDraftDismissed(true);
+  }, []);
 
   return {
     currentStep,
@@ -228,5 +262,9 @@ export function useListPropertyForm() {
     validateStep,
     resetForm,
     userOwnerType,
+    draftAvailable,
+    draftDismissed,
+    discardDraft,
+    keepDraft,
   };
 }

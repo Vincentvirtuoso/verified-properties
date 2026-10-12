@@ -10,13 +10,13 @@ import {
   LuImage,
   LuFileText,
   LuPencil,
+  LuShieldCheck,
 } from "react-icons/lu";
 import type {
   ListPropertyFormData,
   ListPropertyStep,
 } from "../hooks/useListPropertyForm";
-
-// ── Label helpers ──────────────────────────────────────────────────────────────
+import { DOCUMENT_TYPES } from "@/utils/constants";
 
 const PURPOSE_LABEL: Record<string, string> = {
   rent: "For Rent",
@@ -44,6 +44,9 @@ const FEATURE_LABEL: Record<string, string> = {
   furnished: "Furnished",
   serviced: "Serviced",
 };
+const DOC_LABEL: Record<string, string> = Object.fromEntries(
+  DOCUMENT_TYPES.map(({ value, label }) => [value, label]),
+);
 
 function formatPrice(price: string, currency: string) {
   const num = Number(price);
@@ -54,8 +57,6 @@ function formatPrice(price: string, currency: string) {
     maximumFractionDigits: 0,
   }).format(num);
 }
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function ReviewSection({
   title,
@@ -102,19 +103,13 @@ function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
-
 interface StepReviewProps {
   formData: ListPropertyFormData;
   onEdit: (step: ListPropertyStep) => void;
   isSubmitting?: boolean;
 }
 
-export function StepReview({
-  formData,
-  onEdit,
-  // isSubmitting,
-}: StepReviewProps) {
+export function StepReview({ formData, onEdit }: StepReviewProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4 p-5 rounded-xl bg-primary/5 border border-primary/20">
@@ -221,6 +216,12 @@ export function StepReview({
           <Row label="City" value={formData.city} />
           <Row label="State" value={formData.state} />
           <Row label="Country" value={formData.country} />
+          {formData.coordinates && (
+            <Row
+              label="Map Pin"
+              value={`${formData.coordinates.lat.toFixed(5)}, ${formData.coordinates.lng.toFixed(5)}`}
+            />
+          )}
         </div>
       </ReviewSection>
 
@@ -283,25 +284,29 @@ export function StepReview({
             </div>
           )}
 
-          {formData.documentFiles.length > 0 && (
-            <div className="pt-1 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-2">Documents</p>
-              <div className="space-y-1.5">
-                {formData.documentFiles.map((doc, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    <LuFileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-foreground truncate">
-                      {doc.file.name}
-                    </span>
-                    {doc.type && (
-                      <Badge variant="outline" className="shrink-0 text-[10px]">
-                        {doc.type}
-                      </Badge>
-                    )}
-                  </div>
+          {formData.documentTypes.length > 0 ? (
+            <div className="pt-3 border-t border-border">
+              <div className="flex items-start gap-2 mb-2">
+                <LuShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  Documents declared — pending verification. Our team will
+                  contact you to collect copies.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {formData.documentTypes.map((type) => (
+                  <Badge key={type} variant="outline" className="text-[10px]">
+                    <LuFileText className="h-3 w-3 mr-1 inline" />
+                    {DOC_LABEL[type] ?? type}
+                  </Badge>
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+              No ownership documents declared yet — your listing stays live
+              without a verified badge until you do.
+            </p>
           )}
         </div>
       </ReviewSection>

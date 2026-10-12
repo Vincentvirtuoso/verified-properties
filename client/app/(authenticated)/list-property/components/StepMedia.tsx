@@ -2,58 +2,18 @@
 
 import { useRef, ChangeEvent } from "react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Field";
 import {
   LuImage,
   LuVideo,
   LuFileText,
   LuX,
-  LuPlus,
   LuUpload,
+  LuShieldCheck,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
 import type { PropertyDocumentType } from "@/types";
 import Image from "next/image";
-
-const DOCUMENT_TYPES: { value: PropertyDocumentType; label: string }[] = [
-  {
-    value: "certificateOfOccupancy",
-    label: "Certificate of Occupancy (C of O)",
-  },
-  { value: "governorsConsent", label: "Governor's Consent" },
-  { value: "deedOfAssignment", label: "Deed of Assignment" },
-  { value: "surveyPlan", label: "Survey Plan" },
-  { value: "approvedBuildingPlan", label: "Approved Building Plan" },
-  { value: "contractOfSale", label: "Contract of Sale" },
-  { value: "powerOfAttorney", label: "Power of Attorney" },
-  { value: "landPurchaseAgreement", label: "Land Purchase Agreement" },
-  { value: "taxClearanceCertificate", label: "Tax Clearance Certificate" },
-  { value: "gazette", label: "Gazette" },
-  { value: "letterOfAllocation", label: "Letter of Allocation" },
-  { value: "receiptOfPaymentForLand", label: "Receipt of Payment for Land" },
-  { value: "excisionDocument", label: "Excision Document" },
-  { value: "deedOfSublease", label: "Deed of Sublease" },
-  { value: "deedOfMortgage", label: "Deed of Mortgage" },
-  { value: "registeredSurveyPlan", label: "Registered Survey Plan" },
-  {
-    value: "certificateOfStatutoryRightOfOccupancy",
-    label: "Statutory Right of Occupancy",
-  },
-  { value: "affidavitOfLoss", label: "Affidavit of Loss" },
-  {
-    value: "probateLetterOfAdministration",
-    label: "Probate / Letter of Administration",
-  },
-  {
-    value: "irrevocablePowerOfAttorney",
-    label: "Irrevocable Power of Attorney",
-  },
-  { value: "deedOfLease", label: "Deed of Lease" },
-  { value: "deedOfSurrender", label: "Deed of Surrender" },
-  { value: "deedOfGift", label: "Deed of Gift" },
-  { value: "deedOfConveyance", label: "Deed of Conveyance" },
-];
+import { DOCUMENT_TYPES } from "@/utils/constants";
 
 interface StepMediaProps {
   formData: ListPropertyFormData;
@@ -65,7 +25,6 @@ interface StepMediaProps {
 
 export function StepMedia({ formData, updateField }: StepMediaProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageFiles = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -84,27 +43,12 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
     );
   };
 
-  const handleDocFiles = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const incoming = Array.from(e.target.files).map((file) => ({
-      file,
-      type: "" as PropertyDocumentType | "",
-    }));
-    updateField("documentFiles", [...formData.documentFiles, ...incoming]);
-    e.target.value = "";
-  };
-
-  const updateDocType = (index: number, type: PropertyDocumentType | "") => {
-    const next = [...formData.documentFiles];
-    next[index] = { ...next[index], type };
-    updateField("documentFiles", next);
-  };
-
-  const removeDoc = (index: number) => {
-    updateField(
-      "documentFiles",
-      formData.documentFiles.filter((_, i) => i !== index),
-    );
+  const toggleDocType = (type: PropertyDocumentType) => {
+    const current = formData.documentTypes;
+    const next = current.includes(type)
+      ? current.filter((t) => t !== type)
+      : [...current, type];
+    updateField("documentTypes", next);
   };
 
   return (
@@ -184,73 +128,52 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
       <section>
         <SectionHeader
           icon={LuFileText}
-          title="Property Documents (Optional)"
-          description="Upload title documents to increase buyer confidence"
+          title="Ownership Documents (Optional)"
+          description="Select which documents you have for this property. You don't need to upload anything now — our verification team will reach out separately to collect copies."
         />
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          leftIcon={<LuUpload className="h-4 w-4" />}
-          onClick={() => docInputRef.current?.click()}
-          className="mb-4"
-        >
-          Upload documents
-        </Button>
-        <input
-          ref={docInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx"
-          multiple
-          onChange={handleDocFiles}
-          className="hidden"
-        />
-
-        {formData.documentFiles.length > 0 && (
-          <div className="space-y-3">
-            {formData.documentFiles.map((doc, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {DOCUMENT_TYPES.map(({ label, value }) => {
+            const isSelected = formData.documentTypes.includes(
+              value as PropertyDocumentType,
+            );
+            return (
+              <label
+                key={value}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-muted-foreground/30"
+                }`}
               >
-                <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <LuFileText className="h-5 w-5 text-muted-foreground" />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleDocType(value as PropertyDocumentType)}
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring shrink-0"
+                />
+                <span className="text-sm font-medium text-foreground">
+                  {label}
+                </span>
+              </label>
+            );
+          })}
+        </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {doc.file.name}
-                  </p>
-                  <select
-                    value={doc.type}
-                    onChange={(e) =>
-                      updateDocType(
-                        i,
-                        e.target.value as PropertyDocumentType | "",
-                      )
-                    }
-                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary transition-all"
-                  >
-                    <option value="">Select document type…</option>
-                    {DOCUMENT_TYPES.map((dt) => (
-                      <option key={dt.value} value={dt.value}>
-                        {dt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => removeDoc(i)}
-                  className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  aria-label="Remove document"
-                >
-                  <LuX className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+        {formData.documentTypes.length > 0 && (
+          <div className="mt-4 flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+            <LuShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {formData.documentTypes.length} document
+                {formData.documentTypes.length !== 1 ? "s" : ""} declared
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Your listing will show as &quot;Documents declared — pending
+                verification&quot; once published. A verification team member
+                will contact you to collect copies and complete the review.
+              </p>
+            </div>
           </div>
         )}
       </section>

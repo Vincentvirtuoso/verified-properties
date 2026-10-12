@@ -289,7 +289,6 @@ function MessageBubble({
   event: Extract<ThreadEvent, { type: "message" }>;
   isAgentSide: boolean;
 }) {
-  // "Mine" bubbles sit on the right in the primary colour.
   const isMine = isAgentSide
     ? event.sender === "agent"
     : event.sender === "buyer";
