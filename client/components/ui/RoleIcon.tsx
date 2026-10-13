@@ -1,4 +1,4 @@
-import { ProfileRole } from "@affilhomes/shared/types";
+import { ProfileRole, Role } from "@affilhomes/shared/types";
 import { LuUser } from "react-icons/lu";
 import { MdBusiness, MdRealEstateAgent } from "react-icons/md";
 import { HiOutlineLocationMarker } from "react-icons/hi";
