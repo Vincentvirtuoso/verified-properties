@@ -1,0 +1,39 @@
+{
+  "name": "@affilhomes/shared",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./supabase": "./supabase/index.ts",
+    "./supabase/cookies": "./supabase/cookies.ts",
+    "./supabase/client": "./supabase/client.ts",
+    "./supabase/server": "./supabase/server.ts",
+    "./supabase/middleware": "./supabase/middleware.ts",
+    "./supabase/admin": "./supabase/admin.ts",
+    "./supabase/*": "./supabase/*.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/*": "./ui/*.tsx",
+    "./utils": "./utils/index.ts",
+    "./utils/*": "./utils/*.ts",
+    "./types": "./types/index.ts",
+    "./types/*": "./types/*.ts",
+    "./styles/*": "./styles/*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "next": "*"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "react-icons": "^5.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0",
+    "framer-motion": "^12.38.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  }
+}

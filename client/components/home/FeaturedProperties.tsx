@@ -4,10 +4,10 @@ import { useId } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, Variants } from "framer-motion";
 import { LuArrowRight, LuTag, LuClock, LuSearchX } from "react-icons/lu";
-import Countdown from "../ui/Countdown";
-import { Button } from "../ui/Button";
+import Countdown from "@affilhomes/shared/ui/Countdown";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { PropertyCard } from "../property/PropertyCard";
-import { PopulatedProperty } from "@/types";
+import { PopulatedProperty } from "@affilhomes/shared/types";
 
 interface FeaturedPropertiesProps {
   isLoading: boolean;
@@ -34,7 +34,7 @@ export const FeaturedProperties = ({
     },
   };
 
-  const item:Variants = {
+  const item: Variants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 14 },
     visible: {
       opacity: 1,
@@ -115,10 +115,7 @@ export const FeaturedProperties = ({
             <p className="mb-4 font-semibold text-destructive">
               {propertyError}
             </p>
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-            >
+            <Button variant="outline" onClick={() => window.location.reload()}>
               Retry Connection
             </Button>
           </div>

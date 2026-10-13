@@ -1,9 +1,9 @@
 "use client";
 
-import { Field } from "@/components/ui/Field";
-import { RadioGroup } from "@/components/ui/RadioGroup";
-import { Textarea } from "@/components/ui/Textarea";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { RadioGroup } from "@affilhomes/shared/ui/RadioGroup";
+import { Textarea } from "@affilhomes/shared/ui/Textarea";
+import { SectionHeader } from "@affilhomes/shared/ui/SectionHeader";
 import {
   LuBuilding2,
   LuHouse,
@@ -11,8 +11,12 @@ import {
   LuTrendingUp,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import type { PropertyCategory, PropertyType, ListingPurpose } from "@/types";
-import Select from "@/components/ui/Select";
+import type {
+  PropertyCategory,
+  PropertyType,
+  ListingPurpose,
+} from "@affilhomes/shared/types";
+import Select from "@affilhomes/shared/ui/Select";
 
 const PURPOSE_OPTIONS = [
   {

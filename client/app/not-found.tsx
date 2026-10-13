@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { LuHouse, LuCircleHelp } from "react-icons/lu";
 
 export default function NotFound() {

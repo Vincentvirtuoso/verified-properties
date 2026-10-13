@@ -2,16 +2,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { LuMail, LuPhone, LuTriangleAlert, LuUserRound } from "react-icons/lu";
 import { FiSettings } from "react-icons/fi";
-import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Field";
-import { PhoneField } from "@/components/ui/PhoneField";
-import { RoleBadge, LockedBadge } from "@/components/ui";
-import { PopulatedUser, Role } from "@/types";
-import VerifiedBadge from "@/components/icons/VerifiedBadge";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
+import { RoleBadge, LockedBadge } from "@affilhomes/shared/ui";
+import { PopulatedUser, Role } from "@affilhomes/shared/types";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { Modal } from "@/components/ui/Modal";
-import FileUpload from "../ui/FileUpload";
-import { Avatar } from "../ui/Avatar";
+import FileUpload from "@affilhomes/shared/ui/FileUpload";
+import { Avatar } from "@affilhomes/shared/ui/Avatar";
 import { Logomark } from "../ui/LogoMark";
 import { useRouter, usePathname } from "next/navigation";
 

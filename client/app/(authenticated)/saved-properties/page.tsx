@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import SavedPropertiesClient from "./SavedPropertiesClient";
-import { fetchSavedProperties } from "@/lib/supabase/savedProperties";
+import { fetchSavedProperties } from "@affilhomes/shared/supabase";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
-import { PageSpinner } from "@/components/ui/Spinner";
-import type { SavedProperty } from "@/types";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import type { SavedProperty } from "@affilhomes/shared/types";
 
 export default function SavedPropertiesPage() {
   const { savedIds, isLoaded } = useSavedProperties();
@@ -29,7 +29,10 @@ export default function SavedPropertiesPage() {
 
   if (error) {
     return (
-      <p role="alert" className="p-10 text-center font-semibold text-destructive">
+      <p
+        role="alert"
+        className="p-10 text-center font-semibold text-destructive"
+      >
         {error}
       </p>
     );

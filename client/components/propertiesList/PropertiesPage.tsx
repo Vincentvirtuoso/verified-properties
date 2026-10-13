@@ -17,12 +17,12 @@ import { NoResults } from "@/components/propertiesList/NoResults";
 import { FilterType, SortOption, useProperty } from "@/hooks/useProperty";
 import { usePropertiesData } from "@/hooks/usePropertiesData";
 import { usePropertySearch } from "@/hooks/usePropertySearch";
-import type { PropertyFilterState } from "@/types";
+import type { PropertyFilterState } from "@affilhomes/shared/types";
 import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
-} from "@/utils/constants";
+} from "@/utils";
 
 import { PropertiesHeader } from "./PropertiesHeader";
 import { PropertySearch } from "./PropertySearch";

@@ -1,10 +1,10 @@
 "use client";
 
 import { AuthForm } from "@/components/forms/AuthForm";
-import { Field } from "@/components/ui/Field";
+import { Field } from "@affilhomes/shared/ui/Field";
 import { useState } from "react";
 import { FiMail } from "react-icons/fi";
-import { sendPasswordResetEmail } from "@/lib/supabase/auth";
+import { sendPasswordResetEmail } from "@affilhomes/shared/supabase";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");

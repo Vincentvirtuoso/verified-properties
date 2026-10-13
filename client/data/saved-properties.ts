@@ -1,5 +1,5 @@
 import { properties } from "@/data/properties";
-import { SavedProperty } from "@/types";
+import { SavedProperty } from "@affilhomes/shared/types";
 import {
   getSavedEntries,
   seedSavedEntries,

@@ -1,4 +1,4 @@
-import { PopulatedProperty } from "@/types";
+import { PopulatedProperty } from "@affilhomes/shared/types";
 import { dummyUsers } from "./users";
 
 export const properties: PopulatedProperty[] = [

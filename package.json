@@ -1,0 +1,12 @@
+{
+  "name": "affilhomes",
+  "private": true,
+  "workspaces": [
+    "client",
+    "admin",
+    "shared"
+  ],
+  "allowScripts": {
+    "unrs-resolver@1.12.2": true
+  }
+}

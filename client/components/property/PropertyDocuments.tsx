@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import { RiFileLine, RiDownloadLine, RiShieldCheckLine } from "react-icons/ri";
-import { PropertyDocument } from "@/types/property";
-import { DOCUMENT_TYPE_LABELS } from "@/utils/constants";
+import { PropertyDocument } from "@affilhomes/shared/types/property";
+import { DOCUMENT_TYPE_LABELS } from "@/utils";
 
 interface PropertyDocumentsProps {
   documents: PropertyDocument[];

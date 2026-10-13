@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "./Button";
+import { Button } from "@affilhomes/shared/ui";
 
 export type StatCardAccent =
   | "primary"

@@ -2,8 +2,8 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { Button } from "../ui/Button";
-import SectionLabel from "../ui/SectionLabel";
+import { Button } from "@affilhomes/shared/ui/Button";
+import SectionLabel from "@affilhomes/shared/ui/SectionLabel";
 import { Brandmark } from "../common/BrandMark";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -77,6 +77,7 @@ export function AuthForm({
                     <Image
                       src="https://www.google.com/favicon.ico"
                       alt="Google"
+                      loading="eager"
                       className="w-5 h-5 grayscale-20 dark:grayscale-0"
                       width={80}
                       height={80}
@@ -91,6 +92,7 @@ export function AuthForm({
                     <Image
                       src="https://www.facebook.com/favicon.ico"
                       alt="Facebook"
+                      loading="eager"
                       className="w-5 h-5"
                       width={80}
                       height={80}

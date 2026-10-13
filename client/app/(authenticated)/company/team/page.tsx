@@ -8,7 +8,7 @@ import {
   TableHead,
   TableCell,
   TableAction,
-} from "@/components/ui/Table";
+} from "@affilhomes/shared/ui/Table";
 import {
   LuUsers as Users,
   LuShieldCheck as ShieldCheck,
@@ -24,12 +24,15 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 // import { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { StatCard } from "@/components/ui";
-import { TagOverflow } from "@/components/ui/TagOverflow";
-import { DropdownItem, DropdownSeparator } from "@/components/ui/Dropdown";
+import { TagOverflow } from "@affilhomes/shared/ui/TagOverflow";
+import {
+  DropdownItem,
+  DropdownSeparator,
+} from "@affilhomes/shared/ui/Dropdown";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 export default function CompanyTeamPage() {
   const { user, companies, isLoading } = useAuth();

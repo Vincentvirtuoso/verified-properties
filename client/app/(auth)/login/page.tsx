@@ -1,13 +1,13 @@
 "use client";
 
 import { AuthForm } from "@/components/forms/AuthForm";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Field } from "@/components/ui/Field";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
+import { Field } from "@affilhomes/shared/ui/Field";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiLock, FiMail } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -41,7 +41,6 @@ const LoginForm = () => {
   console.log(user);
 
   useEffect(() => {
-    
     if (isAuthenticated && user) {
       if (safeCallbackUrl) {
         router.push(safeCallbackUrl);

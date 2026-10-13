@@ -9,8 +9,8 @@ import React, {
   useRef,
 } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
 import { cn } from "@/lib/utils";
 import { LuTriangleAlert, LuInfo } from "react-icons/lu";
 

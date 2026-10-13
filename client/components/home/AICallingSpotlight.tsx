@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 import {
   LuWifi,
   LuPhoneOff,
@@ -107,8 +107,6 @@ function useSpotlightVariant(): {
   }, [user, isAuthenticated]);
 }
 
-
-
 const ASSISTANT_NAME = "Ada — AI Assistant";
 
 function CallDemo() {
@@ -143,9 +141,7 @@ function CallDemo() {
           </div>
 
           <div className="mt-5 text-center">
-            <p className="text-sm font-semibold text-white">
-              {ASSISTANT_NAME}
-            </p>
+            <p className="text-sm font-semibold text-white">{ASSISTANT_NAME}</p>
             <p className="mt-1.5 text-xs tracking-wide text-zinc-400">
               Calling…
             </p>

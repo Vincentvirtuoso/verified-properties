@@ -1,8 +1,12 @@
 import {
   fetchActiveProperties,
   fetchPublicStats,
-} from "@/lib/supabase/publicProperties";
-import { PopulatedProperty, Stats, Testimonial } from "@/types";
+} from "@affilhomes/shared/supabase";
+import {
+  PopulatedProperty,
+  Stats,
+  Testimonial,
+} from "@affilhomes/shared/types";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 

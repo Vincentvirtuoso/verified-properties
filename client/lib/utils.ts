@@ -1,12 +1,11 @@
-import { Company, PopulatedProperty, PopulatedUser } from "@/types";
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import {
+  Company,
+  PopulatedProperty,
+  PopulatedUser,
+} from "@affilhomes/shared/types";
+import { cn } from "@affilhomes/shared/utils";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-export function populateProperty(
+function populateProperty(
   property: PopulatedProperty,
   users?: PopulatedUser[],
   companies?: Company[],
@@ -22,3 +21,5 @@ export function populateProperty(
     ownerId: users ? owner : companies,
   } as PopulatedProperty;
 }
+
+export { cn, populateProperty };

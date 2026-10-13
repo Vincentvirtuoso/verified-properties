@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { LuArrowLeft, LuArrowRight, LuSend } from "react-icons/lu";
 import type { ListPropertyStep } from "../hooks/useListPropertyForm";
 import { STEPS } from "../hooks/useListPropertyForm";

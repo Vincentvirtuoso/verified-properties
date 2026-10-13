@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 
 type Step = {
   title: string;
@@ -90,8 +90,7 @@ function usePageVariant(): { variant: PageVariant; content: PageContent } {
             "This is what AI Calling does for a Partnership account — from a buyer's first enquiry to a scheduled inspection.",
           steps: OPERATOR_STEPS,
           ctaTitle: "Available on Partnership accounts",
-          ctaBody:
-            "Upgrade to Partnership to turn this on for your listings.",
+          ctaBody: "Upgrade to Partnership to turn this on for your listings.",
           primaryLabel: "Upgrade to Partnership",
           primaryHref: "/register-company",
           secondaryLabel: "Back to Academy",
@@ -168,7 +167,8 @@ function usePageVariant(): { variant: PageVariant; content: PageContent } {
           "The moment you enquire about a listing, an assistant calls you back. Here's exactly what happens next — start to inspection day.",
         steps: BUYER_STEPS,
         ctaTitle: "Ready when you are",
-        ctaBody: "Tap enquire on any listing and your assistant handles the rest.",
+        ctaBody:
+          "Tap enquire on any listing and your assistant handles the rest.",
         primaryLabel: "Browse listings",
         primaryHref: "/properties",
         secondaryLabel: "Back to Academy",

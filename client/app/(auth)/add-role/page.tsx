@@ -4,14 +4,14 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthForm } from "@/components/forms/AuthForm";
-import { Field } from "@/components/ui/Field";
+import { Field } from "@affilhomes/shared/ui/Field";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Role,
   AgentSubRole,
   agentSubRoleLabels,
   PopulatedUser,
-} from "@/types/user";
+} from "@affilhomes/shared/types/user";
 import {
   FiBriefcase,
   FiHome,
@@ -19,9 +19,10 @@ import {
   FiBookOpen,
   FiLayers,
 } from "react-icons/fi";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { ProfileRole } from "@/utils";
 
-const ALLOWED_TRANSITIONS: Record<Role, Role[]> = {
+const ALLOWED_TRANSITIONS: Record<ProfileRole, ProfileRole[]> = {
   [Role.Viewer]: [Role.Agent],
   [Role.Agent]: [],
   [Role.Company]: [],
@@ -38,7 +39,7 @@ function AddRoleFormContent() {
   const isValidTransition =
     fromRole &&
     toRole &&
-    ALLOWED_TRANSITIONS[fromRole]?.includes(toRole) &&
+    ALLOWED_TRANSITIONS[fromRole as ProfileRole]?.includes(toRole as ProfileRole) &&
     user?.roles.includes(fromRole) &&
     !user?.roles.includes(Role.Company);
 
@@ -127,117 +128,117 @@ function AddRoleFormContent() {
     };
 
     try {
-  await completeRegistration(user!._id, updatedProfile);
-  router.push("/welcome");
-} catch (error) {
-  console.error("Agent package onboarding failed:", error);
-}
+      await completeRegistration(user!._id, updatedProfile);
+      router.push("/welcome");
+    } catch (error) {
+      console.error("Agent package onboarding failed:", error);
+    }
 
-  return (
-    <AuthForm
-      title="Activate Agent Package"
-      subtitle="Select your professional path and provide credentials to start listing properties."
-      onSubmit={handleSubmit}
-      submitText="Complete Setup"
-      footerText=""
-      footerLinkText=""
-      footerHref=""
-      showSocialLogins={false}
-      className="max-w-xl"
-      loading={authLoading}
-    >
-      <div className="space-y-5">
-        {/* Sub-Role Picker dropdown */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-            <FiLayers className="text-gray-400" /> Professional Category
-          </label>
-          <select
-            name="subRole"
-            value={subRole}
-            onChange={(e) => setSubRole(e.target.value as AgentSubRole)}
-            className="w-full px-3 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors"
-          >
-            {Object.entries(agentSubRoleLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+    return (
+      <AuthForm
+        title="Activate Agent Package"
+        subtitle="Select your professional path and provide credentials to start listing properties."
+        onSubmit={handleSubmit}
+        submitText="Complete Setup"
+        footerText=""
+        footerLinkText=""
+        footerHref=""
+        showSocialLogins={false}
+        className="max-w-xl"
+        loading={authLoading}
+      >
+        <div className="space-y-5">
+          {/* Sub-Role Picker dropdown */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <FiLayers className="text-gray-400" /> Professional Category
+            </label>
+            <select
+              name="subRole"
+              value={subRole}
+              onChange={(e) => setSubRole(e.target.value as AgentSubRole)}
+              className="w-full px-3 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors"
+            >
+              {Object.entries(agentSubRoleLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <hr className="border-gray-100 dark:border-neutral-800 my-2" />
+
+          {/* Conditional Field Render Strategy */}
+          {subRole === "realtor" && (
+            <div className="space-y-4">
+              <Field
+                label="License Number"
+                name="licenseNumber"
+                type="text"
+                placeholder="e.g. RE-12345"
+                value={formData.licenseNumber}
+                onChange={handleInputChange}
+                error={errors.licenseNumber}
+                icon={FiBriefcase}
+                required
+              />
+              <Field
+                label="Brokerage / Agency Affiliation (Optional)"
+                name="brokerage"
+                type="text"
+                placeholder="e.g. Prime Properties Ltd"
+                value={formData.brokerage}
+                onChange={handleInputChange}
+                icon={FiHome}
+              />
+            </div>
+          )}
+
+          {subRole === "lawyer" && (
+            <div className="space-y-4">
+              <Field
+                label="Supreme Court Bar Number"
+                name="barNumber"
+                type="text"
+                placeholder="e.g. SCN/2014/123"
+                value={formData.barNumber}
+                onChange={handleInputChange}
+                error={errors.barNumber}
+                icon={FiBookOpen}
+                required
+              />
+            </div>
+          )}
+
+          {subRole === "surveyor" && (
+            <div className="space-y-4">
+              <Field
+                label="SURCON Registration Number"
+                name="surveyorRegNumber"
+                type="text"
+                placeholder="e.g. SURV-9876"
+                value={formData.surveyorRegNumber}
+                onChange={handleInputChange}
+                error={errors.surveyorRegNumber}
+                icon={FiAward}
+                required
+              />
+            </div>
+          )}
+
+          {(subRole === "landlord" || subRole === "other") && (
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              As a <strong>{agentSubRoleLabels[subRole]}</strong>, no
+              specialized professional regulatory credentials are required up
+              front. You will be able to manage and upload your custom
+              verification documents on the next step.
+            </div>
+          )}
         </div>
-
-        <hr className="border-gray-100 dark:border-neutral-800 my-2" />
-
-        {/* Conditional Field Render Strategy */}
-        {subRole === "realtor" && (
-          <div className="space-y-4">
-            <Field
-              label="License Number"
-              name="licenseNumber"
-              type="text"
-              placeholder="e.g. RE-12345"
-              value={formData.licenseNumber}
-              onChange={handleInputChange}
-              error={errors.licenseNumber}
-              icon={FiBriefcase}
-              required
-            />
-            <Field
-              label="Brokerage / Agency Affiliation (Optional)"
-              name="brokerage"
-              type="text"
-              placeholder="e.g. Prime Properties Ltd"
-              value={formData.brokerage}
-              onChange={handleInputChange}
-              icon={FiHome}
-            />
-          </div>
-        )}
-
-        {subRole === "lawyer" && (
-          <div className="space-y-4">
-            <Field
-              label="Supreme Court Bar Number"
-              name="barNumber"
-              type="text"
-              placeholder="e.g. SCN/2014/123"
-              value={formData.barNumber}
-              onChange={handleInputChange}
-              error={errors.barNumber}
-              icon={FiBookOpen}
-              required
-            />
-          </div>
-        )}
-
-        {subRole === "surveyor" && (
-          <div className="space-y-4">
-            <Field
-              label="SURCON Registration Number"
-              name="surveyorRegNumber"
-              type="text"
-              placeholder="e.g. SURV-9876"
-              value={formData.surveyorRegNumber}
-              onChange={handleInputChange}
-              error={errors.surveyorRegNumber}
-              icon={FiAward}
-              required
-            />
-          </div>
-        )}
-
-        {(subRole === "landlord" || subRole === "other") && (
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            As a <strong>{agentSubRoleLabels[subRole]}</strong>, no specialized
-            professional regulatory credentials are required up front. You will
-            be able to manage and upload your custom verification documents on
-            the next step.
-          </div>
-        )}
-      </div>
-    </AuthForm>
-  );
-}
+      </AuthForm>
+    );
+  };
 }
 export default function AddRolePage() {
   return (

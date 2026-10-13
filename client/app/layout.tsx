@@ -4,10 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SavedPropertiesProvider } from "@/contexts/SavedPropertiesContext";
 import { ConfirmationProvider } from "@/contexts/ConfirmDialog";
-import {
-  SIDEBAR_COLLAPSED_WIDTH,
-  SIDEBAR_EXPANDED_WIDTH,
-} from "@/utils/constants";
+import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/utils";
 import { CSSProperties } from "react";
 import "leaflet/dist/leaflet.css";
 
@@ -46,8 +43,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col antialiased selection:bg-primary/20">
         <AuthProvider>
           <SavedPropertiesProvider>
-          <ConfirmationProvider>{children}</ConfirmationProvider>
-        </SavedPropertiesProvider>
+            <ConfirmationProvider>{children}</ConfirmationProvider>
+          </SavedPropertiesProvider>
         </AuthProvider>
       </body>
     </html>

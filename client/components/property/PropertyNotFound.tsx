@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LuHouse, LuSearch, LuArrowLeft, LuMapPin } from "react-icons/lu";
+import { LuHouse, LuSearch, LuArrowLeft } from "react-icons/lu";
 
 interface PropertyNotFoundProps {
   slug?: string;

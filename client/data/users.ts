@@ -1,4 +1,4 @@
-import { Role, PopulatedUser, AgentSubRole } from "@/types";
+import { Role, PopulatedUser, AgentSubRole } from "@affilhomes/shared/types";
 import { mockCompanies } from "./companies";
 
 export const dummyUsers: PopulatedUser[] = [

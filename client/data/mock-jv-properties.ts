@@ -1,4 +1,4 @@
-import { JVProperty } from "@/types";
+import { JVProperty } from "@affilhomes/shared/types";
 
 export const MOCK_JV_PROPERTIES: JVProperty[] = [
   {

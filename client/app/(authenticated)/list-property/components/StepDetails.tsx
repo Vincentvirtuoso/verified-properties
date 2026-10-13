@@ -1,8 +1,8 @@
 "use client";
 
-import { Field } from "@/components/ui/Field";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
+import { SectionHeader } from "@affilhomes/shared/ui/SectionHeader";
 import {
   LuBanknote,
   LuLayoutGrid,
@@ -15,7 +15,7 @@ import {
   LuZap,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import type { PropertyFeature } from "@/types";
+import type { PropertyFeature } from "@affilhomes/shared/types";
 
 const FEATURES: {
   value: PropertyFeature;

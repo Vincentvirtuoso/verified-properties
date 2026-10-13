@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { createEnquiry } from "@/lib/supabase/enquiries";
+import { createEnquiry } from "@affilhomes/shared/supabase";
 import { motion } from "framer-motion";
 import { RiSendPlane2Line, RiCheckLine } from "react-icons/ri";
 import { LuPhoneCall } from "react-icons/lu";
@@ -186,7 +186,7 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
             ) : (
               <>
                 <RiSendPlane2Line size={16} />
-                {submitting ? "Sending…" : user ? "Send Message" : "Sign in to send"}
+                {submitting ? "Sendingâ€¦" : user ? "Send Message" : "Sign in to send"}
               </>
             )}
           </motion.button>

@@ -10,14 +10,16 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Brandmark } from "./BrandMark";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 import { LuBuilding, LuBriefcase, LuUsers } from "react-icons/lu";
 import { BsBookmarkStar, BsBuildings } from "react-icons/bs";
+import { IconType } from "react-icons";
+
 
 export interface NavLink {
   href: string;
   label: string;
-  icon: ReactElement;
+  icon: IconType;
 }
 
 export function getNavLinks(
@@ -162,7 +164,7 @@ export function Navbar() {
             isAuthenticated={isAuthenticated}
             user={user}
             onLogout={handleLogout}
-            onSwitch={handleSwitchRole}
+            // onSwitch={handleSwitchRole}
             isLoading={isAuthLoading}
           />
         </div>

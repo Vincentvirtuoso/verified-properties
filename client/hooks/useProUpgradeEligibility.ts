@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 
 export function useProUpgradeEligibility() {
   const { user, companies, isLoading } = useAuth();

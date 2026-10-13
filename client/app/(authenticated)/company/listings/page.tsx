@@ -3,12 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { createClient } from "@/lib/supabase/client";
-import { fetchTeamProfiles } from "@/lib/supabase/companies";
-import { canPublishListings, errorText, setListingStatus } from "@/lib/supabase/admin";
+import { createClient } from "@affilhomes/shared/supabase/client";
+import { fetchTeamProfiles } from "@affilhomes/shared/supabase";
+import {
+  canPublishListings,
+  errorText,
+  setListingStatus,
+} from "@affilhomes/shared/supabase/admin";
 import { formatPrice } from "@/lib/formatters";
-import { Button } from "@/components/ui/Button";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 type Status = "draft" | "active" | "inactive" | "sold" | "rented";
 
@@ -63,7 +67,9 @@ export default function CompanyListingsPage() {
       // RLS: company members can see every company listing by teammates.
       const { data, error } = await supabase
         .from("properties")
-        .select("id, slug, title, status, price, currency, city, owner_id, total_inquiries, created_at")
+        .select(
+          "id, slug, title, status, price, currency, city, owner_id, total_inquiries, created_at",
+        )
         .eq("owner_type", "company")
         .in("owner_id", memberIds)
         .order("created_at", { ascending: false });
@@ -84,7 +90,10 @@ export default function CompanyListingsPage() {
           currency: r.currency,
           city: r.city,
           ownerId: r.owner_id,
-          ownerName: r.owner_id === user._id ? "You" : names.get(r.owner_id)?.name ?? "Team member",
+          ownerName:
+            r.owner_id === user._id
+              ? "You"
+              : (names.get(r.owner_id)?.name ?? "Team member"),
           enquiries: r.total_inquiries ?? 0,
           createdAt: r.created_at,
         })),
@@ -100,7 +109,7 @@ export default function CompanyListingsPage() {
     [rows, filter],
   );
 
-  if (isLoading) return <PageSpinner label="Loading company listings…" />;
+  if (isLoading) return <PageSpinner label="Loading company listingsâ€¦" />;
   if (!user) return null;
   if (!company) {
     return (
@@ -109,7 +118,7 @@ export default function CompanyListingsPage() {
       </p>
     );
   }
-  if (!rows && !error) return <PageSpinner label="Loading company listings…" />;
+  if (!rows && !error) return <PageSpinner label="Loading company listingsâ€¦" />;
 
   const toggle = async (r: Row) => {
     const next = r.status === "active" ? "inactive" : "active";
@@ -120,7 +129,11 @@ export default function CompanyListingsPage() {
       if (result === "pending") {
         setError("Sent for review. It goes live after our team approves it.");
       } else {
-        setRows((all) => all?.map((x) => (x.id === r.id ? { ...x, status: result } : x)) ?? null);
+        setRows(
+          (all) =>
+            all?.map((x) => (x.id === r.id ? { ...x, status: result } : x)) ??
+            null,
+        );
       }
     } catch (e) {
       setError(
@@ -140,17 +153,22 @@ export default function CompanyListingsPage() {
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{company.name} listings</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {company.name} listings
+          </h1>
           <p className="text-sm text-muted-foreground">
             Every listing posted for the company by your team.
           </p>
         </div>
-        <Button href="/list-property" size="sm">New listing</Button>
+        <Button href="/list-property" size="sm">
+          New listing
+        </Button>
       </div>
 
       {!canPublish && (
         <p className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          Your company is waiting for verification. Listings can be published once it&apos;s approved.
+          Your company is waiting for verification. Listings can be published
+          once it&apos;s approved.
         </p>
       )}
 
@@ -161,15 +179,25 @@ export default function CompanyListingsPage() {
             onClick={() => setFilter(f.key)}
             className={`rounded-full px-3 py-1 text-sm ${filter === f.key ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground"}`}
           >
-            {f.label} ({f.key === "all" ? rows?.length ?? 0 : rows?.filter((r) => r.status === f.key).length ?? 0})
+            {f.label} (
+            {f.key === "all"
+              ? (rows?.length ?? 0)
+              : (rows?.filter((r) => r.status === f.key).length ?? 0)}
+            )
           </button>
         ))}
       </div>
 
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {visible.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">No listings here yet.</p>
+        <p className="py-10 text-center text-muted-foreground">
+          No listings here yet.
+        </p>
       ) : (
         <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
           {visible.map((r) => (
@@ -177,30 +205,39 @@ export default function CompanyListingsPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-foreground">
                   {r.status === "active" ? (
-                    <Link href={`/properties/${r.slug}`} className="hover:underline">{r.title}</Link>
+                    <Link
+                      href={`/properties/${r.slug}`}
+                      className="hover:underline"
+                    >
+                      {r.title}
+                    </Link>
                   ) : (
                     r.title
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {r.city} · {formatPrice(r.price, { currency: r.currency })} · by {r.ownerName} ·{" "}
-                  {r.enquiries} enquir{r.enquiries === 1 ? "y" : "ies"}
+                  {r.city} Â· {formatPrice(r.price, { currency: r.currency })} Â·
+                  by {r.ownerName} Â· {r.enquiries} enquir
+                  {r.enquiries === 1 ? "y" : "ies"}
                 </p>
               </div>
               <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                 {STATUS_LABEL[r.status] ?? r.status}
               </span>
-              {r.ownerId === user._id && ["draft", "inactive", "active"].includes(r.status) && (
-                <Button
-                  size="sm"
-                  variant={r.status === "active" ? "outline" : "primary"}
-                  disabled={(r.status !== "active" && !canPublish) || busyId === r.id}
-                  isLoading={busyId === r.id}
-                  onClick={() => toggle(r)}
-                >
-                  {r.status === "active" ? "Hide" : "Publish"}
-                </Button>
-              )}
+              {r.ownerId === user._id &&
+                ["draft", "inactive", "active"].includes(r.status) && (
+                  <Button
+                    size="sm"
+                    variant={r.status === "active" ? "outline" : "primary"}
+                    disabled={
+                      (r.status !== "active" && !canPublish) || busyId === r.id
+                    }
+                    isLoading={busyId === r.id}
+                    onClick={() => toggle(r)}
+                  >
+                    {r.status === "active" ? "Hide" : "Publish"}
+                  </Button>
+                )}
             </li>
           ))}
         </ul>

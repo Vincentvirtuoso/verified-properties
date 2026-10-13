@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
 import { EnquiryThread } from "@/components/enquiries/EnquiryThread";
-import { fetchMyEnquiries } from "@/lib/supabase/enquiries";
-import type { Enquiry } from "@/types/enquiry";
+import { fetchMyEnquiries } from "@affilhomes/shared/supabase";
+import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 export default function EnquiriesPage() {
   const { user, isLoading } = useAuth();
@@ -63,7 +63,8 @@ export default function EnquiriesPage() {
         if (!cancelled) setEnquiries(rows);
       })
       .catch(() => {
-        if (!cancelled) setListError("Couldn't load your enquiries. Please refresh.");
+        if (!cancelled)
+          setListError("Couldn't load your enquiries. Please refresh.");
       })
       .finally(() => {
         if (!cancelled) setListLoading(false);
@@ -76,7 +77,7 @@ export default function EnquiriesPage() {
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
   if (isLoading || (user && listLoading)) {
-    return <PageSpinner label="Loading your enquiries…" />;
+    return <PageSpinner label="Loading your enquiriesâ€¦" />;
   }
 
   if (!user) return null;
@@ -84,7 +85,7 @@ export default function EnquiriesPage() {
   return (
     <div className="h-[calc(100dvh-var(--banner-navbar-height,80px)-70px)] flex">
       <div
-        className={`w-full md:w-[360px] md:shrink-0 border-r border-border flex flex-col ${
+        className={`w-full md:w-90 md:shrink-0 border-r border-border flex flex-col ${
           selected ? "hidden md:flex" : "flex"
         }`}
       >

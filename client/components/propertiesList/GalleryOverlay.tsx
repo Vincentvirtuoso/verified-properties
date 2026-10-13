@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LuX, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import Image from "next/image";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { Property } from "@/types";
+import { Property } from "@affilhomes/shared/types";
 import { imageLoader } from "../../utils/helpers";
 
 const slideVariants = {

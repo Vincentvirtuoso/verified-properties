@@ -10,13 +10,13 @@ import { RiHeartLine, RiHeartFill } from "react-icons/ri";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { LuFileText, LuImage, LuMapPin, LuVideo } from "react-icons/lu";
 
-import { Badge } from "@/components/ui";
-import VerifiedBadge from "@/components/icons/VerifiedBadge";
-import { LISTING_PURPOSE_LABELS } from "@/utils/constants";
+import { Badge } from "@affilhomes/shared/ui";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
+import { LISTING_PURPOSE_LABELS } from "@/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/formatters";
-import { imageLoader } from "@/utils/helpers";
-import { PopulatedProperty } from "@/types/property";
-import { PopulatedUser } from "@/types";
+import { imageLoader } from "@/utils";
+import { PopulatedProperty } from "@affilhomes/shared/types/property";
+import { PopulatedUser } from "@affilhomes/shared/types";
 import { cn } from "@/lib/utils";
 
 const defaultImage = "/placeholder-property.png";
@@ -111,7 +111,10 @@ export function PropertyCard({
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleSaved(_id).then((ok) => {
-      if (!ok) router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      if (!ok)
+        router.push(
+          `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`,
+        );
     });
   };
 

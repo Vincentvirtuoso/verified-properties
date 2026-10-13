@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { FaSearch, FaArrowDown, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { fetchFeaturedProperties, fetchStats } from "@/lib/api";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { PopulatedProperty, Stats } from "@/types";
+import { PopulatedProperty, Stats } from "@affilhomes/shared/types";
 import StatsAndPartners from "@/components/home/StatsAndPatners";
 import QuickActions from "@/components/home/QuickActions";
 import { FeaturedProperties } from "@/components/home/FeaturedProperties";

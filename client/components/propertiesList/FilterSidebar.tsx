@@ -13,7 +13,7 @@ import {
   PropertyFilterState,
   PropertyLocation,
   PropertyType,
-} from "@/types";
+} from "@affilhomes/shared/types";
 
 export const FilterSidebar = ({
   filters,
@@ -28,9 +28,7 @@ export const FilterSidebar = ({
   allDocuments,
 }: {
   filters: PropertyFilterState;
-  handleFilterChange: (
-    newFilters: Partial<PropertyFilterState>,
-  ) => void;
+  handleFilterChange: (newFilters: Partial<PropertyFilterState>) => void;
   locations: PropertyLocation[];
   propertyTypes: PropertyType[];
   priceRange: [number, number];
@@ -45,8 +43,7 @@ export const FilterSidebar = ({
   useEffect(() => {
     const updateStickyTop = () => {
       const header = document.querySelector("header");
-      const headerHeight =
-        header?.getBoundingClientRect().height || 0;
+      const headerHeight = header?.getBoundingClientRect().height || 0;
 
       const topOffset = headerHeight + bannerHeight;
 
@@ -74,8 +71,7 @@ export const FilterSidebar = ({
         className="sticky overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
         style={{
           top: "calc(var(--sticky-filter-top, 120px) + 20px)",
-          maxHeight:
-            "calc(100dvh - var(--sticky-filter-top, 120px) - 40px)",
+          maxHeight: "calc(100dvh - var(--sticky-filter-top, 120px) - 40px)",
         }}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -85,9 +81,7 @@ export const FilterSidebar = ({
             </div>
 
             <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                Filters
-              </h2>
+              <h2 className="text-sm font-semibold text-foreground">Filters</h2>
 
               <p className="text-xs text-muted-foreground">
                 Refine your search
@@ -108,10 +102,8 @@ export const FilterSidebar = ({
         <div
           className="overflow-y-auto px-5 py-4 scrollbar-thin"
           style={{
-            maxHeight:
-              "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
-            minHeight:
-              "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
+            maxHeight: "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
+            minHeight: "calc(100dvh - var(--sticky-filter-top, 120px) - 110px)",
           }}
         >
           <AdvancedFilters

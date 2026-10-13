@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { uploadUserFile } from "@/lib/supabase/storage";
-import { slugifyTitle } from "@/lib/supabase/properties";
+import { createClient } from "@affilhomes/shared/supabase/client";
+import { uploadUserFile } from "@affilhomes/shared/supabase";
+import { slugifyTitle } from "@affilhomes/shared/supabase";
 
 /**
- * POST /api/properties — create a listing from the List Property form.
+ * POST /api/properties â€” create a listing from the List Property form.
  *
  * Runs on the server with the caller's own session (cookie-based), so
  * every write is still subject to RLS and the guard_property_write()
@@ -76,16 +76,23 @@ export async function POST(request: Request) {
   if (!category) return bad("Category is required");
   if (!propertyType) return bad("Property type is required");
   if (!OWNER_TYPES.includes(ownerType)) return bad("Invalid owner type");
-  if (!address || !city || !state) return bad("Address, city and state are required");
+  if (!address || !city || !state)
+    return bad("Address, city and state are required");
   if (!Number.isFinite(price) || price < 0) return bad("Invalid price");
-  if (!Number.isInteger(bedrooms) || bedrooms < 0) return bad("Invalid bedrooms");
-  if (!Number.isFinite(bathrooms) || bathrooms < 0) return bad("Invalid bathrooms");
+  if (!Number.isInteger(bedrooms) || bedrooms < 0)
+    return bad("Invalid bedrooms");
+  if (!Number.isFinite(bathrooms) || bathrooms < 0)
+    return bad("Invalid bathrooms");
   if (!Number.isFinite(area) || area < 0) return bad("Invalid area");
 
   const images = form.getAll("images").filter(isFile);
-  if (images.length > MAX_IMAGES) return bad(`Up to ${MAX_IMAGES} images allowed`);
+  if (images.length > MAX_IMAGES)
+    return bad(`Up to ${MAX_IMAGES} images allowed`);
 
-  const documentCount = Math.min(Number(str("documentCount")) || 0, MAX_DOCUMENTS);
+  const documentCount = Math.min(
+    Number(str("documentCount")) || 0,
+    MAX_DOCUMENTS,
+  );
   const documents: { file: File; type: string }[] = [];
   for (let i = 0; i < documentCount; i++) {
     const file = form.get(`document_${i}`);
@@ -157,7 +164,9 @@ export async function POST(request: Request) {
       });
     }
     if (imageRows.length) {
-      const { error } = await supabase.from("property_images").insert(imageRows);
+      const { error } = await supabase
+        .from("property_images")
+        .insert(imageRows);
       if (error) throw error;
     }
 

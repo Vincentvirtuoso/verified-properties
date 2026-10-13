@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchMyListings } from "@/lib/supabase/properties";
+import { fetchMyListings } from "@affilhomes/shared/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role, PopulatedUser, PopulatedProperty } from "@/types";
+import {
+  Role,
+  PopulatedUser,
+  PopulatedProperty,
+} from "@affilhomes/shared/types";
 import { properties } from "@/data/properties";
 import {
   LuHeart,
@@ -20,7 +24,7 @@ import {
 } from "react-icons/lu";
 import { FiBarChart2, FiZap } from "react-icons/fi";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import Link from "next/link";
 import UserHeaderCard from "@/components/cards/UserHeaderCard";
 import {

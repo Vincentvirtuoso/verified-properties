@@ -22,7 +22,7 @@ import {
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 import { Brandmark } from "./BrandMark";
 import { FiBarChart2 } from "react-icons/fi";
 

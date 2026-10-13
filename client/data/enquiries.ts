@@ -1,5 +1,5 @@
-import { Enquiry } from "@/types/enquiry";
-import { Company, PopulatedUser } from "@/types";
+import { Enquiry } from "@affilhomes/shared/types/enquiry";
+import { Company, PopulatedUser } from "@affilhomes/shared/types";
 import { dummyUsers } from "./users";
 import { mockCompanies } from "./companies";
 
@@ -7,8 +7,6 @@ const now = new Date();
 const hoursAgo = (h: number) => new Date(now.getTime() - h * 60 * 60 * 1000);
 const daysAgo = (d: number) =>
   new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
-
-
 
 const userById = new Map<string, PopulatedUser>(
   dummyUsers.map((u) => [u._id, u]),
@@ -28,8 +26,6 @@ function company(id: string): Company {
   if (!c) throw new Error(`Enquiry references unknown company: ${id}`);
   return c;
 }
-
-
 
 function buyer(id: string) {
   const u = user(id);
@@ -71,8 +67,6 @@ function agentCompany(companyId: string, contactUserId?: string) {
     contactUserName: contact?.name,
   };
 }
-
-
 
 export const mockEnquiries: Enquiry[] = [
   {
@@ -326,7 +320,6 @@ export const mockEnquiries: Enquiry[] = [
     ],
   },
 
- 
   {
     id: "enq_007",
     propertyId: "prop_121",
@@ -366,8 +359,6 @@ export const mockEnquiries: Enquiry[] = [
     ],
   },
 
- 
- 
   {
     id: "enq_008",
     propertyId: "prop_118",
@@ -400,8 +391,6 @@ export const mockEnquiries: Enquiry[] = [
     ],
   },
 
- 
- 
   {
     id: "enq_009",
     propertyId: "prop_127",
@@ -441,7 +430,6 @@ export const mockEnquiries: Enquiry[] = [
     ],
   },
 
- 
   {
     id: "enq_010",
     propertyId: "prop_104",

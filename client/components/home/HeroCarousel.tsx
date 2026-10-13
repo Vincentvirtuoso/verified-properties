@@ -5,7 +5,7 @@ import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { useState } from "react";
 import { LuArrowRight } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";

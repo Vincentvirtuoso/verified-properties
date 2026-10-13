@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   images: {
@@ -12,6 +11,7 @@ const nextConfig: NextConfig = {
     ],
     minimumCacheTTL: 60 * 60 * 24,
   },
+  transpilePackages: ["@affilhomes/shared"], 
   // experimental: {},
 };
 

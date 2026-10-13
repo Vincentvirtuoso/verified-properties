@@ -1,4 +1,4 @@
-import { DAYS_OF_THE_WEEK, MONTHS_LONG, MONTHS_SHORT } from "@/utils/constants";
+import { DAYS_OF_THE_WEEK, MONTHS_LONG, MONTHS_SHORT } from "@/utils";
 
 export function formatPrice(
   amount: number | string,

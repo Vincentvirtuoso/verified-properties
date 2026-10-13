@@ -4,8 +4,8 @@ import { useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { LuPlay, LuPause, LuClock, LuMic } from "react-icons/lu";
 import Image from "next/image";
-import { imageLoader } from "@/utils/helpers";
-import type { Podcast } from "@/types/podcast";
+import { imageLoader } from "@/utils";
+import type { Podcast } from "@affilhomes/shared/types/podcast";
 
 interface Props {
   podcast: Podcast;

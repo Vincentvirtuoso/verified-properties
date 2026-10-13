@@ -12,7 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from "@/components/ui/Accordion";
+} from "@affilhomes/shared/ui/Accordion";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { useRouter } from "next/dist/client/components/navigation";
 

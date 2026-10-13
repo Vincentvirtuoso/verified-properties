@@ -1,6 +1,6 @@
 "use client";
 import CourseCard from "./CourseCard";
-import type { Course } from "@/types/course";
+import type { Course } from "@affilhomes/shared/types/course";
 
 interface Props {
   courses: Course[];

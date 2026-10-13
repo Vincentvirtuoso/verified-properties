@@ -3,9 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role, type PopulatedProperty } from "@/types";
-import { fetchMyListings } from "@/lib/supabase/properties";
-import { canPublishListings, errorText, setListingStatus } from "@/lib/supabase/admin";
+import { Role, type PopulatedProperty } from "@affilhomes/shared/types";
+import { fetchMyListings } from "@affilhomes/shared/supabase";
+import {
+  canPublishListings,
+  errorText,
+  setListingStatus,
+} from "@affilhomes/shared/supabase/admin";
 import {
   deleteMyVideo,
   fetchMyAppeals,
@@ -16,10 +20,10 @@ import {
   type AppealSubject,
   type MyAppeal,
   type MyVideo,
-} from "@/lib/supabase/moderation";
+} from "@affilhomes/shared/supabase";
 import { formatPrice } from "@/lib/formatters";
-import { Button } from "@/components/ui/Button";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -47,7 +51,11 @@ export default function MyListingsPage() {
   const [listings, setListings] = useState<PopulatedProperty[] | null>(null);
   const [videos, setVideos] = useState<MyVideo[]>([]);
   const [appeals, setAppeals] = useState<MyAppeal[]>([]);
-  const [suspension, setSuspension] = useState<{ subjectType: string; subjectId: string; reason: string } | null>(null);
+  const [suspension, setSuspension] = useState<{
+    subjectType: string;
+    subjectId: string;
+    reason: string;
+  } | null>(null);
   const [canPublish, setCanPublish] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +87,7 @@ export default function MyListingsPage() {
   }, [user, tick]);
 
   if (isLoading || (user && !listings && !error)) {
-    return <PageSpinner label="Loading your listings…" />;
+    return <PageSpinner label="Loading your listingsâ€¦" />;
   }
   if (!user) return null;
 
@@ -87,15 +95,24 @@ export default function MyListingsPage() {
   const isCompany = user.activeRole === Role.Company;
   const agentStatus = user.agentProfile?.verificationStatus ?? "unverified";
   const openAppeal = (type: AppealSubject, id: string) =>
-    appeals.find((a) => a.subjectType === type && a.subjectId === id && a.status === "open");
+    appeals.find(
+      (a) =>
+        a.subjectType === type && a.subjectId === id && a.status === "open",
+    );
 
   const toggle = async (p: PopulatedProperty) => {
     setBusyId(p._id);
     setError(null);
     setNotice(null);
     try {
-      const result = await setListingStatus(p._id, p.status === "active" ? "inactive" : "active");
-      if (result === "pending") setNotice("Sent for review. Our team will check it before it goes live.");
+      const result = await setListingStatus(
+        p._id,
+        p.status === "active" ? "inactive" : "active",
+      );
+      if (result === "pending")
+        setNotice(
+          "Sent for review. Our team will check it before it goes live.",
+        );
       reload();
     } catch (e) {
       setError(errorText(e, "Couldn't update this listing."));
@@ -105,7 +122,9 @@ export default function MyListingsPage() {
   };
 
   const appeal = async (type: AppealSubject, id: string) => {
-    const message = window.prompt("Tell our team why this decision should be reviewed again (at least 10 characters):");
+    const message = window.prompt(
+      "Tell our team why this decision should be reviewed again (at least 10 characters):",
+    );
     if (!message) return;
     try {
       await submitAppeal(type, id, message);
@@ -122,25 +141,40 @@ export default function MyListingsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">My listings</h1>
           <p className="text-sm text-muted-foreground">
-            Submit a listing for review. It goes live after our team approves it.
+            Submit a listing for review. It goes live after our team approves
+            it.
           </p>
         </div>
-        <Button href="/list-property" size="sm">New listing</Button>
+        <Button href="/list-property" size="sm">
+          New listing
+        </Button>
       </div>
 
       {suspension && (
         <div className="space-y-2 rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
-          <p className="font-semibold text-destructive">Your account is suspended</p>
+          <p className="font-semibold text-destructive">
+            Your account is suspended
+          </p>
           <p className="text-muted-foreground">Reason: {suspension.reason}</p>
           <div className="flex flex-wrap gap-2">
             {!openAppeal("suspension", suspension.subjectId) ? (
-              <Button size="sm" variant="outline" onClick={() => appeal("suspension", suspension.subjectId)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => appeal("suspension", suspension.subjectId)}
+              >
                 Appeal
               </Button>
             ) : (
-              <span className="text-xs text-muted-foreground">Appeal sent — waiting for a reply.</span>
+              <span className="text-xs text-muted-foreground">
+                Appeal sent â€” waiting for a reply.
+              </span>
             )}
-            <Button size="sm" variant="ghost" href="/support?subject=Suspension">
+            <Button
+              size="sm"
+              variant="ghost"
+              href="/support?subject=Suspension"
+            >
               Contact support
             </Button>
           </div>
@@ -151,7 +185,8 @@ export default function MyListingsPage() {
         <div className="rounded-2xl border border-border bg-card p-4 text-sm">
           {isCompany ? (
             <p className="text-muted-foreground">
-              Your company is waiting for verification. You can submit listings once our team approves your documents.
+              Your company is waiting for verification. You can submit listings
+              once our team approves your documents.
             </p>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -169,31 +204,49 @@ export default function MyListingsPage() {
       )}
 
       {notice && <p className="text-sm text-foreground">{notice}</p>}
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {listings && listings.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">You have no listings yet.</p>
+        <p className="py-10 text-center text-muted-foreground">
+          You have no listings yet.
+        </p>
       ) : (
         <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
           {listings?.map((p) => {
             const review = p.reviewStatus ?? "none";
-            const rejectedDocs = (p.documents ?? []).filter((d) => d.reviewStatus === "rejected" || d.reviewStatus === "more_info");
+            const rejectedDocs = (p.documents ?? []).filter(
+              (d) =>
+                d.reviewStatus === "rejected" || d.reviewStatus === "more_info",
+            );
             const myVideos = videos.filter((v) => v.propertyId === p._id);
             const canToggle =
-              (p.status === "draft" || p.status === "inactive" || p.status === "active") && review !== "pending";
+              (p.status === "draft" ||
+                p.status === "inactive" ||
+                p.status === "active") &&
+              review !== "pending";
             return (
               <li key={p._id} className="space-y-3 p-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-foreground">
                       {p.status === "active" ? (
-                        <Link href={`/properties/${p.slug}`} className="hover:underline">{p.title}</Link>
+                        <Link
+                          href={`/properties/${p.slug}`}
+                          className="hover:underline"
+                        >
+                          {p.title}
+                        </Link>
                       ) : (
                         p.title
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {p.location?.city} · {formatPrice(p.price, { currency: p.currency })}
+                      {p.location?.city} Â·{" "}
+                      {formatPrice(p.price, { currency: p.currency })}
                     </p>
                   </div>
                   <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
@@ -203,17 +256,26 @@ export default function MyListingsPage() {
                     <Button
                       size="sm"
                       variant={p.status === "active" ? "outline" : "primary"}
-                      disabled={(p.status !== "active" && !canPublish) || busyId === p._id}
+                      disabled={
+                        (p.status !== "active" && !canPublish) ||
+                        busyId === p._id
+                      }
                       isLoading={busyId === p._id}
                       onClick={() => toggle(p)}
                     >
-                      {p.status === "active" ? "Hide" : review === "approved" ? "Show again" : "Submit for review"}
+                      {p.status === "active"
+                        ? "Hide"
+                        : review === "approved"
+                          ? "Show again"
+                          : "Submit for review"}
                     </Button>
                   )}
                 </div>
 
                 {p.reviewNote && review !== "approved" && (
-                  <p className="text-xs text-muted-foreground">Note from our team: {p.reviewNote}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Note from our team: {p.reviewNote}
+                  </p>
                 )}
                 {(review === "rejected" || review === "changes_requested") && (
                   <AppealRow
@@ -225,8 +287,11 @@ export default function MyListingsPage() {
                 {rejectedDocs.map((d) => (
                   <div key={d.id} className="space-y-1 text-xs">
                     <p className="text-muted-foreground">
-                      Document &quot;{d.title ?? d.type}&quot;: {d.reviewStatus === "rejected" ? "rejected" : "more info needed"}
-                      {d.reviewNote ? ` — ${d.reviewNote}` : ""}
+                      Document &quot;{d.title ?? d.type}&quot;:{" "}
+                      {d.reviewStatus === "rejected"
+                        ? "rejected"
+                        : "more info needed"}
+                      {d.reviewNote ? ` â€” ${d.reviewNote}` : ""}
                     </p>
                     {d.reviewStatus === "rejected" && d.id && (
                       <AppealRow
@@ -256,17 +321,31 @@ export default function MyListingsPage() {
   );
 }
 
-function AppealRow({ open, onAppeal, subject }: { open: boolean; onAppeal: () => void; subject: string }) {
+function AppealRow({
+  open,
+  onAppeal,
+  subject,
+}: {
+  open: boolean;
+  onAppeal: () => void;
+  subject: string;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {open ? (
-        <span className="text-xs text-muted-foreground">Appeal sent — waiting for a reply.</span>
+        <span className="text-xs text-muted-foreground">
+          Appeal sent â€” waiting for a reply.
+        </span>
       ) : (
         <Button size="sm" variant="outline" onClick={onAppeal}>
           Appeal
         </Button>
       )}
-      <Button size="sm" variant="ghost" href={`/support?subject=${encodeURIComponent(`${subject} decision`)}`}>
+      <Button
+        size="sm"
+        variant="ghost"
+        href={`/support?subject=${encodeURIComponent(`${subject} decision`)}`}
+      >
         Contact support
       </Button>
     </div>
@@ -293,7 +372,9 @@ function VideoSection({
   const input = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasActive = videos.some((v) => v.status === "pending" || v.status === "approved");
+  const hasActive = videos.some(
+    (v) => v.status === "pending" || v.status === "approved",
+  );
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -325,7 +406,9 @@ function VideoSection({
       {videos.map((v) => (
         <div key={v.id} className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-foreground">{v.fileName ?? "Video"}</span>
+            <span className="font-medium text-foreground">
+              {v.fileName ?? "Video"}
+            </span>
             <span className="text-muted-foreground">
               {v.youtubeVideoId
                 ? v.youtubePrivacy === "public"
@@ -334,23 +417,39 @@ function VideoSection({
                 : VIDEO_LABEL[v.status]}
             </span>
             {v.youtubeVideoId && (
-              <a href={`https://www.youtube.com/watch?v=${v.youtubeVideoId}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href={`https://www.youtube.com/watch?v=${v.youtubeVideoId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 Watch
               </a>
             )}
             {!v.youtubeVideoId && v.status !== "approved" && (
-              <button onClick={() => remove(v.id)} className="text-muted-foreground hover:text-destructive">
+              <button
+                onClick={() => remove(v.id)}
+                className="text-muted-foreground hover:text-destructive"
+              >
                 Remove
               </button>
             )}
           </div>
           {v.reviewNote && v.status !== "approved" && (
-            <p className="text-muted-foreground">Note from our team: {v.reviewNote}</p>
+            <p className="text-muted-foreground">
+              Note from our team: {v.reviewNote}
+            </p>
           )}
           {v.status === "rejected" && !v.storageDeletedAt && (
             <>
-              <p className="text-muted-foreground">Rejected videos are kept for 30 days for appeals, then deleted.</p>
-              <AppealRow open={openAppealFor(v.id)} onAppeal={() => onAppeal(v.id)} subject="Video" />
+              <p className="text-muted-foreground">
+                Rejected videos are kept for 30 days for appeals, then deleted.
+              </p>
+              <AppealRow
+                open={openAppealFor(v.id)}
+                onAppeal={() => onAppeal(v.id)}
+                subject="Video"
+              />
             </>
           )}
         </div>
@@ -364,15 +463,26 @@ function VideoSection({
             className="hidden"
             onChange={(e) => pick(e.target.files?.[0])}
           />
-          <Button size="sm" variant="outline" isLoading={uploading} disabled={disabled} onClick={() => input.current?.click()}>
+          <Button
+            size="sm"
+            variant="outline"
+            isLoading={uploading}
+            disabled={disabled}
+            onClick={() => input.current?.click()}
+          >
             Upload video tour
           </Button>
           <span className="text-muted-foreground">
-            Up to 500 MB. Our team reviews it, then posts it on the Affilhomes YouTube channel.
+            Up to 500 MB. Our team reviews it, then posts it on the Affilhomes
+            YouTube channel.
           </span>
         </div>
       )}
-      {error && <p role="alert" className="text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

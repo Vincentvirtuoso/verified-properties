@@ -10,10 +10,7 @@ import {
 } from "@/contexts/BannerHeightContext";
 import { SidebarProvider, useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import {
-  SIDEBAR_COLLAPSED_WIDTH,
-  SIDEBAR_EXPANDED_WIDTH,
-} from "@/utils/constants";
+import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/utils";
 
 const getAds = () =>
   new Promise<Ad[]>((resolve) => setTimeout(() => resolve(dummyAds), 800));

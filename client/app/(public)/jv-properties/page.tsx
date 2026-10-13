@@ -1,6 +1,6 @@
 "use client";
 
-import { useActiveJV } from "@/lib/supabase/jv";
+import { useActiveJV } from "@affilhomes/shared/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { imageLoader } from "@/utils/helpers";
@@ -22,14 +22,24 @@ export default function JvPropertiesPage() {
           All Joint Venture Properties
         </h1>
         <p className="text-muted max-w-2xl mb-8">
-          Browse current joint‑venture opportunities. Find the right project
+          Browse current jointâ€‘venture opportunities. Find the right project
           that matches your investment goals.
         </p>
 
-        {items === null && <p className="text-sm text-muted-foreground">Loading opportunities…</p>}
-        {error && <p className="text-sm text-destructive">Couldn&apos;t load JV opportunities.</p>}
+        {items === null && (
+          <p className="text-sm text-muted-foreground">
+            Loading opportunitiesâ€¦
+          </p>
+        )}
+        {error && (
+          <p className="text-sm text-destructive">
+            Couldn&apos;t load JV opportunities.
+          </p>
+        )}
         {items?.length === 0 && !error && (
-          <p className="py-10 text-center text-muted-foreground">No joint-venture opportunities are live right now.</p>
+          <p className="py-10 text-center text-muted-foreground">
+            No joint-venture opportunities are live right now.
+          </p>
         )}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {(items ?? []).map((property) => (
@@ -79,8 +89,8 @@ export default function JvPropertiesPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-bold text-primary">
                       {property.landValue
-                        ? `₦${property.landValue.toLocaleString()}`
-                        : `₦${property.minimumInvestment.toLocaleString()} min`}
+                        ? `â‚¦${property.landValue.toLocaleString()}`
+                        : `â‚¦${property.minimumInvestment.toLocaleString()} min`}
                     </span>
                     <span className="text-muted">
                       {property.investmentDuration}
@@ -88,7 +98,7 @@ export default function JvPropertiesPage() {
                   </div>
                   {property.totalInvestors !== undefined && (
                     <div className="mt-2 text-xs text-muted">
-                      {property.totalInvestors}/{property.maxInvestors ?? "∞"}{" "}
+                      {property.totalInvestors}/{property.maxInvestors ?? "âˆž"}{" "}
                       investors
                     </div>
                   )}

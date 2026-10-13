@@ -12,7 +12,7 @@ import {
 import { LuBookmark, LuHouse } from "react-icons/lu";
 
 import { cn } from "@/lib/utils";
-import { SavedProperty } from "@/types";
+import { SavedProperty } from "@affilhomes/shared/types";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { NoResults } from "@/components/propertiesList/NoResults";
 import {
@@ -269,51 +269,53 @@ export default function SavedPropertiesClient({
                 </div>
               )}
 
-            {hasResults && (
-              <div className="mb-5">
-                <p className="text-sm text-muted-foreground">
-                  Showing{" "}
-                  <span className="font-semibold text-foreground">
-                    {filteredProperties.length}
-                  </span>{" "}
-                  {filteredProperties.length === 1 ? "property" : "properties"}
-                </p>
-              </div>
-            )}
+              {hasResults && (
+                <div className="mb-5">
+                  <p className="text-sm text-muted-foreground">
+                    Showing{" "}
+                    <span className="font-semibold text-foreground">
+                      {filteredProperties.length}
+                    </span>{" "}
+                    {filteredProperties.length === 1
+                      ? "property"
+                      : "properties"}
+                  </p>
+                </div>
+              )}
 
-            {hasResults ? (
-              <motion.div
-                layout
-                className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
-              >
-                {filteredProperties.map((property, index) => (
-                  <motion.div
-                    key={property.slug}
-                    layout
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.3,
-                      delay: Math.min(index * 0.04, 0.2),
-                    }}
-                  >
-                    <PropertyCard {...property} />
-                  </motion.div>
-                ))}
-              </motion.div>
-            ) : (
-              <NoResults
-                search={search}
-                onClear={() => {
-                  setSearch("");
-                  setFilter("all");
-                }}
-              />
-            )}
-          </motion.div>
-        ) : (
-          <EmptySavedProperties />
-        )}
+              {hasResults ? (
+                <motion.div
+                  layout
+                  className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+                >
+                  {filteredProperties.map((property, index) => (
+                    <motion.div
+                      key={property.slug}
+                      layout
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: Math.min(index * 0.04, 0.2),
+                      }}
+                    >
+                      <PropertyCard {...property} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <NoResults
+                  search={search}
+                  onClear={() => {
+                    setSearch("");
+                    setFilter("all");
+                  }}
+                />
+              )}
+            </motion.div>
+          ) : (
+            <EmptySavedProperties />
+          )}
         </AnimatePresence>
       </div>
     </main>

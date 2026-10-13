@@ -8,7 +8,7 @@ import {
   LuBadgeCheck as BadgeCheck,
 } from "react-icons/lu";
 import { cn } from "@/lib/utils";
-import { Company, companyTypeLabels } from "@/types/company";
+import { Company, companyTypeLabels } from "@affilhomes/shared/types";
 
 export function CompanyCard({ company }: { company: Company }) {
   const accentColors = {

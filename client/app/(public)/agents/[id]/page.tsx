@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { fetchPublicAgent } from "@/lib/supabase/publicDirectory";
+import { createClient } from "@affilhomes/shared/supabase/client";
+import { fetchPublicAgent } from "@affilhomes/shared/supabase";
 import AgentClient from "../_components/AgentClient";
 
 export async function generateMetadata({
@@ -10,7 +10,9 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const data = await fetchPublicAgent(id, await createClient()).catch(() => null);
+  const data = await fetchPublicAgent(id, await createClient()).catch(
+    () => null,
+  );
   if (!data) return { title: "Agent not found" };
   return {
     title: `${data.agent.name} – Real Estate Agent`,

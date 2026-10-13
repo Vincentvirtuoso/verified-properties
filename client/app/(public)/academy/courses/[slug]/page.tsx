@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, notFound, usePathname } from "next/navigation";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Badge } from "@affilhomes/shared/ui/Badge";
+import { Button } from "@affilhomes/shared/ui/Button";
 import {
   LuBookOpen,
   LuVideo,
@@ -15,7 +15,7 @@ import {
 } from "react-icons/lu";
 import { useState } from "react";
 import { MOCK_COURSES } from "@/data/courses";
-import { Course, CourseContentBlock } from "@/types/course";
+import { Course, CourseContentBlock } from "@affilhomes/shared/types/course";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { getBreadcrumbItems } from "../../AcademyPageClient";
 

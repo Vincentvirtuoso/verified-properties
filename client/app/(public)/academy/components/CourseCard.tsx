@@ -1,8 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
-import type { Course } from "@/types";
+import { Badge } from "@affilhomes/shared/ui/Badge";
+import type { Course } from "@affilhomes/shared/types";
 import { LuBookOpen, LuVideo, LuHeadphones, LuLayers } from "react-icons/lu";
 import Image from "next/image";
 

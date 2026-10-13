@@ -19,17 +19,21 @@ import {
   LuPhoneCall,
   LuSparkles,
 } from "react-icons/lu";
-import { InfoRow } from "@/components/ui/InfoRow";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { CompanyMember, companyTypeLabels, PopulatedUser } from "@/types";
-import VerifiedBadge from "@/components/icons/VerifiedBadge";
+import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
+import { Badge } from "@affilhomes/shared/ui/Badge";
+import { Button } from "@affilhomes/shared/ui/Button";
+import {
+  CompanyMember,
+  companyTypeLabels,
+  PopulatedUser,
+} from "@affilhomes/shared/types";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 import { useState } from "react";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
 import UserHeaderCard from "@/components/cards/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 
 const containerVariants = {

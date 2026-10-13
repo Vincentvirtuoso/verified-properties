@@ -1,13 +1,12 @@
-// app/companies/page.tsx
-import { createClient } from "@/lib/supabase/server";
-import { fetchPublicCompanies } from "@/lib/supabase/publicDirectory";
-import { Company } from "@/types";
+import { createClient } from "@affilhomes/shared/supabase/client";
+import { fetchPublicCompanies } from "@affilhomes/shared/supabase";
+import { Company } from "@affilhomes/shared/types";
 import { Metadata } from "next";
 import { CompanyDirectory } from "./_components/CompanyDirectory";
 
 // ---------- SEO Metadata ----------
 export const metadata: Metadata = {
-  title: "Real Estate Companies & Agencies – Find Top Professionals",
+  title: "Real Estate Companies & Agencies â€“ Find Top Professionals",
   description:
     "Browse verified real estate companies, developers, and brokers. View active listings, team info, and get in touch directly.",
   openGraph: {
@@ -78,7 +77,9 @@ function CompaniesStructuredData({
 // ---------- Server Component ----------
 export default async function CompaniesPage() {
   // Verified companies, or ones with a live listing.
-  const companies = await fetchPublicCompanies(await createClient()).catch(() => []);
+  const companies = await fetchPublicCompanies(await createClient()).catch(
+    () => [],
+  );
 
   return (
     <>

@@ -4,14 +4,14 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LuCheck, LuClock, LuBuilding2, LuArrowRight } from "react-icons/lu";
-import { Button } from "@/components/ui/Button";
-import { imageLoader } from "@/utils/helpers";
-import { useActiveJV } from "@/lib/supabase/jv";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { imageLoader } from "@/utils";
+import { useActiveJV } from "@affilhomes/shared/supabase";
 
 const PLANS = [
   {
     name: "Weekly",
-    price: "₦ 10,000",
+    price: "â‚¦ 10,000",
     duration: "week",
     period: "weekly",
     icon: LuClock,
@@ -25,7 +25,7 @@ const PLANS = [
   },
   {
     name: "Monthly",
-    price: "₦ 40,000",
+    price: "â‚¦ 40,000",
     duration: "month",
     period: "monthly",
     icon: LuBuilding2,
@@ -40,7 +40,7 @@ const PLANS = [
   },
   {
     name: "Yearly",
-    price: "₦ 440,000",
+    price: "â‚¦ 440,000",
     duration: "year",
     period: "yearly",
     icon: LuCheck,
@@ -49,7 +49,7 @@ const PLANS = [
       "Early access to new deals",
       "Dedicated account manager",
       "Quarterly strategy calls",
-      "Co‑branded marketing materials",
+      "Coâ€‘branded marketing materials",
     ],
     popular: false,
   },
@@ -154,7 +154,7 @@ export default function JvOpportunityPage() {
               Explore Active JV Opportunities
             </h2>
             <p className="mt-2 text-muted max-w-3xl">
-              Browse hand‑picked joint venture projects currently open for
+              Browse handâ€‘picked joint venture projects currently open for
               investment.
             </p>
           </div>
@@ -217,8 +217,8 @@ export default function JvOpportunityPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-bold text-primary">
                       {property.landValue
-                        ? `₦${property.landValue.toLocaleString()}`
-                        : `₦${property.minimumInvestment.toLocaleString()} min`}
+                        ? `â‚¦${property.landValue.toLocaleString()}`
+                        : `â‚¦${property.minimumInvestment.toLocaleString()} min`}
                     </span>
                     <span className="text-muted">
                       {property.investmentDuration}
@@ -226,7 +226,7 @@ export default function JvOpportunityPage() {
                   </div>
                   {property.totalInvestors !== undefined && (
                     <div className="mt-2 text-xs text-muted">
-                      {property.totalInvestors}/{property.maxInvestors ?? "∞"}{" "}
+                      {property.totalInvestors}/{property.maxInvestors ?? "âˆž"}{" "}
                       investors
                     </div>
                   )}

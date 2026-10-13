@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import type { PopulatedProperty } from "@/types";
+import type { PopulatedProperty } from "@affilhomes/shared/types";
 import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
-} from "@/utils/constants";
+} from "@/utils";
 
 export const MIN_QUERY_LENGTH = 2;
 const MAX_SUGGESTIONS = 5;

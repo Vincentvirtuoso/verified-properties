@@ -9,7 +9,7 @@ import LearningStatsSection from "./components/LearningStatsSection";
 import CtaSection from "./components/CtaSection";
 import { LuFolderOpen, LuFolders, LuGraduationCap } from "react-icons/lu";
 import { BreadcrumbItem } from "@/components/common/BreadCrumbs";
-import { Course, Podcast } from "@/types";
+import { Course, Podcast } from "@affilhomes/shared/types";
 
 interface AcademyPageClientProps {
   courses: Course[];
@@ -40,7 +40,10 @@ export const getBreadcrumbItems = (pathname: string, courseTitle?: string) => {
   return items;
 };
 
-export default function AcademyPageClient({ courses, podcasts }: AcademyPageClientProps) {
+export default function AcademyPageClient({
+  courses,
+  podcasts,
+}: AcademyPageClientProps) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",

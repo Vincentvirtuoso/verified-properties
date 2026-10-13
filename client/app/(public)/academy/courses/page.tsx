@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { Badge } from "@affilhomes/shared/ui/Badge";
 import {
   LuSearch,
   LuX,

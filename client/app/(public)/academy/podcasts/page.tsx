@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LuPlay, LuClock, LuMic } from "react-icons/lu";
 import Image from "next/image";
 import { imageLoader } from "@/utils/helpers";
-import type { Podcast } from "@/types/podcast";
+import type { Podcast } from "@affilhomes/shared/types/podcast";
 import { MOCK_PODCASTS } from "@/data/courses";
 import PodcastDetailModal from "../components/PodcastDetailModal";
 

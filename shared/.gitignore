@@ -1,0 +1,7 @@
+/node_modules
+
+# production
+/build
+
+# env files (can opt-in for committing if needed)
+.env*

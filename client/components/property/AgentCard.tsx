@@ -11,9 +11,13 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { useState } from "react";
-import { imageLoader } from "@/utils/helpers";
-import { PopulatedProperty, Company, PropertyOwnerType } from "@/types";
-import VerifiedBadge from "../icons/VerifiedBadge";
+import { imageLoader } from "@/utils";
+import {
+  PopulatedProperty,
+  Company,
+  PropertyOwnerType,
+} from "@affilhomes/shared/types";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 
 interface OwnerCardProps {
   owner: PopulatedProperty["ownerId"];
@@ -73,7 +77,6 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 }}
     >
-
       <div className="p-5 space-y-4">
         <div className="flex items-center gap-3.5">
           <div

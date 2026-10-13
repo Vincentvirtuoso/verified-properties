@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@/types";
+import { Role } from "@affilhomes/shared/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
 import { EnquiryThread } from "@/components/enquiries/EnquiryThread";
-import { fetchCompanyEnquiries } from "@/lib/supabase/enquiries";
-import type { Enquiry } from "@/types/enquiry";
+import { fetchCompanyEnquiries } from "@affilhomes/shared/supabase";
+import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { LuChevronDown } from "react-icons/lu";
 import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 
@@ -75,7 +75,7 @@ export default function CompanyEnquiriesPage() {
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
   if (isLoading) {
-    return <PageSpinner label="Loading enquiries…" />;
+    return <PageSpinner label="Loading enquiriesâ€¦" />;
   }
 
   if (!user) return null;

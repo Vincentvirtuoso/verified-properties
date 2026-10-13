@@ -17,7 +17,7 @@ import {
   LuHouse,
 } from "react-icons/lu";
 import { FiGrid } from "react-icons/fi";
-import { imageLoader } from "@/utils/helpers";
+import { imageLoader } from "@/utils";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, BreadcrumbSchema } from "@/components/common/BreadCrumbs";
 import {
@@ -25,9 +25,12 @@ import {
   DropdownTrigger,
   DropdownContent,
   DropdownItem,
-} from "@/components/ui/Dropdown";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { fetchDirectoryAgents, type DirectoryAgent } from "@/lib/supabase/publicDirectory";
+} from "@affilhomes/shared/ui/Dropdown";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
+import {
+  fetchDirectoryAgents,
+  type DirectoryAgent,
+} from "@affilhomes/shared/supabase";
 
 export type Agent = DirectoryAgent;
 
@@ -44,7 +47,10 @@ export default function AgentsPage() {
     let cancelled = false;
     fetchDirectoryAgents()
       .then((rows) => !cancelled && setAgents(rows))
-      .catch(() => !cancelled && setLoadError("Couldn't load agents. Please refresh."));
+      .catch(
+        () =>
+          !cancelled && setLoadError("Couldn't load agents. Please refresh."),
+      );
     return () => {
       cancelled = true;
     };
@@ -354,9 +360,13 @@ export default function AgentsPage() {
 
         {/* Agent List */}
         {loadError ? (
-          <p role="alert" className="py-16 text-center text-destructive">{loadError}</p>
+          <p role="alert" className="py-16 text-center text-destructive">
+            {loadError}
+          </p>
         ) : !agents ? (
-          <p className="py-16 text-center text-muted-foreground">Loading agents…</p>
+          <p className="py-16 text-center text-muted-foreground">
+            Loading agentsâ€¦
+          </p>
         ) : filteredAgents.length > 0 ? (
           <div
             className={cn(

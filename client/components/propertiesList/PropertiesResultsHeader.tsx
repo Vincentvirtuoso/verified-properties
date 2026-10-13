@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { LuFilter } from "react-icons/lu";
-import { Badge } from "@/components/ui";
+import { Badge } from "@affilhomes/shared/ui";
 import type { SortOption } from "@/hooks/useProperty";
 
 interface PropertiesResultsHeaderProps {
@@ -13,7 +13,7 @@ interface PropertiesResultsHeaderProps {
   sortOptions: { value: SortOption; label: string }[];
   activeFiltersCount: number;
   onOpenMobileFilters: () => void;
-  children?: ReactNode; 
+  children?: ReactNode;
 }
 
 export function PropertiesResultsHeader({

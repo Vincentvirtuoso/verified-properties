@@ -1,7 +1,7 @@
 "use client";
 
 import { LuX } from "react-icons/lu";
-import { Badge } from "@/components/ui";
+import { Badge } from "@affilhomes/shared/ui";
 
 interface FilterTagProps {
   label: string;

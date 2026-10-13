@@ -8,8 +8,8 @@ import type {
   ListingPurpose,
   PropertyFeature,
   PropertyDocumentType,
-} from "@/types";
-import { Role } from "@/types";
+} from "@affilhomes/shared/types";
+import { Role } from "@affilhomes/shared/types";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type ListPropertyStep =

@@ -1,5 +1,5 @@
 import { FaHome, FaCity, FaBuilding, FaStar } from "react-icons/fa";
-import { DashboardStats } from "@/types";
+import { DashboardStats } from "@affilhomes/shared/types";
 import Image from "next/image";
 import { StatCard, StatItem } from "../cards/StatCard";
 

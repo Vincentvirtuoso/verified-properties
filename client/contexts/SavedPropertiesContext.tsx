@@ -14,7 +14,7 @@ import {
   fetchSavedPropertyIds,
   saveProperty,
   unsaveProperty,
-} from "@/lib/supabase/savedProperties";
+} from "@affilhomes/shared/supabase/savedProperties";
 
 interface SavedPropertiesContextValue {
   savedIds: Set<string>;

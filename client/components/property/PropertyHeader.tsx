@@ -9,15 +9,18 @@ import {
   RiStarLine,
 } from "react-icons/ri";
 import { useEffect, useState } from "react";
-import { PopulatedProperty, PropertyStatus } from "@/types/property";
-import { PROPERTY_TYPE_LABELS } from "@/utils/constants";
+import {
+  PopulatedProperty,
+  PropertyStatus,
+} from "@affilhomes/shared/types/property";
+import { PROPERTY_TYPE_LABELS } from "@/utils";
 import {
   SAVED_PROPERTIES_EVENT,
   SAVED_PROPERTIES_STORAGE_KEY,
   isPropertySaved,
   toggleSavedProperty,
 } from "@/lib/saved-properties-storage";
-import { Button } from "../ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 
 const statusConfig: Record<
   PropertyStatus,

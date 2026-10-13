@@ -1,123 +1,138 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { useState } from "react";
+import type { IconType } from "react-icons";
 import {
-  LuUser,
-  LuLayoutDashboard,
   LuChevronDown,
-  LuLogOut,
-  LuUserCheck,
-  LuCirclePlus,
   LuChevronUp,
+  LuCirclePlus,
+  LuLayoutDashboard,
+  LuLogOut,
   LuPlus,
-  LuUserRoundPlus,
-  LuRepeat,
-  LuUserRound,
   LuShieldCheck,
+  LuUser,
+  LuUserCheck,
+  LuUserRound,
 } from "react-icons/lu";
-import { Button } from "../ui/Button";
-import { PopulatedUser, Role } from "@/types";
+import { BsBuildingAdd } from "react-icons/bs";
+import { Avatar } from "@affilhomes/shared/ui/Avatar";
+import { Badge } from "@affilhomes/shared/ui/Badge";
+import { Button } from "@affilhomes/shared/ui/Button";
 import {
   Dropdown,
   DropdownContent,
   DropdownItem,
   DropdownSeparator,
   DropdownTrigger,
-} from "../ui/Dropdown";
-import { useEffect, useState } from "react";
-import { isAdmin } from "@/lib/supabase/admin";
-import { Badge } from "../ui";
-import RoleIcon from "../ui/RoleIcon";
-import { BsBuildingAdd } from "react-icons/bs";
+} from "@affilhomes/shared/ui/Dropdown";
+import { Spinner } from "@affilhomes/shared/ui/Spinner";
+import { PopulatedUser, Role } from "@affilhomes/shared/types";
+import RoleIcon from "@/components/ui/RoleIcon";
 import { ProfileModal } from "@/components/profile/ProfileModal";
-import { Avatar } from "../ui/Avatar";
 import { UpgradeToProCTA } from "./UpgradeToProCTA";
-import { Spinner } from "../ui/Spinner";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
   user?: PopulatedUser | null;
+  isAdmin?: boolean;
   onLogout?: () => void;
-  onSwitch: (role: Role, activeRole: Role) => void;
   isLoading: boolean;
 }
 
-const ProfileMenu = ({
-  user,
-  isAuthenticated,
-  onLogout,
-  onSwitch,
-}: {
-  user: PopulatedUser;
-  onLogout?: () => void;
-  isAuthenticated: boolean;
-  onSwitch: (role: Role, activeRole: Role) => void;
-}) => {
-  const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
-  const [isAddRoleDropdownOpen, setIsAddRoleDropdownOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  // Only a convenience: the admin page and every admin action re-check the role in the database.
-  const [showAdmin, setShowAdmin] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    isAdmin().then((ok) => !cancelled && setShowAdmin(ok));
-    return () => {
-      cancelled = true;
-    };
-  }, [user._id]);
+type MenuLink = {
+  label: string;
+  href: string;
+  icon: IconType;
+  external?: boolean;
+};
 
-  const isPureViewer =
-    user.roles.length === 1 && user.roles.includes(Role.Viewer);
-  const isCompanyUser = user.activeRole === Role.Company;
-  const isAgentActive = user.activeRole === Role.Agent;
+const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL;
 
-  const canAddAgent =
-    !user.roles.includes(Role.Agent) && user.roles.includes(Role.Viewer);
-  const addableRoles = canAddAgent ? [Role.Agent] : [];
-
-  const navLinks = [
-    {
-      label: isCompanyUser ? "Company Dashboard" : "Dashboard",
-      href: isCompanyUser ? "/company/dashboard" : "/dashboard",
-      icon: LuLayoutDashboard,
-    },
+function getNavLinks(user: PopulatedUser, isAdmin: boolean): MenuLink[] {
+  const links: MenuLink[] = [
+    user.activeRole === Role.Company
+      ? {
+          label: "Company Dashboard",
+          href: "/company/dashboard",
+          icon: LuLayoutDashboard,
+        }
+      : { label: "Dashboard", href: "/dashboard", icon: LuLayoutDashboard },
   ];
-  const dashboardNavLink = navLinks[0];
-  if (showAdmin) {
-    navLinks.push({ label: "Admin", href: "/admin", icon: LuShieldCheck });
+
+  if (isAdmin && ADMIN_URL) {
+    links.push({
+      label: "Admin",
+      href: ADMIN_URL,
+      icon: LuShieldCheck,
+      external: true,
+    });
   }
 
-  const contextActions = [];
+  return links;
+}
+
+function getContextActions(user: PopulatedUser): MenuLink[] {
+  const actions: MenuLink[] = [];
+  const isPureViewer =
+    user.roles.length === 1 && user.roles.includes(Role.Viewer);
 
   if (isPureViewer) {
-    contextActions.push({
-      label: "Become an Agent",
-      href: "/onboarding/become-an-agent",
-      icon: LuUserCheck,
-    });
-    contextActions.push({
-      label: "List your Property",
-      href: "/onboarding/list-property",
-      icon: LuCirclePlus,
-    });
+    actions.push(
+      {
+        label: "Become an Agent",
+        href: "/onboarding/become-an-agent",
+        icon: LuUserCheck,
+      },
+      {
+        label: "List your Property",
+        href: "/onboarding/list-property",
+        icon: LuCirclePlus,
+      },
+    );
   }
 
   if (!user.companyId) {
-    contextActions.push({
+    actions.push({
       label: "Register Company",
       href: "/onboarding/company",
       icon: LuPlus,
     });
   }
 
-  if (isAgentActive) {
-    contextActions.push({
+  if (user.activeRole === Role.Agent) {
+    actions.push({
       label: "List a New Property",
       href: "/list-property",
       icon: BsBuildingAdd,
     });
   }
+
+  return actions;
+}
+
+function getAddableRoles(user: PopulatedUser): Role[] {
+  const canAddAgent =
+    user.roles.includes(Role.Viewer) && !user.roles.includes(Role.Agent);
+  return canAddAgent ? [Role.Agent] : [];
+}
+
+const ProfileMenu = ({
+  user,
+  isAdmin,
+  onLogout,
+}: {
+  user: PopulatedUser;
+  isAdmin: boolean;
+  onLogout?: () => void;
+}) => {
+  const [isMainOpen, setIsMainOpen] = useState(false);
+  const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const navLinks = getNavLinks(user, isAdmin);
+  const contextActions = getContextActions(user);
+  const addableRoles = getAddableRoles(user);
 
   return (
     <div className="flex items-center gap-1.5">
@@ -130,16 +145,13 @@ const ProfileMenu = ({
         <Avatar src={user.avatar} name={user.name} size={36} priority />
       </Button>
 
-      <Dropdown
-        onOpenChange={(open) => setIsMainDropdownOpen(open)}
-        placement="bottom-end"
-      >
+      <Dropdown onOpenChange={setIsMainOpen} placement="bottom-end">
         <DropdownTrigger asChild>
           <button
             aria-label="Open user menu"
             className="p-1 rounded-md hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
           >
-            {isMainDropdownOpen ? (
+            {isMainOpen ? (
               <LuChevronUp size={20} />
             ) : (
               <LuChevronDown size={20} />
@@ -158,6 +170,7 @@ const ProfileMenu = ({
             </div>
             <UpgradeToProCTA variant="compact" />
           </div>
+
           <DropdownSeparator />
 
           <div className="overflow-hidden max-h-[35vh] overflow-y-auto">
@@ -168,21 +181,18 @@ const ProfileMenu = ({
             >
               <span className="text-xs">View Profile</span>
             </DropdownItem>
-            <div className="hidden lg:block">
-              <Link href={dashboardNavLink.href}>
-                <DropdownItem
-                  className="flex items-center gap-2.5 px-2 py-2 rounded-md"
-                  icon={
-                    <dashboardNavLink.icon className="w-4 h-4 text-primary/80" />
-                  }
-                >
-                  <span className="text-xs">{dashboardNavLink.label}</span>
-                </DropdownItem>
-              </Link>
-            </div>
 
-            <div className="lg:hidden">
-              {navLinks.map(({ href, icon: Icon, label }) => (
+            {navLinks.map(({ href, icon: Icon, label, external }) =>
+              !external ? (
+                <a href={href} key={href} rel="noopener">
+                  <DropdownItem
+                    className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+                    icon={<Icon className="w-4 h-4 text-primary/80" />}
+                  >
+                    <span className="text-xs">{label}</span>
+                  </DropdownItem>
+                </a>
+              ) : (
                 <Link href={href} key={href}>
                   <DropdownItem
                     className="flex items-center gap-2.5 px-2 py-2 rounded-md"
@@ -191,14 +201,14 @@ const ProfileMenu = ({
                     <span className="text-xs">{label}</span>
                   </DropdownItem>
                 </Link>
-              ))}
-            </div>
+              ),
+            )}
 
             {contextActions.length > 0 && (
               <>
                 <DropdownSeparator />
                 {contextActions.map(({ href, icon: Icon, label }) => (
-                  <Link key={href + label} href={href}>
+                  <Link key={href} href={href}>
                     <DropdownItem
                       className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted-foreground rounded-md transition-colors"
                       icon={<Icon className="w-4 h-4 text-primary/80" />}
@@ -218,7 +228,7 @@ const ProfileMenu = ({
                 className="w-full"
                 placement="bottom-end"
                 offset={-3}
-                onOpenChange={(open) => setIsAddRoleDropdownOpen(open)}
+                onOpenChange={setIsAddRoleOpen}
               >
                 <DropdownTrigger asChild>
                   <button className="text-xs gap-2 flex items-center w-full justify-between px-3 py-2 rounded-md group hover:bg-subtle/20 cursor-pointer">
@@ -231,7 +241,7 @@ const ProfileMenu = ({
                       </div>
                       <span className="group-hover:text-primary">Add Role</span>
                     </div>
-                    {isAddRoleDropdownOpen ? (
+                    {isAddRoleOpen ? (
                       <LuChevronUp size={20} />
                     ) : (
                       <LuChevronDown size={20} />
@@ -271,6 +281,7 @@ const ProfileMenu = ({
           )}
         </DropdownContent>
       </Dropdown>
+
       <ProfileModal
         open={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -282,19 +293,12 @@ const ProfileMenu = ({
 export function UserMenu({
   isAuthenticated,
   user,
+  isAdmin = false,
   onLogout,
-  onSwitch,
   isLoading,
 }: UserMenuProps) {
   if (isAuthenticated && user) {
-    return (
-      <ProfileMenu
-        user={user}
-        onLogout={onLogout}
-        onSwitch={onSwitch}
-        isAuthenticated={isAuthenticated}
-      />
-    );
+    return <ProfileMenu user={user} isAdmin={isAdmin} onLogout={onLogout} />;
   }
 
   return (
@@ -324,7 +328,11 @@ export function UserMenu({
         className="md:hidden p-2 rounded-full hover:bg-sidebar-hover-bg text-navbar-foreground"
         title="Log in"
       >
-        {isLoading ? <Spinner variant="muted" /> : <LuUser className="w-6 h-6" />}
+        {isLoading ? (
+          <Spinner variant="muted" />
+        ) : (
+          <LuUser className="w-6 h-6" />
+        )}
       </Link>
     </div>
   );

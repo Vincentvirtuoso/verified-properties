@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AuthForm } from "@/components/forms/AuthForm";
-import { Field } from "@/components/ui/Field";
+import { Field } from "@affilhomes/shared/ui/Field";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Role,
@@ -12,7 +12,7 @@ import {
   AgentSubRole,
   agentSubRoleLabels,
   CompanyType,
-} from "@/types";
+} from "@affilhomes/shared/types";
 import {
   FiBriefcase,
   FiHome,
@@ -22,8 +22,8 @@ import {
   FiLayers,
 } from "react-icons/fi";
 import { LuBuilding } from "react-icons/lu";
-import FileUpload from "@/components/ui/FileUpload";
-import { PhoneField } from "@/components/ui/PhoneField";
+import FileUpload from "@affilhomes/shared/ui/FileUpload";
+import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 

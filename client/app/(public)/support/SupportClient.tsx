@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createSupportTicket } from "@/lib/supabase/moderation";
+import { createSupportTicket } from "@affilhomes/shared/supabase";
 import {
   FaWhatsapp,
   FaEnvelope,
@@ -9,15 +9,15 @@ import {
   FaRegPaperPlane,
 } from "react-icons/fa";
 import { FiUser, FiMail, FiHelpCircle } from "react-icons/fi";
-import { Field } from "@/components/ui/Field";
-import { Textarea } from "@/components/ui/Textarea";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { Textarea } from "@affilhomes/shared/ui/Textarea";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from "@/components/ui/Accordion";
-import { Button } from "@/components/ui/Button";
+} from "@affilhomes/shared/ui/Accordion";
+import { Button } from "@affilhomes/shared/ui/Button";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -31,17 +31,17 @@ const faqs = [
   {
     question: "What is a Boost and how does it work?",
     answer:
-      "Boosting moves your standard listing closer to the featured tier. It costs ₦1,000 per property per 30 days. You can boost any active listing from the 'My Listings' page.",
+      "Boosting moves your standard listing closer to the featured tier. It costs â‚¦1,000 per property per 30 days. You can boost any active listing from the 'My Listings' page.",
   },
   {
     question: "How do I verify my agent profile?",
     answer:
-      "Go to your Profile → Verification tab. Upload the required documents (profile picture, government ID, professional certificate, utility bill). Our team reviews within 2–3 business days.",
+      "Go to your Profile â†’ Verification tab. Upload the required documents (profile picture, government ID, professional certificate, utility bill). Our team reviews within 2â€“3 business days.",
   },
   {
     question: "Can I switch between Viewer, Agent, and Company roles?",
     answer:
-      "Yes – you can switch between any roles you've onboarded. Viewer is default, Agent requires agent package, Company requires partnership package. Company role is locked and cannot be combined with others.",
+      "Yes â€“ you can switch between any roles you've onboarded. Viewer is default, Agent requires agent package, Company requires partnership package. Company role is locked and cannot be combined with others.",
   },
   {
     question: "How do I register a Company?",
@@ -143,7 +143,9 @@ export default function SupportClient() {
     const subject = new URLSearchParams(window.location.search).get("subject");
     if (!subject) return;
     Promise.resolve().then(() =>
-      setForm((prev) => (prev.subject ? prev : { ...prev, subject: subject.slice(0, 200) })),
+      setForm((prev) =>
+        prev.subject ? prev : { ...prev, subject: subject.slice(0, 200) },
+      ),
     );
   }, []);
 

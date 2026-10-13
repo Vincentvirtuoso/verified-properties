@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchActiveProperties } from "@/lib/supabase/publicProperties";
-import type { PopulatedProperty } from "@/types";
+import { fetchActiveProperties } from "@affilhomes/shared/supabase";
+import type { PopulatedProperty } from "@affilhomes/shared/types";
 import { properties as mockProperties } from "@/data/properties";
 
 export function usePropertiesData() {

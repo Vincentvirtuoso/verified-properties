@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
 import { cn } from "@/lib/utils";
 
 interface Step {

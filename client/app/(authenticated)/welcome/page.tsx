@@ -1,8 +1,8 @@
 "use client";
 
-import { PopulatedUser, Role } from "@/types";
+import { PopulatedUser, Role } from "@affilhomes/shared/types";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import {
   LuUserCheck,
   LuBuilding2,
@@ -16,9 +16,10 @@ import {
   LuInfo,
 } from "react-icons/lu";
 import { useAuth } from "@/contexts/AuthContext";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { BsArrowRight } from "react-icons/bs";
 import RoleIcon from "@/components/ui/RoleIcon";
+import { ProfileRole } from "@/utils";
 
 interface Step {
   icon: React.ReactNode;
@@ -33,7 +34,7 @@ interface RoleGuide {
   extraInfo?: { label: string; content: string };
 }
 
-const roleGuides: Record<Role, RoleGuide> = {
+const roleGuides: Record<ProfileRole, RoleGuide> = {
   [Role.Viewer]: {
     title: "Welcome, Explorer!",
     description:
@@ -228,7 +229,7 @@ export default function WelcomePage() {
   }
 
   const activeRole = user.activeRole as Role;
-  const guide = roleGuides[activeRole] ?? roleGuides[Role.Viewer];
+  const guide = roleGuides[activeRole as ProfileRole] ?? roleGuides[Role.Viewer];
   const extraInfo = getExtraInfo(activeRole, user);
 
   const initial = user.name?.charAt(0)?.toUpperCase() ?? "👤";

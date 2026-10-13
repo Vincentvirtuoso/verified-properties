@@ -1,17 +1,16 @@
 "use client";
 
-import { PopulatedProperty, PopulatedUser } from "@/types";
+import { PopulatedProperty, PopulatedUser } from "@affilhomes/shared/types";
 import Image from "next/image";
-import VerifiedBadge from "@/components/icons/VerifiedBadge";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import {
   AgentSubRoleBadge,
   InfoRow,
   InfoRowProps,
-  StatCard,
-  StatCardProps,
-} from "@/components/ui";
+} from "@affilhomes/shared/ui";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
 import {
   LuClockAlert,
   LuInfo,
@@ -22,7 +21,7 @@ import {
   LuZap,
 } from "react-icons/lu";
 import { useState } from "react";
-import { imageLoader } from "@/utils/helpers";
+import { imageLoader } from "@/utils";
 
 export default function AgentClient({
   agent,

@@ -8,7 +8,7 @@ import {
   PropertyFilterState,
   PropertyLocation,
   PropertyType,
-} from "@/types";
+} from "@affilhomes/shared/types";
 
 export function MobileFilterDrawer({
   filters,

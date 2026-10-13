@@ -10,7 +10,7 @@ import {
   RiFullscreenLine,
   RiImageLine,
 } from "react-icons/ri";
-import { PropertyImage } from "@/types/property";
+import { PropertyImage } from "@affilhomes/shared/types/property";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 
 interface PropertyGalleryProps {

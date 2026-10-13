@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@affilhomes/shared/ui/Badge";
 import {
   LuCircleCheck,
   LuHouse,
@@ -16,7 +16,7 @@ import type {
   ListPropertyFormData,
   ListPropertyStep,
 } from "../hooks/useListPropertyForm";
-import { DOCUMENT_TYPES } from "@/utils/constants";
+import { DOCUMENT_TYPES } from "@/utils";
 
 const PURPOSE_LABEL: Record<string, string> = {
   rent: "For Rent",

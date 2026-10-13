@@ -10,7 +10,7 @@ import {
   DropdownTrigger,
   DropdownContent,
   DropdownItem,
-} from "@/components/ui/Dropdown";
+} from "@affilhomes/shared/ui/Dropdown";
 
 export interface BreadcrumbItem {
   label: string;

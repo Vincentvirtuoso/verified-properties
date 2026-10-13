@@ -9,17 +9,17 @@ import {
   LuSend,
 } from "react-icons/lu";
 
-import type { Enquiry, ThreadEvent } from "@/types/enquiry";
+import type { Enquiry, ThreadEvent } from "@affilhomes/shared/types/enquiry";
 import { format } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@affilhomes/shared/supabase/client";
 import {
   fetchEnquiryMessages,
   sendEnquiryMessage,
   updateEnquiryStage,
   type EnquiryStage,
-} from "@/lib/supabase/enquiries";
+} from "@affilhomes/shared/supabase";
 
 const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -198,7 +198,7 @@ export function EnquiryThread({
               {enquiry.propertyTitle}
               {isAgentSide && enquiry.buyerPhone && (
                 <>
-                  {" · "}
+                  {" Â· "}
                   <a
                     href={`tel:${enquiry.buyerPhone}`}
                     className="text-primary hover:underline"
@@ -235,7 +235,7 @@ export function EnquiryThread({
         <div className="mx-auto max-w-3xl space-y-6">
           {loading && events.length === 0 && (
             <p className="text-center text-sm text-muted-foreground">
-              Loading messages…
+              Loading messagesâ€¦
             </p>
           )}
 
@@ -314,7 +314,7 @@ function MessageBubble({
                 : "text-muted-foreground",
             )}
           >
-            {event.sender === "assistant" && <span>Assistant ·</span>}
+            {event.sender === "assistant" && <span>Assistant Â·</span>}
             <span>{format(event.timestamp, "HH:mm")}</span>
           </div>
         </div>
@@ -358,15 +358,15 @@ function CallCard({
               {event.caller === "assistant" ? "Assistant call" : "Agent call"}
               {isMissed && (
                 <span className="font-medium text-destructive">
-                  {" · Missed"}
+                  {" Â· Missed"}
                 </span>
               )}
             </p>
 
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {format(event.timestamp, "EEE, do MMMM yyyy · HH:mm")}
+              {format(event.timestamp, "EEE, do MMMM yyyy Â· HH:mm")}
               {event.outcome === "answered" &&
-                ` · ${minutes}:${String(seconds).padStart(2, "0")}`}
+                ` Â· ${minutes}:${String(seconds).padStart(2, "0")}`}
             </p>
           </div>
 
@@ -421,7 +421,7 @@ const VERTICAL_PADDING = 20;
 
 function ChatComposer({
   onSend,
-  placeholder = "Type a message…",
+  placeholder = "Type a messageâ€¦",
   disabled = false,
   minRows = 1,
   maxRows = 5,

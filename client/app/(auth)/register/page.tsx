@@ -2,17 +2,17 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { RadioGroup } from "@/components/ui/RadioGroup";
-import { Field } from "@/components/ui/Field";
+import { RadioGroup } from "@affilhomes/shared/ui/RadioGroup";
+import { Field } from "@affilhomes/shared/ui/Field";
 import { AuthForm } from "@/components/forms/AuthForm";
-import { PhoneField } from "@/components/ui/PhoneField";
-import { Role, PopulatedUser } from "@/types";
+import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
+import { Role, PopulatedUser } from "@affilhomes/shared/types";
 import { FiAtSign, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
 import { useRouter, useSearchParams } from "next/navigation";
-import FileUpload from "@/components/ui/FileUpload";
-import { PageSpinner } from "@/components/ui/Spinner";
+import FileUpload from "@affilhomes/shared/ui/FileUpload";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 const accountTypeToRole: Record<string, Role> = {
   seeker: Role.Viewer,

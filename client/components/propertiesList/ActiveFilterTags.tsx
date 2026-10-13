@@ -1,8 +1,8 @@
 "use client";
 
 import { LuX } from "react-icons/lu";
-import type { PropertyFilterState } from "@/types";
-import { PROPERTY_CATEGORY_LABELS } from "@/utils/constants";
+import type { PropertyFilterState } from "@affilhomes/shared/types";
+import { PROPERTY_CATEGORY_LABELS } from "@/utils";
 import { FilterTag } from "./FilterTag";
 
 interface ActiveFilterTagsProps {

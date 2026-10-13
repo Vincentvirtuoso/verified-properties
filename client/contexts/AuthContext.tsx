@@ -5,7 +5,7 @@ import {
   PopulatedUser,
   Role,
   LOCKED_ROLES,
-} from "@/types";
+} from "@affilhomes/shared/types";
 
 import React, {
   createContext,
@@ -21,16 +21,16 @@ import {
   signOut,
   signUpWithEmail,
   updateCurrentProfile,
-} from "@/lib/supabase/auth";
+} from "@affilhomes/shared/supabase";
 import {
   createCompanyForCurrentUser,
   getCompanyWithTeam,
   mapCompanyRow,
   slugifyCompanyName,
   submitCompanyOnboardingDocs,
-} from "@/lib/supabase/companies";
-import { uploadUserFile } from "@/lib/supabase/storage";
-import { createClient } from "@/lib/supabase/client";
+} from "@affilhomes/shared/supabase";
+import { uploadUserFile } from "@affilhomes/shared/supabase";
+import { createClient } from "@affilhomes/shared/supabase/client";
 
 export interface CompanyOnboardingFiles {
   logo?: File | null;
@@ -44,10 +44,7 @@ interface AuthContextType {
   isLoading: boolean;
   authLoading: boolean;
   authError: string | null;
-  login: (credentials: {
-    email: string;
-    password: string;
-  }) => Promise<void>;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
   /**
    * Creates the auth account. Resolves to true when the user is signed in
    * immediately, false when they must confirm their email first.
@@ -83,9 +80,7 @@ interface AuthContextType {
   }) => Promise<Company>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
@@ -116,13 +111,9 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
 
     metadata: profile.metadata ?? {},
 
-    createdAt: profile.created_at
-      ? new Date(profile.created_at)
-      : new Date(),
+    createdAt: profile.created_at ? new Date(profile.created_at) : new Date(),
 
-    updatedAt: profile.updated_at
-      ? new Date(profile.updated_at)
-      : new Date(),
+    updatedAt: profile.updated_at ? new Date(profile.updated_at) : new Date(),
   } as PopulatedUser;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -155,11 +146,7 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export function AuthProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PopulatedUser | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,21 +205,19 @@ export function AuthProvider({
     // Keep state in sync with sign-in/out in other tabs, token refresh,
     // and email-link sessions.
     const supabase = createClient();
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === "SIGNED_OUT") {
-          setUser(null);
-          setCompanies([]);
-          return;
-        }
-        if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-          // Defer to avoid calling Supabase inside the auth callback.
-          setTimeout(() => {
-            if (mounted) void loadUser();
-          }, 0);
-        }
-      },
-    );
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        setCompanies([]);
+        return;
+      }
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        // Defer to avoid calling Supabase inside the auth callback.
+        setTimeout(() => {
+          if (mounted) void loadUser();
+        }, 0);
+      }
+    });
 
     return () => {
       mounted = false;
@@ -245,13 +230,7 @@ export function AuthProvider({
   }, [loadUser]);
 
   const login = useCallback(
-    async ({
-      email,
-      password,
-    }: {
-      email: string;
-      password: string;
-    }) => {
+    async ({ email, password }: { email: string; password: string }) => {
       setAuthLoading(true);
       setAuthError(null);
 
@@ -411,7 +390,12 @@ export function AuthProvider({
           // Upload files first so a failed upload never leaves a company
           // without its documents (the RPC allows one company per user).
           const logoUrl = files?.logo
-            ? await uploadUserFile("avatars", userId, files.logo, files.logo.name)
+            ? await uploadUserFile(
+                "avatars",
+                userId,
+                files.logo,
+                files.logo.name,
+              )
             : undefined;
           const cacPath = files?.cacCertificate
             ? await uploadUserFile(
@@ -533,9 +517,7 @@ export function useAuth() {
   const context = useContext(AuthContext);
 
   if (context === undefined) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
 
   return context;

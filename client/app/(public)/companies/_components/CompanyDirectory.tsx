@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Select from "@/components/ui/Select";
+import Select from "@affilhomes/shared/ui/Select";
 import { CompanyCard } from "./CompanyCard";
-import { Company, CompanyType, companyTypeLabels } from "@/types/company";
-import { Field } from "@/components/ui/Field";
+import {
+  Company,
+  CompanyType,
+  companyTypeLabels,
+} from "@affilhomes/shared/types/company";
+import { Field } from "@affilhomes/shared/ui/Field";
 
 interface Props {
   initialCompanies: Company[];

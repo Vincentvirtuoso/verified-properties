@@ -8,19 +8,19 @@ import {
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
   DOCUMENT_TYPE_LABELS,
-} from "@/utils/constants";
+} from "@/utils";
 import type {
   PropertyType,
   PropertyCategory,
   PropertyFeature,
   PropertyDocument,
   PropertyLocation,
-} from "@/types/property";
-import type { PropertyFilterState } from "@/types";
+} from "@affilhomes/shared/types/property";
+import type { PropertyFilterState } from "@affilhomes/shared/types";
 import { cn } from "@/lib/utils";
 
-import { Checkbox } from "../ui/Checkbox";
-import { Slider } from "../ui/Slider";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
+import { Slider } from "@affilhomes/shared/ui/Slider";
 
 const fieldClass = cn(
   "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm",

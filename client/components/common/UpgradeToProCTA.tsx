@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LuSparkles, LuChevronRight } from "react-icons/lu";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { useProUpgradeEligibility } from "@/hooks/useProUpgradeEligibility";
 
 type Variant = "card" | "compact" | "banner";

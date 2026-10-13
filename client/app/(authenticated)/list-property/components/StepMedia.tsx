@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, ChangeEvent } from "react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SectionHeader } from "@affilhomes/shared/ui/SectionHeader";
 import {
   LuImage,
   LuVideo,
@@ -11,9 +11,9 @@ import {
   LuShieldCheck,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import type { PropertyDocumentType } from "@/types";
+import type { PropertyDocumentType } from "@affilhomes/shared/types";
 import Image from "next/image";
-import { DOCUMENT_TYPES } from "@/utils/constants";
+import { DOCUMENT_TYPES } from "@/utils";
 
 interface StepMediaProps {
   formData: ListPropertyFormData;

@@ -1,8 +1,8 @@
 "use client";
 
-import type { Enquiry } from "@/types/enquiry";
+import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { formatRelativeTime } from "@/lib/formatters";
-import { Avatar } from "../ui/Avatar";
+import { Avatar } from "@affilhomes/shared/ui/Avatar";
 
 interface EnquiryListProps {
   enquiries: Enquiry[];

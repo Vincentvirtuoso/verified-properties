@@ -9,9 +9,12 @@ import {
   RiHotelBedLine,
   RiServiceLine,
 } from "react-icons/ri";
-import { PopulatedProperty, PropertyFeature } from "@/types/property";
+import {
+  PopulatedProperty,
+  PropertyFeature,
+} from "@affilhomes/shared/types/property";
 import { LuBath, LuBed } from "react-icons/lu";
-import { PROPERTY_FEATURE_LABELS } from "@/utils/constants";
+import { PROPERTY_FEATURE_LABELS } from "@/utils";
 
 const featureIcons: Record<PropertyFeature, React.ReactNode> = {
   boysQuarters: <RiHome4Line size={14} />,

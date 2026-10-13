@@ -2,12 +2,12 @@
 
 import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Field } from "@/components/ui/Field";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { SectionHeader } from "@affilhomes/shared/ui/SectionHeader";
 import { LuMapPin } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import { NIGERIAN_STATES } from "@/utils/constants";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { NIGERIAN_STATES } from "@/utils";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 
 const LocationPicker = dynamic(
   () =>
@@ -16,11 +16,7 @@ const LocationPicker = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <PageSpinner
-        label="Loading map…"
-      />
-    ),
+    loading: () => <PageSpinner label="Loading map…" />,
   },
 );
 

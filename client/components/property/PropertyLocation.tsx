@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { LuMapPin, LuExternalLink } from "react-icons/lu";
 import { cn } from "@/lib/utils";
-import { PropertyLocation } from "@/types/property";
+import { PropertyLocation } from "@affilhomes/shared/types/property";
 
 interface LocationPlaceholderProps {
   location: PropertyLocation;
@@ -53,7 +53,7 @@ export function LocationPlaceholder({
 
   const embedUrl = useMemo(() => {
     if (hasCoords) {
-      const d = 0.01; 
+      const d = 0.01;
       const bbox = [
         longitude - d,
         latitude - d,

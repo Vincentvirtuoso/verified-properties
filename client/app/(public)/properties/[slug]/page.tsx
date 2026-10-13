@@ -2,9 +2,9 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import PropertyDetailClient from "./PropertyDetailClient";
 import { PropertyNotFound } from "@/components/property/PropertyNotFound";
-import type { PopulatedProperty } from "@/types/property";
-import { createClient } from "@/lib/supabase/server";
-import { fetchPropertyBySlug } from "@/lib/supabase/publicProperties";
+import type { PopulatedProperty } from "@affilhomes/shared/types/property";
+import { createClient } from "@affilhomes/shared/supabase/client";
+import { fetchPropertyBySlug } from "@affilhomes/shared/supabase";
 import { properties as mockProperties } from "@/data/properties";
 
 export const revalidate = 3600;

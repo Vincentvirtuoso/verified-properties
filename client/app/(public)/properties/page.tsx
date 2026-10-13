@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { PropertiesPage } from "@/components/propertiesList/PropertiesPage";
 
 export const metadata: Metadata = {

@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@affilhomes/shared/ui/Button";
 import { LuBookOpen, LuHeadphones } from "react-icons/lu";
 import Link from "next/link";
 

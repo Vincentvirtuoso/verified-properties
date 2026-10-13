@@ -1,4 +1,4 @@
-import type { Course, Podcast } from "@/types";
+import type { Course, Podcast } from "@affilhomes/shared/types";
 
 export const MOCK_COURSES: Course[] = [
   {

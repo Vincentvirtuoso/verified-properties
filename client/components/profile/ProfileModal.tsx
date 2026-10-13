@@ -4,9 +4,9 @@ import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
-import { SectionHeader, InfoRow, StatCard } from "@/components/ui";
+import { SectionHeader, InfoRow,  } from "@affilhomes/shared/ui";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role, AgentSubRole, Company } from "@/types";
+import { Role, AgentSubRole, Company } from "@affilhomes/shared/types";
 import { formatCompactPrice } from "@/lib/formatters";
 import {
   LuShield,
@@ -23,8 +23,9 @@ import {
   LuArrowRight,
 } from "react-icons/lu";
 import { FiAlertCircle } from "react-icons/fi";
-import { roleLabels, roleDescriptions } from "@/utils/constants";
+import { roleLabels, roleDescriptions, ProfileRole } from "@/utils";
 import { usePathname } from "next/navigation";
+import { StatCard } from "../ui";
 
 const agentSubRoleLabels: Record<AgentSubRole, string> = {
   realtor: "Realtor",
@@ -140,10 +141,10 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
                           isActive ? "text-primary" : "text-foreground"
                         }`}
                       >
-                        {roleLabels[role]}
+                        {roleLabels[role as ProfileRole]}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {roleDescriptions[role]}
+                        {roleDescriptions[role as ProfileRole]}
                       </p>
                     </div>
 

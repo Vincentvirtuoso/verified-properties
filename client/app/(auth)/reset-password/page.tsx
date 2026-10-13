@@ -1,8 +1,8 @@
 "use client";
 
 import { AuthForm } from "@/components/forms/AuthForm";
-import { Field } from "@/components/ui/Field";
-import { updatePassword } from "@/lib/supabase/auth";
+import { Field } from "@affilhomes/shared/ui/Field";
+import { updatePassword } from "@affilhomes/shared/supabase";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FiLock } from "react-icons/fi";
@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
         label="New Password"
         name="password"
         type="password"
-        placeholder="••••••••"
+        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
@@ -71,7 +71,7 @@ const ResetPasswordPage = () => {
         label="Repeat Password"
         name="repeatPassword"
         type="password"
-        placeholder="••••••••"
+        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
         value={repeatPassword}
         onChange={(e) => setRepeatPassword(e.target.value)}
         error={error}

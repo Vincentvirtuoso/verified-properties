@@ -1,4 +1,4 @@
-import { Company } from "@/types";
+import { Company } from "@affilhomes/shared/types";
 
 export const mockCompanies: Company[] = [
   {

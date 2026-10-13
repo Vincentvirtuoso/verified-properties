@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@affilhomes/shared/supabase";
 
 /**
  * Landing URL for Supabase email links (sign-up confirmation and
