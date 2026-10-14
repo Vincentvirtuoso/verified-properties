@@ -38,7 +38,6 @@ const LoginForm = () => {
   };
 
   const safeCallbackUrl = getSafeRedirectUrl(callbackUrl);
-  console.log(user);
 
   useEffect(() => {
     if (isAuthenticated && user) {

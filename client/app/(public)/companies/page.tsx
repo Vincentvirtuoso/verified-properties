@@ -4,7 +4,6 @@ import { Company } from "@affilhomes/shared/types";
 import { Metadata } from "next";
 import { CompanyDirectory } from "./_components/CompanyDirectory";
 
-// ---------- SEO Metadata ----------
 export const metadata: Metadata = {
   title: "Real Estate Companies & Agencies â€“ Find Top Professionals",
   description:
@@ -77,7 +76,7 @@ function CompaniesStructuredData({
 // ---------- Server Component ----------
 export default async function CompaniesPage() {
   // Verified companies, or ones with a live listing.
-  const companies = await fetchPublicCompanies(await createClient()).catch(
+  const companies = await fetchPublicCompanies(await cr()).catch(
     () => [],
   );
 

@@ -39,17 +39,31 @@ export async function proxy(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname, search } = req.nextUrl;
-  const publicRoute = isPublic(pathname);
+  const { pathname } = req.nextUrl;
 
-  if (!user && !publicRoute) {
-    const url = new URL("/login", req.url);
-    url.searchParams.set("next", pathname + search);
-    return NextResponse.redirect(url);
+  const redirectTo = (path: string, searchParams?: Record<string, string>) => {
+    const url = req.nextUrl.clone();
+    url.pathname = path;
+    url.search = "";
+    if (searchParams) {
+      for (const [k, v] of Object.entries(searchParams)) {
+        url.searchParams.set(k, v);
+      }
+    }
+    const redirect = NextResponse.redirect(url);
+    // Preserve any refreshed auth cookies on the redirect response.
+    for (const cookie of res.cookies.getAll()) {
+      redirect.cookies.set(cookie);
+    }
+    return redirect;
+  };
+
+  if (!user && !isPublic(pathname)) {
+    return redirectTo("/login", { next: pathname + req.nextUrl.search });
   }
 
   if (user && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return redirectTo("/dashboard");
   }
 
   return res;
@@ -57,6 +71,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next|api|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
   ],
 };

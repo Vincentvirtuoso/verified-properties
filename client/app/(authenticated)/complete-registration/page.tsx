@@ -371,7 +371,6 @@ function CompleteRegistrationForm() {
             maxFiles={1}
             allowedTypes={["application/pdf", "image/jpeg", "image/png"]}
             onUploadComplete={(files) => {
-              console.log(files);
               setCacCertFile(files[0] || null);
 
               if (errors.cacCert)

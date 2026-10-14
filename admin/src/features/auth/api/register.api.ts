@@ -1,7 +1,5 @@
-import { signUpWithEmail } from "@affilhomes/shared/supabase";
-
+import { createAdminBrowserClient } from "@/lib/supabase";
 import type { RegisterInput } from "../schemas/register.schema";
-import { Role } from "@affilhomes/shared/types";
 
 export type RegisterResult = {
   needsConfirm: boolean;
@@ -10,15 +8,25 @@ export type RegisterResult = {
 export async function requestAdminAccess(
   input: RegisterInput,
 ): Promise<RegisterResult> {
-  const { session } = await signUpWithEmail(
-    input.email,
-    input.password,
-    input.name,
-    {
-      requested_role: Role.Admin,
-      admin_reason: input.reason,
-    },
-  );
+  const supabase = createAdminBrowserClient();
 
-  return { needsConfirm: !session };
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email.trim(),
+    password: input.password,
+    options: {
+      data: {
+        full_name: input.name.trim(),
+        access_request: "admin",
+        admin_reason: input.reason.trim().slice(0, 1000),
+      },
+    },
+  });
+
+  if (error) {
+    throw new Error(
+      "We couldn't submit your request. Check your details and try again.",
+    );
+  }
+
+  return { needsConfirm: !data.session };
 }

@@ -1,30 +1,62 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { errorText } from "@affilhomes/shared/supabase/admin";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Loads an admin list and reloads it when `deps` change or reload() is called. */
-export function useAdminList<T>(load: () => Promise<T[]>, deps: unknown[]) {
-  const [tick, setTick] = useState(0);
-  const key = JSON.stringify(deps) + ":" + tick;
-  const [state, setState] = useState<{ key: string; rows: T[] | null; error: string | null }>({
-    key: "",
-    rows: null,
-    error: null,
-  });
+export type UseAdminListResult<T> = {
+  rows: T[] | null;
+  error: string | null;
+  loading: boolean;
+  reload: () => Promise<void>;
+};
+
+/**
+ * Small fetch helper for admin tab lists.
+ *
+ * `deps` drives the initial fetch — pass the same values the fetcher
+ * closes over (filters, status, etc.). The fetcher itself is stored in
+ * a ref, so you don’t need to memoize it.
+ */
+export function useAdminList<T>(
+  fetcher: () => Promise<T[]>,
+  deps: unknown[] = [],
+): UseAdminListResult<T> {
+  const [rows, setRows] = useState<T[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const reload = useCallback(async () => {
+    if (mountedRef.current) {
+      setLoading(true);
+      setError(null);
+    }
+    try {
+      const data = await fetcherRef.current();
+      if (!mountedRef.current) return;
+      setRows(data);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setRows([]);
+      setError(err instanceof Error ? err.message : "Couldn’t load this list.");
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    load()
-      .then((rows) => !cancelled && setState({ key, rows, error: null }))
-      .catch((e) => !cancelled && setState({ key, rows: [], error: errorText(e, "Couldn't load this list.") }));
-    return () => {
-      cancelled = true;
-    };
+    void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, deps);
 
-  const current = state.key === key;
-  const reload = useCallback(() => setTick((t) => t + 1), []);
-  return { rows: current ? state.rows : null, error: current ? state.error : null, reload };
+  return { rows, error, loading, reload };
 }

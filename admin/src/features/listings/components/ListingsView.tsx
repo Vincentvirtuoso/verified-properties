@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   adminUnpublish,
   documentLink,
-  errorText,
   fetchAdminListings,
   fetchListingDocuments,
   reviewListing,
@@ -14,16 +13,16 @@ import {
   type ListingDocument,
   type ReviewStatus,
 } from "@affilhomes/shared/supabase/admin";
-import { formatPrice } from "@/lib/formatters";
 import { Button } from "@affilhomes/shared/ui/Button";
+import { formatPrice } from "@affilhomes/shared/utils";
 import {
-  askReason,
+  AskReason,
   Empty,
   FilterChips,
   ReviewActions,
   StatusPill,
-} from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+} from "@/components/ui/ReviewActions";
+import { useAdminList } from "@/hooks/useAdminList";
 
 type Filter = ReviewStatus | "live";
 
@@ -37,17 +36,6 @@ export function ListingsTab() {
     [filter],
   );
   const [open, setOpen] = useState<string | null>(null);
-
-  const takeDown = async (r: AdminListing) => {
-    const reason = askReason(`Take "${r.title}" off the site?`);
-    if (!reason) return;
-    try {
-      await adminUnpublish(r.id, reason);
-      reload();
-    } catch (e) {
-      window.alert(errorText(e, "Couldn't take that listing down."));
-    }
-  };
 
   return (
     <section className="space-y-4">
@@ -67,7 +55,7 @@ export function ListingsTab() {
         </p>
       )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
       ) : rows.length === 0 ? (
         <Empty />
       ) : (
@@ -93,7 +81,7 @@ export function ListingsTab() {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {r.ownerName} Â· {r.city}, {r.state} Â· {formatPrice(r.price)}
+                    {r.ownerName} · {r.city}, {r.state} · {formatPrice(r.price)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Owner{" "}
@@ -102,7 +90,7 @@ export function ListingsTab() {
                       : r.ownerVerified
                         ? "verified"
                         : "not verified"}{" "}
-                    Â· Documents {r.documentsApproved}/{r.documentsTotal}{" "}
+                    · Documents {r.documentsApproved}/{r.documentsTotal}{" "}
                     approved
                   </p>
                   {r.reviewNote && (
@@ -117,13 +105,17 @@ export function ListingsTab() {
                     : r.reviewStatus.replace("_", " ")}
                 </StatusPill>
                 {r.status === "active" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => takeDown(r)}
-                  >
-                    Take down
-                  </Button>
+                  <AskReason
+                    label="Take down"
+                    prompt={`Why is "${r.title}" being taken down?`}
+                    placeholder="e.g. Duplicate listing, misleading photos…"
+                    confirmLabel="Take down"
+                    destructive
+                    onConfirm={async (reason) => {
+                      await adminUnpublish(r.id, reason);
+                      reload();
+                    }}
+                  />
                 )}
                 {r.reviewStatus === "pending" && (
                   <Button
@@ -183,7 +175,7 @@ function ListingReview({
           Property documents
         </p>
         {!docs.rows ? (
-          <p className="text-xs text-muted-foreground">Loadingâ€¦</p>
+          <p className="text-xs text-muted-foreground">Loading…</p>
         ) : docs.rows.length === 0 ? (
           <p className="text-xs text-muted-foreground">
             No documents uploaded.
@@ -200,7 +192,7 @@ function ListingReview({
                   className="font-medium text-primary hover:underline"
                 >
                   {d.documentType.replace(/_/g, " ")}{" "}
-                  {d.title ? `Â· ${d.title}` : ""}
+                  {d.title ? `· ${d.title}` : ""}
                 </button>
                 <StatusPill>{d.reviewStatus.replace("_", " ")}</StatusPill>
                 {d.reviewNote && (

@@ -12,7 +12,7 @@ import {
   signInWithEmail,
   signOut,
 } from "@affilhomes/shared/supabase";
-import { createClient } from "@affilhomes/shared/supabase/client";
+// import { createClient } from "@affilhomes/shared/supabase/client";
 import React, {
   createContext,
   useCallback,
@@ -23,6 +23,7 @@ import React, {
 } from "react";
 
 import { fetchUserRoles } from "@/features/auth/api/admin-roles.api";
+import { createAdminBrowserClient } from "@/lib/supabase";
 
 export type AuthStatus =
   | "loading"
@@ -173,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void loadUser();
 
-    const supabase = createClient();
+    const supabase = createAdminBrowserClient();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         if (!mountedRef.current) return;

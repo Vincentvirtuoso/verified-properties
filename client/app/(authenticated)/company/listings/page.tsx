@@ -64,7 +64,6 @@ export default function CompanyListingsPage() {
     let cancelled = false;
     (async () => {
       const supabase = createClient();
-      // RLS: company members can see every company listing by teammates.
       const { data, error } = await supabase
         .from("properties")
         .select(

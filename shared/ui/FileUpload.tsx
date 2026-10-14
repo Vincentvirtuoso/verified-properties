@@ -211,10 +211,6 @@ export default function FileUpload({
     );
 
     if (successfullyUploadedFiles.length > 0) {
-      console.log(
-        "Files uploaded successfully:",
-        successfullyUploadedFiles.map((f) => f.file),
-      );
       onUploadComplete(successfullyUploadedFiles.map((f) => f.file));
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setReportedCompleteIds((prev) => {

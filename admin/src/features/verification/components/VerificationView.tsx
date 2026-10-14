@@ -12,15 +12,15 @@ import {
   type VerificationStatus,
 } from "@affilhomes/shared/supabase/admin";
 import { ID_DOC_LABEL, type IdDocType } from "@affilhomes/shared/supabase";
-import { Empty, FilterChips, ReviewActions, StatusPill } from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+import { Empty, FilterChips, ReviewActions, StatusPill } from "../../../components/ui/ReviewActions";
+import { useAdminList } from "../../../hooks/useAdminList";
 
 const DOC_LABELS: Record<string, string> = {
   cacCertificateUrl: "CAC certificate",
   companyLogoUrl: "Logo",
 };
 
-export function VerificationTab() {
+export function VerificationView() {
   const [status, setStatus] = useState<VerificationStatus>("pending");
   const queue = useAdminList<VerificationItem>(
     () => fetchVerificationQueue(status),

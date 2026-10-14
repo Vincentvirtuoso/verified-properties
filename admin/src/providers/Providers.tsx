@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AuthProvider } from "./AuthProvider";
 import { ToastProvider } from "./ToastProvider";
 import { isDev } from "@affilhomes/shared/utils";
+import { ThemeProvider } from "./ThemeProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -24,12 +25,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </AuthProvider>
-      {isDev() && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
+        {isDev() && <ReactQueryDevtools initialIsOpen={false} />}
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

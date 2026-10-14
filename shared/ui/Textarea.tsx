@@ -1,9 +1,9 @@
 "use client";
 
 import { cn } from "../utils";
-import { useId, useRef, useEffect } from "react";
+import { useId, useRef, useEffect, TextareaHTMLAttributes } from "react";
 
-interface TextareaProps {
+interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"|"onChange"> {
   label?: string;
   name: string;
   value: string;
@@ -35,6 +35,7 @@ export function Textarea({
   autoResize = true,
   disabled = false,
   className,
+  ...props
 }: TextareaProps) {
   const id = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +100,7 @@ export function Textarea({
           style={
             !autoResize ? { height: `${rows * 1.625 + 1.5}rem` } : undefined
           }
+          {...props}
         />
       </div>
 
