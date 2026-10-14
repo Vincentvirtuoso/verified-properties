@@ -1,18 +1,5 @@
 "use client";
 
-import {
-  type AdminStatus,
-  type PopulatedUser,
-  Role,
-  isAdminRole,
-  isSuperAdminRole,
-} from "@affilhomes/shared/types";
-import {
-  getCurrentProfile,
-  signInWithEmail,
-  signOut,
-} from "@affilhomes/shared/supabase";
-// import { createClient } from "@affilhomes/shared/supabase/client";
 import React, {
   createContext,
   useCallback,
@@ -21,9 +8,14 @@ import React, {
   useRef,
   useState,
 } from "react";
+import type { AdminStatus, PopulatedUser } from "@affilhomes/shared/types";
+import { Role } from "@affilhomes/shared/types";
 
-import { fetchUserRoles } from "@/features/auth/api/admin-roles.api";
 import { createAdminBrowserClient } from "@/lib/supabase";
+import {
+  fetchAdminRoles,
+  type AdminRole,
+} from "@/features/auth/api/admin-roles.api";
 
 export type AuthStatus =
   | "loading"
@@ -34,17 +26,25 @@ export type AuthStatus =
   | "suspended"
   | "unauthorized";
 
+type Snapshot = {
+  user: PopulatedUser | null;
+  role: AdminRole | null;
+  status: AuthStatus;
+};
+
+const SIGNED_OUT: Snapshot = { user: null, role: null, status: "unauthenticated" };
+
 interface AuthContextValue {
   user: PopulatedUser | null;
-  /** Effective admin role for /admin. Null when not an active admin. */
-  role: Role | null;
+  /** Effective admin role. Null unless the account is an active admin. */
+  role: AdminRole | null;
   status: AuthStatus;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSuperAdmin: boolean;
   authLoading: boolean;
   authError: string | null;
-  isSuperAdmin: boolean;
-  login: (creds: { email: string; password: string }) => Promise<void>;
+  login: (creds: { email: string; password: string }) => Promise<AuthStatus>;
   logout: () => Promise<void>;
   clearError: () => void;
   refreshUser: () => Promise<void>;
@@ -52,201 +52,184 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function mapProfileToUser(profile: any): PopulatedUser {
-  return {
-    _id: profile.id,
-    email: profile.email ?? "",
-    name: profile.name ?? "",
-    phone: profile.phone ?? "",
-    whatsappNumber: profile.whatsapp_number ?? "",
-    avatar: profile.avatar ?? "",
-    passwordHash: "",
-    roles: profile.roles ?? [],
-    activeRole: profile.active_role ?? Role.Viewer,
-    isEmailVerified: profile.is_email_verified ?? false,
-    isPhoneVerified: profile.is_phone_verified ?? false,
-    companyId: undefined,
-    companyRole: profile.company_role ?? undefined,
-    viewerProfile: profile.viewer_profile ?? undefined,
-    agentProfile: profile.agent_profile ?? undefined,
-    adminStatus: (profile.admin_status ?? null) as AdminStatus | null,
-    metadata: profile.metadata ?? {},
-    createdAt: profile.created_at ? new Date(profile.created_at) : new Date(),
-    updatedAt: profile.updated_at ? new Date(profile.updated_at) : new Date(),
-  } as PopulatedUser;
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
 function errorMessage(err: unknown, fallback: string) {
   if (err instanceof Error) return err.message;
-  if (err && typeof err === "object" && "message" in err)
+  if (err && typeof err === "object" && "message" in err) {
     return String((err as { message: unknown }).message);
+  }
   return fallback;
 }
 
-function resolveStatus(
-  profile: PopulatedUser | null,
-  adminRoles: Role[],
-): AuthStatus {
-  if (!profile) return "unauthenticated";
-  const s = profile.adminStatus;
-  if (s === "pending") return "pending";
-  if (s === "rejected") return "rejected";
-  if (s === "suspended") return "suspended";
-  if (s !== "active") return "unauthorized";
-  if (!adminRoles.some(isAdminRole)) return "unauthorized";
-  return "authenticated";
+// Only the fields the admin UI reads. Everything else is left out on purpose.
+function mapProfileToUser(profile: Record<string, unknown>): PopulatedUser {
+  return {
+    _id: String(profile.id),
+    email: String(profile.email ?? ""),
+    name: String(profile.name ?? ""),
+    avatar: (profile.avatar as string | undefined) ?? "",
+    phone: (profile.phone as string | undefined) ?? "",
+    whatsappNumber: (profile.whatsapp_number as string | undefined) ?? "",
+    passwordHash: "",
+    roles: (profile.roles as PopulatedUser["roles"]) ?? [],
+    activeRole: (profile.active_role as Role) ?? Role.Viewer,
+    isEmailVerified: Boolean(profile.is_email_verified),
+    isPhoneVerified: Boolean(profile.is_phone_verified),
+    adminStatus: (profile.admin_status as AdminStatus | null) ?? null,
+    companyId: undefined,
+    createdAt: profile.created_at ? new Date(String(profile.created_at)) : new Date(),
+    updatedAt: profile.updated_at ? new Date(String(profile.updated_at)) : new Date(),
+  } as PopulatedUser;
 }
 
-function resolveEffectiveRole(
-  profile: PopulatedUser | null,
-  adminRoles: Role[],
-): Role | null {
-  if (!profile || profile.adminStatus !== "active") return null;
-  if (adminRoles.some(isSuperAdminRole)) return Role.SuperAdmin;
-  if (adminRoles.some((r) => r === Role.Admin)) return Role.Admin;
+function resolveRole(
+  adminStatus: AdminStatus | null | undefined,
+  adminRoles: AdminRole[],
+): AdminRole | null {
+  if (adminStatus !== "active") return null;
+  if (adminRoles.includes("super_admin")) return "super_admin";
+  if (adminRoles.includes("admin")) return "admin";
   return null;
 }
 
+function resolveStatus(
+  adminStatus: AdminStatus | null | undefined,
+  role: AdminRole | null,
+): AuthStatus {
+  switch (adminStatus) {
+    case "pending":
+      return "pending";
+    case "rejected":
+      return "rejected";
+    case "suspended":
+      return "suspended";
+    case "active":
+      return role ? "authenticated" : "unauthorized";
+    default:
+      return "unauthorized";
+  }
+}
+
+async function loadSession(
+  supabase: ReturnType<typeof createAdminBrowserClient>,
+): Promise<Snapshot> {
+  // getUser() verifies the token with Supabase. getSession() only reads the cookie.
+  const { data: authData, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !authData.user) return SIGNED_OUT;
+
+  const { data: profile, error: profileErr } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+  if (profileErr) throw profileErr;
+  if (!profile) return { user: null, role: null, status: "unauthorized" };
+
+  const adminRoles = await fetchAdminRoles(supabase, authData.user.id);
+  const user = mapProfileToUser(profile as Record<string, unknown>);
+  const role = resolveRole(user.adminStatus, adminRoles);
+
+  return { user, role, status: resolveStatus(user.adminStatus, role) };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<PopulatedUser | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [supabase] = useState(() => createAdminBrowserClient());
+  const [snapshot, setSnapshot] = useState<Snapshot>({
+    user: null,
+    role: null,
+    status: "loading",
+  });
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const mountedRef = useRef(true);
-  const inflightRef = useRef<Promise<PopulatedUser | null> | null>(null);
+  // Each load gets an id; only the newest one is allowed to write state.
+  const requestIdRef = useRef(0);
+
+  const refresh = useCallback(async (): Promise<Snapshot> => {
+    const id = ++requestIdRef.current;
+    let next: Snapshot;
+    try {
+      next = await loadSession(supabase);
+    } catch (err) {
+      console.error("Failed to load admin session:", err);
+      next = SIGNED_OUT;
+    }
+    if (id === requestIdRef.current) setSnapshot(next);
+    return next;
+  }, [supabase]);
 
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+    void refresh();
 
-  const clearError = useCallback(() => {
-    if (mountedRef.current) setAuthError(null);
-  }, []);
-
-  const loadUser = useCallback(async (): Promise<PopulatedUser | null> => {
-    // Deduplicate: StrictMode and login()+SIGNED_IN would otherwise fire
-    // two Supabase round-trips back-to-back.
-    if (inflightRef.current) return inflightRef.current;
-
-    const run = (async () => {
-      try {
-        const profile = await getCurrentProfile();
-        if (!mountedRef.current) return null;
-
-        if (!profile) {
-          setUser(null);
-          setRole(null);
-          setStatus("unauthenticated");
-          return null;
-        }
-
-        const mapped = mapProfileToUser(profile);
-        const adminRoles = await fetchUserRoles(mapped._id);
-        if (!mountedRef.current) return null;
-
-        setUser(mapped);
-        setRole(resolveEffectiveRole(mapped, adminRoles));
-        setStatus(resolveStatus(mapped, adminRoles));
-        return mapped;
-      } catch (err) {
-        console.error("Failed to load admin user:", err);
-        if (!mountedRef.current) return null;
-        setUser(null);
-        setRole(null);
-        setStatus("unauthenticated");
-        return null;
-      } finally {
-        inflightRef.current = null;
-      }
-    })();
-
-    inflightRef.current = run;
-    return run;
-  }, []);
-
-  useEffect(() => {
-    void loadUser();
-
-    const supabase = createAdminBrowserClient();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
-        if (!mountedRef.current) return;
-        setUser(null);
-        setRole(null);
-        setStatus("unauthenticated");
+        requestIdRef.current++;
+        setSnapshot(SIGNED_OUT);
         return;
       }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        // Defer: Supabase warns against calling its methods inside this
-        // callback, and it also lets `loadUser()`'s inflight promise clear.
-        setTimeout(() => {
-          if (mountedRef.current) void loadUser();
-        }, 0);
+        // Defer: Supabase advises against calling its methods inside this callback.
+        setTimeout(() => void refresh(), 0);
       }
     });
 
-    return () => {
-      sub.subscription.unsubscribe();
-    };
-  }, [loadUser]);
+    return () => sub.subscription.unsubscribe();
+  }, [supabase, refresh]);
+
+  const clearError = useCallback(() => setAuthError(null), []);
 
   const login = useCallback(
     async ({ email, password }: { email: string; password: string }) => {
       setAuthLoading(true);
       setAuthError(null);
       try {
-        await signInWithEmail(email, password);
-        await loadUser();
-      } catch (err) {
-        if (mountedRef.current) {
-          setAuthError(errorMessage(err, "Login failed."));
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const next = await refresh();
+
+        // Accounts with no admin relationship don't keep a session here.
+        // Pending, rejected, and suspended accounts keep one so they can see their status page.
+        if (next.status === "unauthorized") {
+          await supabase.auth.signOut();
+          setSnapshot(SIGNED_OUT);
+          setAuthError("This account doesn't have admin access.");
         }
+        return next.status;
+      } catch (err) {
+        setAuthError(errorMessage(err, "Login failed."));
         throw err;
       } finally {
-        if (mountedRef.current) setAuthLoading(false);
+        setAuthLoading(false);
       }
     },
-    [loadUser],
+    [supabase, refresh],
   );
 
   const logout = useCallback(async () => {
     setAuthLoading(true);
     setAuthError(null);
-    try {
-      await signOut();
-      if (!mountedRef.current) return;
-      setUser(null);
-      setRole(null);
-      setStatus("unauthenticated");
-    } catch {
-      if (mountedRef.current) setAuthError("Logout failed. Please try again.");
-    } finally {
-      if (mountedRef.current) setAuthLoading(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setAuthError("Logout failed. Please try again.");
+    } else {
+      setSnapshot(SIGNED_OUT);
     }
-  }, []);
+    setAuthLoading(false);
+  }, [supabase]);
 
   const refreshUser = useCallback(async () => {
-    await loadUser();
-  }, [loadUser]);
-
-  const isSuperAdmin = role === Role.SuperAdmin;
+    await refresh();
+  }, [refresh]);
 
   const value: AuthContextValue = {
-    user,
-    role,
-    status,
-    isAuthenticated: status === "authenticated",
-    isLoading: status === "loading",
+    user: snapshot.user,
+    role: snapshot.role,
+    status: snapshot.status,
+    isAuthenticated: snapshot.status === "authenticated",
+    isLoading: snapshot.status === "loading",
+    isSuperAdmin: snapshot.role === "super_admin",
     authLoading,
     authError,
-    isSuperAdmin,
     login,
     logout,
     clearError,
