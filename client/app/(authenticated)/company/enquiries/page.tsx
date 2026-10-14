@@ -75,7 +75,7 @@ export default function CompanyEnquiriesPage() {
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
   if (isLoading) {
-    return <PageSpinner label="Loading enquiriesâ€¦" />;
+    return <PageSpinner label="Loading enquiries..." />;
   }
 
   if (!user) return null;

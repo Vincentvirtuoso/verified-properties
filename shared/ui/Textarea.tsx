@@ -1,11 +1,20 @@
 "use client";
 
 import { cn } from "../utils";
-import { useId, useRef, useEffect, TextareaHTMLAttributes } from "react";
+import {
+  useId,
+  useRef,
+  useEffect,
+  TextareaHTMLAttributes,
+  CSSProperties,
+} from "react";
 
-interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"|"onChange"> {
+interface TextareaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "className" | "onChange"
+> {
   label?: string;
-  name: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -14,11 +23,23 @@ interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>
   description?: string;
   maxLength?: number;
   showCount?: boolean;
+  /** Initial visible rows. Also the default `minRows` when auto-resizing. */
   rows?: number;
+  /** Minimum visible rows when auto-resizing. Defaults to `rows`. */
+  minRows?: number;
+  /** Maximum visible rows before the textarea starts scrolling. */
+  maxRows?: number;
   autoResize?: boolean;
   disabled?: boolean;
   className?: string;
 }
+
+const LINE_HEIGHT_REM = 1.625;
+const VERTICAL_PADDING_REM = 1.5; // py-3 top + bottom
+const DEFAULT_MAX_ROWS = 10;
+
+const rowsToRem = (rows: number) =>
+  rows * LINE_HEIGHT_REM + VERTICAL_PADDING_REM;
 
 export function Textarea({
   label,
@@ -32,30 +53,62 @@ export function Textarea({
   maxLength,
   showCount = !!maxLength,
   rows = 3,
+  minRows,
+  maxRows,
   autoResize = true,
   disabled = false,
   className,
+  style,
   ...props
 }: TextareaProps) {
   const id = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const effectiveMinRows = minRows ?? rows;
+  const effectiveMaxRows = maxRows ?? DEFAULT_MAX_ROWS;
+
   useEffect(() => {
     if (!autoResize || !textareaRef.current) return;
 
     const textarea = textareaRef.current;
+
     const resize = () => {
+      const rootFontSize =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const toPx = (rem: number) => rem * rootFontSize;
+
+      const minPx = toPx(rowsToRem(effectiveMinRows));
+      const maxPx = toPx(rowsToRem(effectiveMaxRows));
+
       textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      const natural = textarea.scrollHeight;
+      const next = Math.min(Math.max(natural, minPx), maxPx);
+
+      textarea.style.height = `${next}px`;
+      // Show a scrollbar only when content overflows maxRows.
+      textarea.style.overflowY = natural > maxPx ? "auto" : "hidden";
     };
 
     resize();
     textarea.addEventListener("input", resize);
     return () => textarea.removeEventListener("input", resize);
-  }, [autoResize, value]);
+  }, [autoResize, value, effectiveMinRows, effectiveMaxRows]);
 
   const characterCount = value.length;
   const isOverLimit = maxLength ? characterCount > maxLength : false;
+
+  // Inline styles double as an SSR/first-paint fallback — the effect
+  // refines the height once mounted.
+  const baseStyle: CSSProperties = autoResize
+    ? {
+        minHeight: `${rowsToRem(effectiveMinRows)}rem`,
+        maxHeight: `${rowsToRem(effectiveMaxRows)}rem`,
+      }
+    : {
+        height: `${rowsToRem(rows)}rem`,
+        ...(minRows != null && { minHeight: `${rowsToRem(minRows)}rem` }),
+        ...(maxRows != null && { maxHeight: `${rowsToRem(maxRows)}rem` }),
+      };
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -91,15 +144,12 @@ export function Textarea({
           maxLength={maxLength}
           rows={autoResize ? undefined : rows}
           className={cn(
-            "block w-full resize-none rounded-xl bg-transparent px-4 py-3 max-h-72",
-            "text-sm text-foreground placeholder:text-muted-foreground",
+            "block w-full resize-none rounded-xl bg-transparent px-4 py-3",
+            "text-sm text-foreground placeholder:text-muted",
             "focus:outline-none",
             "disabled:cursor-not-allowed",
-            !autoResize && "min-h-30",
           )}
-          style={
-            !autoResize ? { height: `${rows * 1.625 + 1.5}rem` } : undefined
-          }
+          style={{ ...baseStyle, ...style }}
           {...props}
         />
       </div>
@@ -119,7 +169,7 @@ export function Textarea({
             </p>
           )}
           {!error && description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="text-xs text-muted">{description}</p>
           )}
         </div>
 
@@ -129,7 +179,7 @@ export function Textarea({
               "text-xs tabular-nums shrink-0",
               isOverLimit
                 ? "text-destructive font-medium"
-                : "text-muted-foreground",
+                : "text-muted",
             )}
           >
             {characterCount}

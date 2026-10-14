@@ -74,7 +74,7 @@ export function AuditTab() {
         </p>
       )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
         <Empty>No actions recorded yet.</Empty>
       ) : (
@@ -91,7 +91,7 @@ export function AuditTab() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {r.targetType} {r.targetId?.slice(0, 8)} Â· by{" "}
+                  {r.targetType} {r.targetId?.slice(0, 8)} · by{" "}
                   {r.adminId ? r.adminId.slice(0, 8) : "system"}
                 </p>
                 {r.reason && (

@@ -2,8 +2,8 @@
 @import "@affilhomes/shared/styles/tokens.css";
 @import "@affilhomes/shared/styles/components.css";
 
-@source "../";
-@source "../../shared/ui";
+@source "../../";
+@source "../../../shared/ui";
 
 * {
   scrollbar-color: var(--primary) transparent;

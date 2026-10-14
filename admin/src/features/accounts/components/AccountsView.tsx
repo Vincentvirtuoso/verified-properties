@@ -71,7 +71,7 @@ export function AccountsTab() {
         </p>
       )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
         <Empty>No accounts found.</Empty>
       ) : (
@@ -86,8 +86,8 @@ export function AccountsTab() {
                   {a.name}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {a.subjectType === "company" ? "Company" : "User"} Â·{" "}
-                  {a.email ?? "no email"} Â· {a.detail?.replace(/_/g, " ")} Â·
+                  {a.subjectType === "company" ? "Company" : "User"} ·{" "}
+                  {a.email ?? "no email"} · {a.detail?.replace(/_/g, " ")} ·
                   verification {a.verificationStatus}
                 </p>
                 {a.suspended && a.suspensionReason && (

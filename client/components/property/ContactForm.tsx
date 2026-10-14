@@ -18,22 +18,38 @@ interface ContactFormProps {
 }
 
 const enquirySchema = z.object({
-  name: z.string().trim().min(1, "Please enter your name").max(100, "Name is too long"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Please enter your name")
+    .max(100, "Name is too long"),
   phone: z
     .string()
     .trim()
     .regex(/^\+?[0-9 ()-]{7,20}$/, "Please enter a valid phone number"),
-  message: z.string().trim().min(1, "Please enter a message").max(2000, "Message is too long"),
+  message: z
+    .string()
+    .trim()
+    .min(1, "Please enter a message")
+    .max(2000, "Message is too long"),
 });
 
-export default function ContactForm({ propertyId, propertyTitle, ownerId }: ContactFormProps) {
-  const { user,isLoading } = useAuth();
+export default function ContactForm({
+  propertyId,
+  propertyTitle,
+  ownerId,
+}: ContactFormProps) {
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<{ name: string | null; phone: string | null; message: string }>({
+  const [form, setForm] = useState<{
+    name: string | null;
+    phone: string | null;
+    message: string;
+  }>({
     // null = not edited yet, so the signed-in user's profile is used.
     name: null,
     phone: null,
@@ -111,86 +127,94 @@ export default function ContactForm({ propertyId, propertyTitle, ownerId }: Cont
               <RiCheckLine className="h-4 w-4 text-success" /> Enquiry sent
             </p>
             <p className="text-muted-foreground">
-              The agent has your message and number. You can follow the conversation in your enquiries.
+              The agent has your message and number. You can follow the
+              conversation in your enquiries.
             </p>
-            <Link href="/enquiries" className="inline-block font-semibold text-primary hover:underline">
+            <Link
+              href="/enquiries"
+              className="inline-block font-semibold text-primary hover:underline"
+            >
               View my enquiries
             </Link>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-              Your Name
-            </label>
-            <input
-              type="text"
-              required
-              value={values.name}
-              onChange={(e) => {
-                setTouched((t) => ({ ...t, name: true }));
-                setForm({ ...form, name: e.target.value });
-              }}
-              placeholder="John Doe"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              required
-              value={values.phone}
-              onChange={(e) => {
-                setTouched((t) => ({ ...t, phone: true }));
-                setForm({ ...form, phone: e.target.value });
-              }}
-              placeholder="+234 800 000 0000"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-              Message
-            </label>
-            <textarea
-              rows={4}
-              maxLength={2000}
-              value={values.message}
-              onChange={(e) => {
-                setTouched((t) => ({ ...t, message: true }));
-                setForm({ ...form, message: e.target.value });
-              }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Your Name
+              </label>
+              <input
+                type="text"
+                required
+                value={values.name}
+                onChange={(e) => {
+                  setTouched((t) => ({ ...t, name: true }));
+                  setForm({ ...form, name: e.target.value });
+                }}
+                placeholder="John Doe"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                required
+                value={values.phone}
+                onChange={(e) => {
+                  setTouched((t) => ({ ...t, phone: true }));
+                  setForm({ ...form, phone: e.target.value });
+                }}
+                placeholder="+234 800 000 0000"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Message
+              </label>
+              <textarea
+                rows={4}
+                maxLength={2000}
+                value={values.message}
+                onChange={(e) => {
+                  setTouched((t) => ({ ...t, message: true }));
+                  setForm({ ...form, message: e.target.value });
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
+              />
+            </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <motion.button
-            type="submit"
-            disabled={submitting}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
-              sent
-                ? "bg-success text-success-foreground"
-                : "bg-primary hover:bg-primary/90 text-primary-foreground"
-            }`}
-            whileTap={{ scale: 0.98 }}
-          >
-            {sent ? (
-              <>
-                <RiCheckLine size={16} />
-                Message Sent!
-              </>
-            ) : (
-              <>
-                <RiSendPlane2Line size={16} />
-                {submitting ? "Sendingâ€¦" : user ? "Send Message" : "Sign in to send"}
-              </>
-            )}
-          </motion.button>
-        </form>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <motion.button
+              type="submit"
+              disabled={submitting}
+              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                sent
+                  ? "bg-success text-success-foreground"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              }`}
+              whileTap={{ scale: 0.98 }}
+            >
+              {sent ? (
+                <>
+                  <RiCheckLine size={16} />
+                  Message Sent!
+                </>
+              ) : (
+                <>
+                  <RiSendPlane2Line size={16} />
+                  {submitting
+                    ? "Sending..."
+                    : user
+                      ? "Send Message"
+                      : "Sign in to send"}
+                </>
+              )}
+            </motion.button>
+          </form>
         )}
       </div>
     </motion.div>

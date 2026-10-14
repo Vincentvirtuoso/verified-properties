@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -29,6 +30,9 @@ import { PropertySearch } from "./PropertySearch";
 import { PropertiesResultsHeader } from "./PropertiesResultsHeader";
 import { ActiveFilterTags } from "./ActiveFilterTags";
 import { PropertiesResults } from "./PropertiesResults";
+import { PropertiesPagination } from "./PropertiesPagination";
+
+const PAGE_SIZE = 12;
 
 export function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -36,6 +40,12 @@ export function PropertiesPage() {
 
   const { properties, isLoading, error: loadError } = usePropertiesData();
   const search = usePropertySearch(properties);
+
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const scrollToList = useCallback(() => {
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const {
     SORT_OPTIONS,
@@ -55,10 +65,14 @@ export function PropertiesPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<PropertyFilterState>(DEFAULT_FILTERS);
+    const [page, setPage] = useState(1);
+
 
   useEffect(() => {
     setFilters(DEFAULT_FILTERS);
   }, [DEFAULT_FILTERS]);
+
+  
 
   const currentType = (searchParams.get("type") as FilterType) || "all";
 
@@ -197,16 +211,38 @@ export function PropertiesPage() {
         else params.set("type", type);
         router.push(`/properties?${params.toString()}`, { scroll: false });
       });
+      scrollToList();
     },
-    [router, searchParams],
+    [router, searchParams, scrollToList],
   );
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<PropertyFilterState>) => {
       setFilters((prev) => ({ ...prev, ...newFilters }));
+      scrollToList();
     },
     [],
   );
+
+  const handlePageChange = useCallback(
+    (next: number) => {
+      setPage(next);
+      scrollToList();
+    },
+    [scrollToList],
+  );
+
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedProperties.length / PAGE_SIZE),
+  );
+  const currentPage = Math.min(page, totalPages);
+
+  const pagedProperties = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return sortedProperties.slice(start, start + PAGE_SIZE);
+  }, [sortedProperties, currentPage]);
 
   const clearAllFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
@@ -226,6 +262,9 @@ export function PropertiesPage() {
     },
     [DEFAULT_FILTERS, search],
   );
+useEffect(() => {
+  setPage(1);
+}, [filters, sortBy, currentType, search.debouncedSearchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -252,7 +291,7 @@ export function PropertiesPage() {
             allDocuments={ALL_DOCUMENTS}
           />
 
-          <div className="flex-1">
+          <div className="flex-1 scroll-mt-40" ref={listRef}>
             <PropertiesResultsHeader
               resultCount={sortedProperties.length}
               debouncedSearchQuery={search.debouncedSearchQuery}
@@ -284,7 +323,7 @@ export function PropertiesPage() {
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
               >
-                {sortedProperties.map((property, index) => (
+                {pagedProperties.map((property, index) => (
                   <motion.div
                     key={property.slug}
                     layout
@@ -306,6 +345,13 @@ export function PropertiesPage() {
                   onClear={clearAllFilters}
                 />
               )}
+              {totalPages > 1 && (
+                <PropertiesPagination
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
             </PropertiesResults>
           </div>
         </div>
@@ -322,7 +368,10 @@ export function PropertiesPage() {
           allCategories={ALL_CATEGORIES}
           allDocuments={ALL_DOCUMENTS}
           allFeatures={ALL_FEATURES}
-          onClose={() => setShowMobileFilters(false)}
+          onClose={() => {
+            setShowMobileFilters(false);
+            scrollToList();
+          }}
         />
       )}
     </div>

@@ -12,6 +12,8 @@
     "./supabase/*": "./supabase/*.ts",
     "./ui": "./ui/index.ts",
     "./ui/*": "./ui/*.tsx",
+    "./icons": "./icons/index.ts",
+    "./icons/*": "./icons/*.tsx",
     "./utils": "./utils/index.ts",
     "./utils/*": "./utils/*.ts",
     "./types": "./types/index.ts",

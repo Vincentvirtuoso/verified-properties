@@ -70,7 +70,7 @@ const StatsAndPartners = ({
               ))}
         </div>
 
-        <div className="pt-10 border-t border-border/60">
+        <div className="py-10 border-t border-border/60">
           <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-8">
             Trusted by Industry Leaders
           </p>
@@ -85,8 +85,6 @@ const StatsAndPartners = ({
                   src={partner.logo}
                   alt={partner.name}
                   fill
-                  // width={1200}
-                  // height={40}
                   className="object-contain w-auto h-full"
                   priority={false}
                 />

@@ -4,7 +4,7 @@ import { uploadUserFile } from "@affilhomes/shared/supabase";
 import { slugifyTitle } from "@affilhomes/shared/supabase";
 
 /**
- * POST /api/properties â€” create a listing from the List Property form.
+ * POST /api/properties — create a listing from the List Property form.
  *
  * Runs on the server with the caller's own session (cookie-based), so
  * every write is still subject to RLS and the guard_property_write()

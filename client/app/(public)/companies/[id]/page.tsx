@@ -365,7 +365,7 @@ export default function AgentsPage() {
           </p>
         ) : !agents ? (
           <p className="py-16 text-center text-muted-foreground">
-            Loading agentsâ€¦
+            Loading agents...
           </p>
         ) : filteredAgents.length > 0 ? (
           <div

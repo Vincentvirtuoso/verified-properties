@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
+import { PageSpinner } from "@affilhomes/shared/ui";
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   const recommended = properties.slice(0, 2);
@@ -84,8 +85,9 @@ const AgentDashboard = ({
   const agentProfile = user.agentProfile;
   const subRole = agentProfile?.subRole;
 
-  // Real listings owned by this agent (drafts included).
   const [agentListings, setAgentListings] = useState<PopulatedProperty[]>([]);
+
+  const { updateProfile } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +101,10 @@ const AgentDashboard = ({
       cancelled = true;
     };
   }, [user]);
+
+  const handleUpdateProfile = async (updatedData: any) => {
+    await updateProfile(updatedData);
+  };
 
   const quickActions = [
     {
@@ -173,7 +179,11 @@ const AgentDashboard = ({
 
   return (
     <div className="space-y-8">
-      <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
+      <UserHeaderCard
+        user={user}
+        onProfileOpen={() => setProfileOpen(true)}
+        onUpdate={handleUpdateProfile}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
@@ -336,8 +346,8 @@ export default function DashboardPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading your dashboard...</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardSkeleton />
       </div>
     );
   }
@@ -364,6 +374,64 @@ export default function DashboardPage() {
       {renderDashboard()}
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      <div className="bg-card border border-border rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="h-16 w-16 rounded-full bg-muted/30 shrink-0" />
+        <div className="flex-1 space-y-2 min-w-0">
+          <div className="h-5 w-40 rounded bg-muted/30" />
+          <div className="h-4 w-56 rounded bg-muted/30" />
+        </div>
+        <div className="h-10 w-28 rounded-lg bg-muted/30" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-card border border-border rounded-2xl p-6 flex items-center gap-4"
+          >
+            <div className="h-12 w-12 rounded-xl bg-muted/30 shrink-0" />
+            <div className="flex-1 space-y-2 min-w-0">
+              <div className="h-4 w-24 rounded bg-muted/30" />
+              <div className="h-6 w-20 rounded bg-muted/30" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <div className="h-5 w-32 rounded bg-muted/30" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-9 rounded-lg bg-muted/30" />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="h-5 w-48 rounded bg-muted/30" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-card border border-border rounded-2xl overflow-hidden"
+            >
+              <div className="aspect-4/3 bg-muted/30" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 w-3/4 rounded bg-muted/30" />
+                <div className="h-4 w-1/2 rounded bg-muted/30" />
+                <div className="h-4 w-2/3 rounded bg-muted/30" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

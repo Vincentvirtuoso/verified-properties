@@ -297,6 +297,10 @@ export function UserMenu({
   onLogout,
   isLoading,
 }: UserMenuProps) {
+  if (isLoading) {
+    return <UserMenuSkeleton />;
+  }
+
   if (isAuthenticated && user) {
     return <ProfileMenu user={user} isAdmin={isAdmin} onLogout={onLogout} />;
   }
@@ -334,6 +338,19 @@ export function UserMenu({
           <LuUser className="w-6 h-6" />
         )}
       </Link>
+    </div>
+  );
+}
+
+function UserMenuSkeleton() {
+  return (
+    <div className="flex items-center gap-2 animate-pulse">
+      <div className="hidden md:flex items-center gap-3">
+        <div className="h-8 w-16 rounded-md bg-muted/30" />
+        <div className="h-8 w-28 rounded-md bg-muted/30" />
+      </div>
+
+      <div className="md:hidden h-10 w-10 rounded-full bg-muted/30" />
     </div>
   );
 }

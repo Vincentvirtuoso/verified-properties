@@ -37,6 +37,10 @@ export interface CompanyOnboardingFiles {
   cacCertificate?: File | null;
 }
 
+export interface ProfileUpdateFiles {
+  avatar?: File | null;
+}
+
 interface AuthContextType {
   user: PopulatedUser | null;
   companies: Company[];
@@ -62,6 +66,15 @@ interface AuthContextType {
   updateUserRole: (
     userId: string,
     updates: Partial<PopulatedUser>,
+  ) => Promise<PopulatedUser>;
+  /**
+   * Updates the currently signed-in user's own profile. Only editable
+   * columns are sent (see `toProfileUpdates`); the DB guard enforces
+   * the rest. Pass an avatar `File` in `files` to upload and attach it.
+   */
+  updateProfile: (
+    updates: Partial<PopulatedUser>,
+    files?: ProfileUpdateFiles,
   ) => Promise<PopulatedUser>;
   completeRegistration: (
     userId: string,
@@ -330,6 +343,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, loadUser],
   );
 
+  const updateProfile = useCallback(
+    async (
+      updates: Partial<PopulatedUser>,
+      files?: ProfileUpdateFiles,
+    ): Promise<PopulatedUser> => {
+      if (!user) {
+        throw new Error("No user logged in");
+      }
+
+      setAuthLoading(true);
+      setAuthError(null);
+
+      try {
+        // Upload avatar first so a failed upload never partially applies.
+        let avatar = updates.avatar;
+        if (files?.avatar) {
+          avatar = await uploadUserFile(
+            "avatars",
+            user._id,
+            files.avatar,
+            files.avatar.name,
+          );
+        }
+
+        // Merge any existing metadata rather than clobbering it.
+        const mergedUpdates: Partial<PopulatedUser> = {
+          ...updates,
+          avatar,
+          metadata:
+            updates.metadata !== undefined
+              ? { ...user.metadata, ...updates.metadata }
+              : undefined,
+        };
+
+        const payload = toProfileUpdates(mergedUpdates);
+
+        if (Object.keys(payload).length > 0) {
+          await updateCurrentProfile(user._id, payload);
+        }
+
+        const updated = await loadUser();
+        if (!updated) throw new Error("Failed to reload profile");
+        return updated;
+      } catch (error) {
+        setAuthError(errorMessage(error, "Failed to update profile."));
+        throw error;
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [user, loadUser],
+  );
+
   const createCompany = useCallback(
     async (companyData: {
       name: string;
@@ -378,17 +444,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-        // 1. Ordinary profile fields (name, phone, agent profile, roles...).
         const profileUpdates = toProfileUpdates(updates);
         if (Object.keys(profileUpdates).length > 0) {
           await updateCurrentProfile(userId, profileUpdates);
         }
 
-        // 2. Company onboarding: atomic RPC creates the company, the admin
-        //    membership and grants the company role.
         if (company) {
-          // Upload files first so a failed upload never leaves a company
-          // without its documents (the RPC allows one company per user).
           const logoUrl = files?.logo
             ? await uploadUserFile(
                 "avatars",
@@ -505,6 +566,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         switchRole,
         updateUserRole,
+        updateProfile,
         completeRegistration,
       }}
     >

@@ -21,6 +21,13 @@ import {
 import { cn } from "../utils";
 import Image from "next/image";
 import { Avatar } from "./Avatar";
+import {
+  DocumentIcon,
+  FolderIcon,
+  ImageIcon,
+  PdfIcon,
+  SheetIcon,
+} from "../icons";
 
 export interface FileWithMeta {
   id: string;
@@ -83,7 +90,6 @@ export default function FileUpload({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Configure variant-specific settings
   const getVariantConfig = () => {
     switch (variant) {
       case "avatar":
@@ -98,12 +104,7 @@ export default function FileUpload({
       case "document":
         return {
           maxFiles: maxFiles,
-          allowedTypes: allowedTypes.filter(
-            (t) =>
-              t.startsWith("application/") ||
-              t === "text/plain" ||
-              t === "text/csv",
-          ),
+          allowedTypes,
           showPreview: false,
           showProgress: true,
           showSize: true,
@@ -112,7 +113,7 @@ export default function FileUpload({
       default:
         return {
           maxFiles: maxFiles,
-          allowedTypes: allowedTypes,
+          allowedTypes,
           showPreview: true,
           showProgress: true,
           showSize: true,
@@ -125,7 +126,6 @@ export default function FileUpload({
   const effectiveMaxFiles = config.maxFiles;
   const effectiveAllowedTypes = config.allowedTypes;
 
-  // Process uploaded files
   const processFiles = (incomingFiles: FileList | null) => {
     if (!incomingFiles) return;
 
@@ -181,7 +181,6 @@ export default function FileUpload({
     setFiles(updatedFiles);
   };
 
-  // Simulate upload progress
   const simulateUpload = (id: string) => {
     let progress = 0;
     const interval = setInterval(() => {
@@ -202,7 +201,6 @@ export default function FileUpload({
     }, 200);
   };
 
-  // Trigger onUploadComplete when a file becomes "success"
   useEffect(() => {
     if (!onUploadComplete) return;
 
@@ -212,7 +210,7 @@ export default function FileUpload({
 
     if (successfullyUploadedFiles.length > 0) {
       onUploadComplete(successfullyUploadedFiles.map((f) => f.file));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       setReportedCompleteIds((prev) => {
         const newSet = new Set(prev);
         successfullyUploadedFiles.forEach((f) => newSet.add(f.id));
@@ -248,7 +246,7 @@ export default function FileUpload({
       }
       return prev.filter((f) => f.id !== id);
     });
-    // Also remove from reported set
+
     setReportedCompleteIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
@@ -262,14 +260,15 @@ export default function FileUpload({
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes("pdf")) return "📄";
-    if (fileType.includes("word") || fileType.includes("document")) return "📝";
-    if (fileType.includes("sheet") || fileType.includes("excel")) return "📊";
-    if (fileType.includes("image")) return "🖼️";
-    return "📁";
+    if (fileType.includes("pdf")) return <PdfIcon size={16} />;
+    if (fileType.includes("word") || fileType.includes("document"))
+      return <DocumentIcon size={16} />;
+    if (fileType.includes("sheet") || fileType.includes("excel"))
+      return <SheetIcon size={16} />;
+    if (fileType.includes("image")) return <ImageIcon size={16} />;
+    return <FolderIcon size={16} />;
   };
 
-  // ===== Avatar variant =====
   if (variant === "avatar") {
     const currentFile = files[0];
     const displayUrl = currentFile?.previewUrl ?? currentImageUrl;
@@ -346,7 +345,6 @@ export default function FileUpload({
     );
   }
 
-  // ===== Document variant =====
   if (variant === "document") {
     return (
       <div className={cn("w-full", className)}>
@@ -452,7 +450,6 @@ export default function FileUpload({
     );
   }
 
-  // ===== Default variant =====
   return (
     <div
       className={cn(

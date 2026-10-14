@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { closeTicket, fetchTickets, type AdminTicket } from "@affilhomes/shared/supabase/admin";
+import {
+  closeTicket,
+  fetchTickets,
+  type AdminTicket,
+} from "@affilhomes/shared/supabase/admin";
 import { Empty, FilterChips, ReviewActions, StatusPill } from "./ReviewActions";
 import { useAdminList } from "./useAdminList";
 
@@ -9,7 +13,10 @@ type Filter = "open" | "closed";
 
 export function SupportTab() {
   const [filter, setFilter] = useState<Filter>("open");
-  const { rows, error, reload } = useAdminList<AdminTicket>(() => fetchTickets(filter), [filter]);
+  const { rows, error, reload } = useAdminList<AdminTicket>(
+    () => fetchTickets(filter),
+    [filter],
+  );
 
   return (
     <section className="space-y-4">
@@ -21,27 +28,45 @@ export function SupportTab() {
           { value: "closed", label: "Closed" },
         ]}
       />
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
         <Empty>No messages.</Empty>
       ) : (
         <ul className="space-y-3">
           {rows.map((t) => (
-            <li key={t.id} className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm">
+            <li
+              key={t.id}
+              className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm"
+            >
               <div className="flex flex-wrap items-start gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">{t.subject || "No subject"}</p>
+                  <p className="font-semibold text-foreground">
+                    {t.subject || "No subject"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    {t.name} Â·{" "}
-                    <a href={`mailto:${t.email}`} className="text-primary hover:underline">
+                    {t.name} ·{" "}
+                    <a
+                      href={`mailto:${t.email}`}
+                      className="text-primary hover:underline"
+                    >
                       {t.email}
                     </a>{" "}
-                    Â· {new Date(t.createdAt).toLocaleString()}
+                    · {new Date(t.createdAt).toLocaleString()}
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-foreground">{t.message}</p>
-                  {t.adminNote && <p className="mt-2 text-xs text-muted-foreground">Closed: {t.adminNote}</p>}
+                  <p className="mt-2 whitespace-pre-wrap text-foreground">
+                    {t.message}
+                  </p>
+                  {t.adminNote && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Closed: {t.adminNote}
+                    </p>
+                  )}
                 </div>
                 <StatusPill>{t.status}</StatusPill>
               </div>

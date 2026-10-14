@@ -193,7 +193,7 @@ const UserHeaderCard = ({
                 <p className="text-xs text-muted-foreground -mb-1.5 mt-1">
                   ID:
                   <span className="font-mono bg-inverse px-2 py-1 ml-2 rounded-sm">
-                    {user._id}
+                    {(user._id)}
                   </span>
                 </p>
               </div>
@@ -446,7 +446,7 @@ const UserHeaderCard = ({
             <Button variant="outline" onClick={closeSettings}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} isLoading={isSaving}>
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>

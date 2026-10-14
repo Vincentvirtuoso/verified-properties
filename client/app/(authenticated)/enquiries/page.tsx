@@ -9,6 +9,7 @@ import { fetchMyEnquiries } from "@affilhomes/shared/supabase";
 import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { EnquiriesSkeleton } from "@/components/enquiries/EnquirySkeleton";
 
 export default function EnquiriesPage() {
   const { user, isLoading } = useAuth();
@@ -77,7 +78,7 @@ export default function EnquiriesPage() {
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
   if (isLoading || (user && listLoading)) {
-    return <PageSpinner label="Loading your enquiriesâ€¦" />;
+    return <EnquiriesSkeleton />;
   }
 
   if (!user) return null;
@@ -130,3 +131,4 @@ export default function EnquiriesPage() {
     </div>
   );
 }
+

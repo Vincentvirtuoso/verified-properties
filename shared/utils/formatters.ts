@@ -98,25 +98,15 @@ export function formatCompactPrice(
 }
 
 export function formatPhoneNumber(phoneNumber: string): string {
-  let result: string = "";
-  if (phoneNumber.includes("+")) {
-    result =
-      phoneNumber.slice(0, 4) +
-      " " +
-      phoneNumber.slice(4, 7) +
-      " " +
-      phoneNumber.slice(7, 10) +
-      " " +
-      phoneNumber.slice(10);
-  } else {
-    result =
-      phoneNumber.slice(0, 4) +
-      " " +
-      phoneNumber.slice(4, 7) +
-      " " +
-      phoneNumber.slice(7);
+  const digits = phoneNumber.replace(/\D/g, "");
+
+  const nationalNumber = digits.replace(/^2340?/, "").replace(/^0/, "");
+
+  if (nationalNumber.length !== 10) {
+    return phoneNumber;
   }
-  return result;
+
+  return `+234 ${nationalNumber.slice(0, 3)} ${nationalNumber.slice(3, 6)} ${nationalNumber.slice(6)}`;
 }
 
 const DEFAULT_LOCALE = {

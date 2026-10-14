@@ -43,14 +43,16 @@ export const FeaturedProperties = ({
     },
   };
 
+  const date = new Date();
+  date.setDate(date.getDate() + 7); 
+
   return (
     <section
       id="featured"
       aria-labelledby={headingId}
-      className="relative overflow-hidden py-20"
+      className="relative overflow-hidden py-10"
     >
       <div className="relative z-10 px-4 sm:px-6">
-        {/* Banner ---------------------------------------------------------- */}
         <div className="relative mb-12 overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end lg:gap-8">
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:gap-6 sm:text-left">
@@ -74,8 +76,6 @@ export const FeaturedProperties = ({
               </div>
             </div>
 
-            {/* Loss aversion: "these prices end" reads as a loss to avoid,
-                not just an event to observe. */}
             <div
               role="timer"
               aria-live="polite"
@@ -87,13 +87,14 @@ export const FeaturedProperties = ({
                 These prices end in
               </p>
               <div className="flex justify-center lg:justify-start">
-                <Countdown targetDate="2026-10-05T00:00:00" />
+                <Countdown
+                  targetDate={date.toLocaleDateString()}
+                />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content --------------------------------------------------------- */}
         {isLoading ? (
           <div
             aria-busy="true"
@@ -103,7 +104,7 @@ export const FeaturedProperties = ({
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[4/5] animate-pulse rounded-3xl border border-border bg-muted/40 motion-reduce:animate-none"
+                className="aspect-4/5 animate-pulse rounded-3xl border border-border bg-muted/40 motion-reduce:animate-none"
               />
             ))}
           </div>

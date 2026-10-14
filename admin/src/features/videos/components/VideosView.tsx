@@ -68,7 +68,7 @@ export function VideosTab() {
         </p>
       )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
         <Empty />
       ) : (
@@ -84,14 +84,14 @@ export function VideosTab() {
                     {v.propertyTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {v.ownerName} Â· owner{" "}
-                    {v.ownerVerified ? "verified" : "not verified"} Â· listing{" "}
+                    {v.ownerName} · owner{" "}
+                    {v.ownerVerified ? "verified" : "not verified"} · listing{" "}
                     {v.propertyStatus}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {v.fileName ?? "video"}
                     {v.sizeBytes
-                      ? ` Â· ${(v.sizeBytes / 1024 / 1024).toFixed(1)} MB`
+                      ? ` · ${(v.sizeBytes / 1024 / 1024).toFixed(1)} MB`
                       : ""}
                   </p>
                   {v.reviewNote && (

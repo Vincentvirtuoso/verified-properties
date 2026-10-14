@@ -12,7 +12,12 @@ import {
   type VerificationStatus,
 } from "@affilhomes/shared/supabase/admin";
 import { ID_DOC_LABEL, type IdDocType } from "@affilhomes/shared/supabase";
-import { Empty, FilterChips, ReviewActions, StatusPill } from "../../../components/ui/ReviewActions";
+import {
+  Empty,
+  FilterChips,
+  ReviewActions,
+  StatusPill,
+} from "../../../components/ui/ReviewActions";
 import { useAdminList } from "../../../hooks/useAdminList";
 
 const DOC_LABELS: Record<string, string> = {
@@ -68,7 +73,7 @@ export function VerificationView() {
         </p>
       )}
       {!queue.rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : queue.rows.length === 0 ? (
         <Empty />
       ) : (
@@ -89,10 +94,10 @@ export function VerificationView() {
                   <div>
                     <p className="font-semibold text-foreground">{item.name}</p>
                     <p className="text-xs capitalize text-muted-foreground">
-                      {item.subjectType} Â· {item.detail?.replace(/_/g, " ")}
+                      {item.subjectType} · {item.detail?.replace(/_/g, " ")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {[item.email, item.phone].filter(Boolean).join(" Â· ")}
+                      {[item.email, item.phone].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground">

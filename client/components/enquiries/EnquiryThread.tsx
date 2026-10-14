@@ -198,7 +198,7 @@ export function EnquiryThread({
               {enquiry.propertyTitle}
               {isAgentSide && enquiry.buyerPhone && (
                 <>
-                  {" Â· "}
+                  {" · "}
                   <a
                     href={`tel:${enquiry.buyerPhone}`}
                     className="text-primary hover:underline"
@@ -235,7 +235,7 @@ export function EnquiryThread({
         <div className="mx-auto max-w-3xl space-y-6">
           {loading && events.length === 0 && (
             <p className="text-center text-sm text-muted-foreground">
-              Loading messagesâ€¦
+              Loading messages...
             </p>
           )}
 
@@ -314,7 +314,7 @@ function MessageBubble({
                 : "text-muted-foreground",
             )}
           >
-            {event.sender === "assistant" && <span>Assistant Â·</span>}
+            {event.sender === "assistant" && <span>Assistant ·</span>}
             <span>{format(event.timestamp, "HH:mm")}</span>
           </div>
         </div>
@@ -358,15 +358,15 @@ function CallCard({
               {event.caller === "assistant" ? "Assistant call" : "Agent call"}
               {isMissed && (
                 <span className="font-medium text-destructive">
-                  {" Â· Missed"}
+                  {" · Missed"}
                 </span>
               )}
             </p>
 
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {format(event.timestamp, "EEE, do MMMM yyyy Â· HH:mm")}
+              {format(event.timestamp, "EEE, do MMMM yyyy · HH:mm")}
               {event.outcome === "answered" &&
-                ` Â· ${minutes}:${String(seconds).padStart(2, "0")}`}
+                ` · ${minutes}:${String(seconds).padStart(2, "0")}`}
             </p>
           </div>
 
@@ -421,7 +421,7 @@ const VERTICAL_PADDING = 20;
 
 function ChatComposer({
   onSend,
-  placeholder = "Type a messageâ€¦",
+  placeholder = "Type a message...",
   disabled = false,
   minRows = 1,
   maxRows = 5,

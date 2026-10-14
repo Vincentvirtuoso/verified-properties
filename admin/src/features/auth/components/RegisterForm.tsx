@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LuCheck, LuMail, LuUser } from "react-icons/lu";
 
-import { Button } from "@affilhomes/shared/ui";
+import { Button, Field, Textarea } from "@affilhomes/shared/ui";
 
 import { useZodForm } from "@/hooks/useZodForm";
 import { useAuth } from "@/providers/AuthProvider";
@@ -21,6 +21,8 @@ export function RegisterForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { needsConfirm: boolean }>(null);
 
+  const inputClassName = "h-10 text-sm";
+
   const { values, errors, setField, handleSubmit } = useZodForm(
     registerSchema,
     {
@@ -32,9 +34,6 @@ export function RegisterForm() {
     },
   );
 
-  // Once the profile trigger fires and AuthProvider resolves, route
-  // based on the resulting status. Covers the "bootstrap super_admin"
-  // case where the user is signed in straight after signup.
   useEffect(() => {
     if (!done) return;
     if (status === "authenticated") {
@@ -84,107 +83,67 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium">
-          Full name
-        </label>
-        <div className="relative">
-          <LuUser
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            id="name"
-            autoComplete="name"
-            value={values.name}
-            onChange={(e) => setField("name", e.target.value)}
-            aria-invalid={!!errors.name}
-            className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-        </div>
-        {errors.name && (
-          <p className="text-xs text-destructive">{errors.name}</p>
-        )}
-      </div>
+      <Field
+        id="name"
+        autoComplete="name"
+        value={values.name}
+        onChange={(e) => setField("name", e.target.value)}
+        aria-invalid={!!errors.name}
+        label="Full Name"
+        size={20}
+        inputClassName={inputClassName}
+        icon={LuUser}
+        error={errors.name}
+        placeholder="Jane Doe"
+      />
+      <Field
+        icon={LuMail}
+        inputClassName={inputClassName}
+        label="Email"
+        id="email"
+        type="email"
+        autoComplete="email"
+        value={values.email}
+        onChange={(e) => setField("email", e.target.value)}
+        aria-invalid={!!errors.email}
+        error={errors.email}
+        placeholder="jane-doe@gmail.com"
+      />
+      <Field
+        inputClassName={inputClassName}
+        label="Password"
+        id="password"
+        type="password"
+        autoComplete="new-password"
+        value={values.password}
+        onChange={(e) => setField("password", e.target.value)}
+        aria-invalid={!!errors.password}
+        error={errors.password}
+        placeholder="••••••••"
+      />
+      <Field
+        inputClassName={inputClassName}
+        label="Confirm Password"
+        id="confirm-password"
+        type="password"
+        autoComplete="new-password"
+        value={values.confirm}
+        onChange={(e) => setField("confirm", e.target.value)}
+        aria-invalid={!!errors.confirm}
+        error={errors.confirm}
+        placeholder="••••••••"
+      />
 
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <div className="relative">
-          <LuMail
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={(e) => setField("email", e.target.value)}
-            aria-invalid={!!errors.email}
-            className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-        </div>
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email}</p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={values.password}
-            onChange={(e) => setField("password", e.target.value)}
-            aria-invalid={!!errors.password}
-            className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="confirm" className="text-sm font-medium">
-            Confirm
-          </label>
-          <input
-            id="confirm"
-            type="password"
-            autoComplete="new-password"
-            value={values.confirm}
-            onChange={(e) => setField("confirm", e.target.value)}
-            aria-invalid={!!errors.confirm}
-            className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-          {errors.confirm && (
-            <p className="text-xs text-destructive">{errors.confirm}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="reason" className="text-sm font-medium">
-          Why do you need access?
-        </label>
-        <textarea
-          id="reason"
-          rows={4}
-          value={values.reason}
-          onChange={(e) => setField("reason", e.target.value)}
-          aria-invalid={!!errors.reason}
-          placeholder="Briefly describe your role and what you'll be doing in the admin panel."
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-        />
-        {errors.reason && (
-          <p className="text-xs text-destructive">{errors.reason}</p>
-        )}
-      </div>
+      <Textarea
+        id="reason"
+        rows={4}
+        value={values.reason}
+        onChange={(value) => setField("reason", value)}
+        aria-invalid={!!errors.reason}
+        label="Why do you need access?"
+        error={errors.reason}
+        placeholder="Briefly describe your role and what you'll be doing in the admin panel."
+      />
 
       {formError && (
         <div
@@ -195,7 +154,12 @@ export function RegisterForm() {
         </div>
       )}
 
-      <Button type="submit" disabled={submitting} className="h-11 w-full">
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="h-11 w-full"
+        isLoading={submitting}
+      >
         {submitting ? "Submitting…" : "Request access"}
       </Button>
 

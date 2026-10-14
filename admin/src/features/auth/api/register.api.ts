@@ -23,9 +23,10 @@ export async function requestAdminAccess(
   });
 
   if (error) {
-    throw new Error(
-      "We couldn't submit your request. Check your details and try again.",
-    );
+    const message: string =
+      error.message ??
+      "We couldn't submit your request. Check your details and try again.";
+    throw new Error(message);
   }
 
   return { needsConfirm: !data.session };

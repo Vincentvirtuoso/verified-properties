@@ -106,17 +106,16 @@ export default function HomePage() {
           </form>
         </div>
       </div>
-
-      <QuickActions />
-      <AICallingSpotlight />
-
-      <StatsAndPartners stats={stats} isLoading={isLoadingStats} />
-
       <FeaturedProperties
         properties={featuredProperties}
         propertyError={propertyError}
         isLoading={isLoadingProperties}
       />
+
+      <QuickActions />
+      <AICallingSpotlight />
+
+      <StatsAndPartners stats={stats} isLoading={isLoadingStats} />
 
       {showScrollButton && (
         <button

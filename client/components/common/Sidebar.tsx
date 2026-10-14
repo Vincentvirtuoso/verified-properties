@@ -8,13 +8,11 @@ import {
   LuX,
   LuHouse,
   LuSearch,
-  LuSettings,
   LuLogOut,
   LuChevronRight,
   LuChevronLeft,
   LuLayoutDashboard,
   LuCircleHelp,
-  LuCirclePlus,
   LuUsers,
   LuBriefcase,
   LuMessagesSquare,
@@ -25,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
 import { Brandmark } from "./BrandMark";
 import { FiBarChart2 } from "react-icons/fi";
+import { ListingsIcon } from "@affilhomes/shared/icons";
 
 type SidebarSlot =
   | { kind: "count"; value: number; max?: number }
@@ -102,7 +101,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
         {
           href: "/my-listings",
           label: "My Listings",
-          icon: <LuCirclePlus />,
+          icon: <ListingsIcon />,
           category: "Management",
           slot: { kind: "count", value: 4, max: 99 },
         },
@@ -140,7 +139,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
         {
           href: "/company/listings",
           label: "All Listings",
-          icon: <LuCirclePlus />,
+          icon: <ListingsIcon />,
           category: "Management",
           slot: { kind: "count", value: 41, max: 99 },
         },
@@ -415,7 +414,7 @@ export const Sidebar = ({
   const pathname = usePathname();
   const router = useRouter();
   const { bannerHeight } = useBannerHeightContext();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
 
   const activeLinks = useMemo(() => {
     if (externalLinks) return externalLinks;
@@ -445,25 +444,35 @@ export const Sidebar = ({
         className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full z-40 hidden lg:flex flex-col bg-sidebar-bg border-border transition-all duration-300 ease-in-out ${isLeft ? "border-r" : "border-l"} ${width}`}
         style={{ paddingTop: bannerHeight }}
       >
-        <div
-          className={`flex items-center p-4 ${collapsed ? "justify-center" : "justify-between"}`}
-        >
-          {!collapsed && <Brandmark logoOnly logoSize={40} />}
-          <button
-            onClick={onCollapsedChange}
-            className="p-2 rounded-lg hover:bg-inverse transition-colors text-muted-foreground"
-          >
-            {collapsed ? <LuChevronRight /> : <LuChevronLeft />}
-          </button>
-        </div>
+        {isLoading ? (
+          <SidebarSkeleton
+            collapsed={collapsed}
+            variant={variant}
+            position={position}
+          />
+        ) : (
+          <>
+            <div
+              className={`flex items-center p-4 ${collapsed ? "justify-center" : "justify-between"}`}
+            >
+              {!collapsed && <Brandmark logoOnly logoSize={40} />}
+              <button
+                onClick={onCollapsedChange}
+                className="p-2 rounded-lg hover:bg-inverse transition-colors text-muted-foreground"
+              >
+                {collapsed ? <LuChevronRight /> : <LuChevronLeft />}
+              </button>
+            </div>
 
-        <SidebarContent
-          userRole={user?.activeRole}
-          links={activeLinks}
-          pathname={pathname}
-          collapsed={collapsed}
-          onLogout={handleLogout}
-        />
+            <SidebarContent
+              userRole={user?.activeRole}
+              links={activeLinks}
+              pathname={pathname}
+              collapsed={collapsed}
+              onLogout={handleLogout}
+            />
+          </>
+        )}
       </aside>
     );
   }
@@ -488,26 +497,128 @@ export const Sidebar = ({
             className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full w-75 z-70 bg-sidebar-bg shadow-2xl border-border flex flex-col ${isLeft ? "border-r" : "border-l"}`}
             style={{ paddingTop: bannerHeight }}
           >
-            <div className="flex items-center justify-between p-4">
-              <Brandmark logoOnly logoSize={40} />
-              <button
-                onClick={onClose}
-                className="p-2 rounded-full hover:bg-inverse text-muted-foreground"
-              >
-                <LuX className="w-6 h-6" />
-              </button>
-            </div>
+            {isLoading ? (
+              <SidebarSkeleton variant="overlay" position={position} />
+            ) : (
+              <>
+                <div className="flex items-center justify-between p-4">
+                  <Brandmark logoOnly logoSize={40} />
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-full hover:bg-inverse text-muted-foreground"
+                  >
+                    <LuX className="w-6 h-6" />
+                  </button>
+                </div>
 
-            <SidebarContent
-              links={activeLinks}
-              pathname={pathname}
-              onClose={onClose}
-              onLogout={handleLogout}
-              userRole={user?.activeRole}
-            />
+                <SidebarContent
+                  links={activeLinks}
+                  pathname={pathname}
+                  onClose={onClose}
+                  onLogout={handleLogout}
+                  userRole={user?.activeRole}
+                />
+              </>
+            )}
           </motion.aside>
         </>
       )}
     </AnimatePresence>
   );
 };
+
+function SidebarSkeleton({
+  collapsed = false,
+  variant = "overlay",
+  position = "left",
+}: {
+  collapsed?: boolean;
+  variant?: "persistent" | "overlay" | "collapsible";
+  position?: "left" | "right";
+}) {
+  const isLeft = position === "left";
+
+  return (
+    <aside
+      className={`flex h-full flex-col bg-sidebar-bg border-border ${
+        isLeft ? "border-r" : "border-l"
+      }`}
+      aria-hidden="true"
+    >
+      <div
+        className={`flex items-center p-4 ${
+          collapsed ? "justify-center" : "justify-between"
+        }`}
+      >
+        <div className="h-10 w-10 rounded-xl bg-muted/30 animate-pulse" />
+        {!collapsed && (
+          <div className="h-8 w-8 rounded-lg bg-muted/30 animate-pulse" />
+        )}
+      </div>
+
+      <div className="flex-1 space-y-6 overflow-hidden px-3 py-2 animate-pulse">
+        <div className="space-y-1">
+          {!collapsed && (
+            <div className="mb-2 ml-4 h-2.5 w-16 rounded bg-muted/30" />
+          )}
+          {Array.from({ length: 2 }).map((_, i) => (
+            <SkeletonNavRow key={i} collapsed={collapsed} />
+          ))}
+        </div>
+
+        <div className="space-y-1">
+          {!collapsed && (
+            <div className="mb-2 ml-4 h-2.5 w-24 rounded bg-muted/30" />
+          )}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonNavRow key={i} collapsed={collapsed} withBadge />
+          ))}
+        </div>
+
+        <div className="space-y-1">
+          {!collapsed && (
+            <div className="mb-2 ml-4 h-2.5 w-16 rounded bg-muted/30" />
+          )}
+          <SkeletonNavRow collapsed={collapsed} />
+        </div>
+      </div>
+
+      <div className="mt-auto border-t border-border px-4 py-2 animate-pulse">
+        <div
+          className={`flex items-center gap-3 rounded-xl p-2.5 ${
+            collapsed ? "justify-center" : ""
+          }`}
+        >
+          <div className="h-5 w-5 shrink-0 rounded bg-muted/30" />
+          {!collapsed && <div className="h-4 w-16 rounded bg-muted/30" />}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function SkeletonNavRow({
+  collapsed = false,
+  withBadge = false,
+}: {
+  collapsed?: boolean;
+  withBadge?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
+        collapsed ? "justify-center" : "justify-start"
+      }`}
+    >
+      <div className="h-5 w-5 shrink-0 rounded bg-muted/30" />
+      {!collapsed && (
+        <>
+          <div className="h-4 flex-1 max-w-[60%] rounded bg-muted/30" />
+          {withBadge && (
+            <div className="ml-auto h-4 w-7 shrink-0 rounded-full bg-muted/30" />
+          )}
+        </>
+      )}
+    </div>
+  );
+}

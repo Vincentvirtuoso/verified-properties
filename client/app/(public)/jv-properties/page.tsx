@@ -28,7 +28,7 @@ export default function JvPropertiesPage() {
 
         {items === null && (
           <p className="text-sm text-muted-foreground">
-            Loading opportunitiesâ€¦
+            Loading opportunities...
           </p>
         )}
         {error && (

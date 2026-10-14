@@ -32,7 +32,11 @@ type Snapshot = {
   status: AuthStatus;
 };
 
-const SIGNED_OUT: Snapshot = { user: null, role: null, status: "unauthenticated" };
+const SIGNED_OUT: Snapshot = {
+  user: null,
+  role: null,
+  status: "unauthenticated",
+};
 
 interface AuthContextValue {
   user: PopulatedUser | null;
@@ -41,6 +45,7 @@ interface AuthContextValue {
   status: AuthStatus;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoggingOut: boolean;
   isSuperAdmin: boolean;
   authLoading: boolean;
   authError: string | null;
@@ -76,8 +81,12 @@ function mapProfileToUser(profile: Record<string, unknown>): PopulatedUser {
     isPhoneVerified: Boolean(profile.is_phone_verified),
     adminStatus: (profile.admin_status as AdminStatus | null) ?? null,
     companyId: undefined,
-    createdAt: profile.created_at ? new Date(String(profile.created_at)) : new Date(),
-    updatedAt: profile.updated_at ? new Date(String(profile.updated_at)) : new Date(),
+    createdAt: profile.created_at
+      ? new Date(String(profile.created_at))
+      : new Date(),
+    updatedAt: profile.updated_at
+      ? new Date(String(profile.updated_at))
+      : new Date(),
   } as PopulatedUser;
 }
 
@@ -139,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     status: "loading",
   });
   const [authLoading, setAuthLoading] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Each load gets an id; only the newest one is allowed to write state.
@@ -182,7 +192,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(true);
       setAuthError(null);
       try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
 
         const next = await refresh();
@@ -206,6 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setAuthLoading(true);
     setAuthError(null);
+    setIsLoggingOut(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
       setAuthError("Logout failed. Please try again.");
@@ -213,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSnapshot(SIGNED_OUT);
     }
     setAuthLoading(false);
+    setIsLoggingOut(false);
   }, [supabase]);
 
   const refreshUser = useCallback(async () => {
@@ -226,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: snapshot.status === "authenticated",
     isLoading: snapshot.status === "loading",
     isSuperAdmin: snapshot.role === "super_admin",
+    isLoggingOut,
     authLoading,
     authError,
     login,

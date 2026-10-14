@@ -57,7 +57,7 @@ export function JVTab() {
         </p>
       )}
       {!rows ? (
-        <p className="text-sm text-muted-foreground">Loadingâ€¦</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
         <Empty />
       ) : (
@@ -83,13 +83,13 @@ export function JVTab() {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {r.ownerName} Â· owner{" "}
-                    {r.ownerVerified ? "verified" : "not verified"} Â· {r.city},{" "}
+                    {r.ownerName} · owner{" "}
+                    {r.ownerVerified ? "verified" : "not verified"} · {r.city},{" "}
                     {r.state}
                     {r.landValue
-                      ? ` Â· land ${formatCompactPrice(r.landValue)}`
+                      ? ` · land ${formatCompactPrice(r.landValue)}`
                       : ""}
-                    {r.roi ? ` Â· ROI ${r.roi}%` : ""}
+                    {r.roi ? ` · ROI ${r.roi}%` : ""}
                   </p>
                   {r.reviewNote && (
                     <p className="text-xs text-muted-foreground">

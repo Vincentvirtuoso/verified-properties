@@ -76,7 +76,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 
       <div className="relative">
         {IconSlot && (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:h-4.5 [&_svg]:w-4.5">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted [&_svg]:h-4.5 [&_svg]:w-4.5">
             {IconSlot}
           </span>
         )}
@@ -96,7 +96,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground",
+            "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted",
             "transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring",
             "disabled:cursor-not-allowed disabled:opacity-60",
             (Icon || iconElement) && "pl-10",
@@ -113,7 +113,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
             onClick={togglePasswordVisibility}
             onMouseDown={(e) => e.preventDefault()}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
           </button>
@@ -121,7 +121,14 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
       </div>
 
       {error && (
-        <p id={errorId} role="alert" className="mt-1 text-xs text-destructive">
+        <p id={errorId} role="alert" className="mt-1 text-xs text-destructive inline-flex gap-1 items-center">
+          <svg
+            className="w-3.5 h-3.5 shrink-0"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+          >
+            <path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM7.25 5a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0V5zm.75 6.25a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+          </svg>
           {error}
         </p>
       )}

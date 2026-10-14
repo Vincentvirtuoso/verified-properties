@@ -108,7 +108,7 @@ export default function CompanyListingsPage() {
     [rows, filter],
   );
 
-  if (isLoading) return <PageSpinner label="Loading company listingsâ€¦" />;
+  if (isLoading) return <PageSpinner label="Loading company listings..." />;
   if (!user) return null;
   if (!company) {
     return (
@@ -117,7 +117,8 @@ export default function CompanyListingsPage() {
       </p>
     );
   }
-  if (!rows && !error) return <PageSpinner label="Loading company listingsâ€¦" />;
+  if (!rows && !error)
+    return <PageSpinner label="Loading company listings..." />;
 
   const toggle = async (r: Row) => {
     const next = r.status === "active" ? "inactive" : "active";
@@ -215,8 +216,8 @@ export default function CompanyListingsPage() {
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {r.city} Â· {formatPrice(r.price, { currency: r.currency })} Â·
-                  by {r.ownerName} Â· {r.enquiries} enquir
+                  {r.city} · {formatPrice(r.price, { currency: r.currency })} ·
+                  by {r.ownerName} · {r.enquiries} enquir
                   {r.enquiries === 1 ? "y" : "ies"}
                 </p>
               </div>

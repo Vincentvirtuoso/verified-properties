@@ -87,7 +87,7 @@ export default function MyListingsPage() {
   }, [user, tick]);
 
   if (isLoading || (user && !listings && !error)) {
-    return <PageSpinner label="Loading your listingsâ€¦" />;
+    return <PageSpinner label="Loading your listings..." />;
   }
   if (!user) return null;
 
@@ -167,7 +167,7 @@ export default function MyListingsPage() {
               </Button>
             ) : (
               <span className="text-xs text-muted-foreground">
-                Appeal sent â€” waiting for a reply.
+                Appeal sent — waiting for a reply.
               </span>
             )}
             <Button
@@ -245,7 +245,7 @@ export default function MyListingsPage() {
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {p.location?.city} Â·{" "}
+                      {p.location?.city} ·{" "}
                       {formatPrice(p.price, { currency: p.currency })}
                     </p>
                   </div>
@@ -291,7 +291,7 @@ export default function MyListingsPage() {
                       {d.reviewStatus === "rejected"
                         ? "rejected"
                         : "more info needed"}
-                      {d.reviewNote ? ` â€” ${d.reviewNote}` : ""}
+                      {d.reviewNote ? ` — ${d.reviewNote}` : ""}
                     </p>
                     {d.reviewStatus === "rejected" && d.id && (
                       <AppealRow
@@ -334,7 +334,7 @@ function AppealRow({
     <div className="flex flex-wrap items-center gap-2">
       {open ? (
         <span className="text-xs text-muted-foreground">
-          Appeal sent â€” waiting for a reply.
+          Appeal sent — waiting for a reply.
         </span>
       ) : (
         <Button size="sm" variant="outline" onClick={onAppeal}>
