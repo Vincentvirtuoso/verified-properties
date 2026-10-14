@@ -17,7 +17,7 @@ import {
   LuUser,
 } from "react-icons/lu";
 
-import { Avatar, Button } from "@affilhomes/shared/ui";
+import { Avatar, Button, Field } from "@affilhomes/shared/ui";
 
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -73,13 +73,12 @@ export function Topbar() {
       {title && <h1 className="truncate text-base font-semibold">{title}</h1>}
 
       <div className="ml-auto flex items-center gap-1 md:gap-2">
-        {/* Search */}
         <form onSubmit={onSearch} className="relative hidden md:block">
           <LuSearch
             size={16}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
           />
-          <input
+          <Field
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search accounts, listings…"
@@ -90,13 +89,11 @@ export function Topbar() {
           </kbd>
         </form>
 
-        {/* Quick action */}
         <Button size="sm" className="hidden md:inline-flex">
           <LuPlus size={16} />
           <span className="ml-1.5">New</span>
         </Button>
 
-        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
@@ -122,7 +119,6 @@ export function Topbar() {
           )}
         </div>
 
-        {/* Theme */}
         <button
           type="button"
           onClick={toggle}
@@ -132,7 +128,6 @@ export function Topbar() {
           {theme === "dark" ? <LuSun size={18} /> : <LuMoon size={18} />}
         </button>
 
-        {/* View site */}
         <Link
           href="/"
           target="_blank"
@@ -143,7 +138,6 @@ export function Topbar() {
           <LuExternalLink size={18} />
         </Link>
 
-        {/* User menu */}
         <div className="relative" ref={userMenuRef}>
           <button
             type="button"

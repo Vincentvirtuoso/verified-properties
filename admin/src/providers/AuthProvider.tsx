@@ -187,8 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const next = await refresh();
 
-        // Accounts with no admin relationship don't keep a session here.
-        // Pending, rejected, and suspended accounts keep one so they can see their status page.
         if (next.status === "unauthorized") {
           await supabase.auth.signOut();
           setSnapshot(SIGNED_OUT);

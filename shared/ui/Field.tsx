@@ -19,8 +19,8 @@ type NativeInputProps = Omit<
 >;
 
 export interface FieldProps extends NativeInputProps {
-  label: string;
-  name: string;
+  label?: string;
+  name?: string;
   type?: "text" | "email" | "password" | "tel" | "number";
   /** Decorative element rendered inside the input. */
   icon?: IconType;
@@ -68,9 +68,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 
   return (
     <div className={cn("space-y-1", className)}>
-      <FieldLabel htmlFor={inputId} required={required}>
-        {label}
-      </FieldLabel>
+      {label && (
+        <FieldLabel htmlFor={inputId} required={required}>
+          {label}
+        </FieldLabel>
+      )}
 
       <div className="relative">
         {IconSlot && (
@@ -83,7 +85,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           {...inputProps}
           ref={ref}
           id={inputId}
-          name={name}
+          name={name ?? undefined}
           type={resolvedType}
           value={inputProps.value}
           defaultValue={inputProps.defaultValue}

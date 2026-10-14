@@ -4,6 +4,11 @@ import { Inter } from "next/font/google";
 import { Providers } from "@/providers/Providers";
 
 import "./globals.css";
+import {
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_EXPANDED_WIDTH,
+} from "@affilhomes/shared/utils";
+import { CSSProperties } from "react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,7 +45,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={inter.variable}
+      suppressHydrationWarning
+      style={
+        {
+          "--sidebar-width-expanded": `${SIDEBAR_EXPANDED_WIDTH}px`,
+          "--sidebar-width-collapsed": `${SIDEBAR_COLLAPSED_WIDTH}px`,
+        } as CSSProperties
+      }
+    >
       <body className="min-h-screen font-sans antialiased">
         <Providers>{children}</Providers>
       </body>

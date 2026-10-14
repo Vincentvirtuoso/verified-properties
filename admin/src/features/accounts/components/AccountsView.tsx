@@ -9,8 +9,9 @@ import {
   type AdminAccount,
 } from "@affilhomes/shared/supabase/admin";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { askReason, Empty, StatusPill } from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+import { useAdminList } from "@/hooks/useAdminList";
+import { askReason, Empty } from "@/components/data/ReviewActions";
+import { StatusPill } from "@/components/ui/ReviewActions";
 
 export function AccountsTab() {
   const [input, setInput] = useState("");
