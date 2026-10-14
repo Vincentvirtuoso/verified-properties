@@ -1,17 +1,21 @@
-import type { Role } from "@affilhomes/shared/types";
-import { createClient } from "@affilhomes/shared/supabase/client";
+import type { createAdminBrowserClient } from "@/lib/supabase";
 
-/**
- * Reads the signed-in user's rows from `public.user_roles`.
- * RLS allows "Users can view their own roles", so this is safe
- * from the browser.
- */
-export async function fetchUserRoles(userId: string): Promise<Role[]> {
-  const supabase = createClient();
+export type AdminRole = "admin" | "super_admin";
+
+const ADMIN_ROLES: readonly string[] = ["admin", "super_admin"];
+
+export async function fetchAdminRoles(
+  supabase: ReturnType<typeof createAdminBrowserClient>,
+  userId: string,
+): Promise<AdminRole[]> {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => row.role as Role);
+
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((row) => row.role as string)
+    .filter((role): role is AdminRole => ADMIN_ROLES.includes(role));
 }
