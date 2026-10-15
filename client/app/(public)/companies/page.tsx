@@ -76,7 +76,9 @@ function CompaniesStructuredData({
 // ---------- Server Component ----------
 export default async function CompaniesPage() {
   // Verified companies, or ones with a live listing.
-  const companies = await fetchPublicCompanies(await cr()).catch(() => []);
+  const companies = await fetchPublicCompanies(await createClient()).catch(
+    () => [],
+  );
 
   return (
     <>
