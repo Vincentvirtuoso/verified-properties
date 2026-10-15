@@ -2,9 +2,8 @@ import {
   PropertyLocation,
   PropertyImage,
   PropertyStatus,
-  PropertyCategory,
-  PropertyType,
 } from "./property";
+import { PropertyCategory, PropertyType } from "./property.sub";
 import { PopulatedUser } from "./user";
 
 export type JVProperty = {

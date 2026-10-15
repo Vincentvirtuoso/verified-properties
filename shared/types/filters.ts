@@ -1,4 +1,5 @@
-import { PropertyCategory, PropertyFeature, PropertyType, PropertyDocument } from "./property";
+import { PropertyDocument } from "./property";
+import { PropertyCategory, PropertyFeature, PropertyType } from "./property.sub";
 
 export interface PropertyFilterState {
   priceRange: [number, number];
