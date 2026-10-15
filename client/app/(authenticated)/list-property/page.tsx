@@ -11,9 +11,11 @@ import { StepReview } from "./components/StepReview";
 import { StepNav } from "./components/StepNav";
 import { FeatureTour } from "@/components/common/FeatureTour";
 import { useListPropertyForm, STEPS } from "./hooks/useListPropertyForm";
-import type { ListPropertyStep } from "./hooks/useListPropertyForm";
+import type {
+  ListPropertyFormData,
+  ListPropertyStep,
+} from "./hooks/useListPropertyForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { LuX } from "react-icons/lu";
 import {
   LuSparkles,
   LuHouse,
@@ -21,10 +23,13 @@ import {
   LuFileCheck,
   LuSave,
   LuRocket,
+  LuArrowRight,
+  LuTrash2,
 } from "react-icons/lu";
 import { useFormScrollOnError } from "@/hooks/useFormScrollOnError";
 
 const LIST_PROPERTY_TOUR_STEPS = [
+  // ...unchanged
   {
     icon: LuSparkles,
     title: "Welcome — let's list your property",
@@ -47,7 +52,7 @@ const LIST_PROPERTY_TOUR_STEPS = [
     icon: LuFileCheck,
     title: "Documents? Just tell us what you have",
     description:
-      "No uploading required at this stage — just select which ownership documents exist for the property (e.g. Certificate of Occupancy, Deed of Assignment). Our verification team will reach out separately to collect copies and complete the review.",
+      "No uploading required at this stage — just select which ownership documents exist for the property (e.g. Certificate of Ownership, Deed of Assignment). Our verification team will reach out separately to collect copies and complete the review.",
   },
   {
     icon: LuSave,
@@ -63,12 +68,120 @@ const LIST_PROPERTY_TOUR_STEPS = [
   },
 ];
 
+function DraftResolutionView({
+  formData,
+  bannerHeight,
+  onContinue,
+  onStartFresh,
+}: {
+  formData: ListPropertyFormData;
+  bannerHeight: number;
+  onContinue: () => void;
+  onStartFresh: () => void;
+}) {
+  const previewLines = [
+    formData.title && { label: "Title", value: formData.title },
+    formData.category && {
+      label: "Category",
+      value: formData.category.replace(/([A-Z])/g, " $1").trim(),
+    },
+    formData.type && {
+      label: "Type",
+      value: formData.type.replace(/([A-Z])/g, " $1").trim(),
+    },
+    formData.address && { label: "Address", value: formData.address },
+    formData.price && {
+      label: "Price",
+      value: `${formData.currency} ${formData.price}`,
+    },
+  ].filter(Boolean) as { label: string; value: string }[];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div
+        className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20"
+        style={{ top: bannerHeight + 64 }}
+      >
+        <div className="px-4 sm:px-6 py-4">
+          <h1 className="text-xl font-bold text-foreground">List a Property</h1>
+          <p className="text-sm text-muted">
+            Resolve your draft to continue
+          </p>
+        </div>
+      </div>
+
+      <div className="px-4 sm:px-6 py-10">
+        <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <LuSave className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+
+          <h2 className="mt-4 text-center text-lg font-semibold text-foreground">
+            You have an unfinished listing
+          </h2>
+          <p className="mt-2 text-center text-sm text-muted">
+            We found a draft you started earlier. Pick how you'd like to proceed
+            before continuing.
+          </p>
+
+          {previewLines.length > 0 && (
+            <div className="mt-6 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
+                Draft summary
+              </p>
+              <dl className="space-y-2 text-sm">
+                {previewLines.map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="flex items-start justify-between gap-4"
+                  >
+                    <dt className="shrink-0 text-muted">{label}</dt>
+                    <dd className="truncate text-right font-medium text-foreground">
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
+          <div className="mt-6 space-y-2">
+            <button
+              type="button"
+              onClick={onContinue}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Continue draft
+              <LuArrowRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onStartFresh}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-destructive hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <LuTrash2 className="h-4 w-4" />
+              Start fresh
+            </button>
+          </div>
+
+          <p className="mt-4 text-center text-xs text-muted">
+            Starting fresh permanently deletes your saved draft.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ListPropertyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   const { bannerHeight } = useBannerHeightContext();
+  const isFirstRender = useRef(true);
   const stepContentRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -192,6 +305,21 @@ export default function ListPropertyPage() {
 
   useEffect(() => setHydrated(true), []);
 
+  // Scroll to top of step content whenever the step changes.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const el = stepContentRef.current;
+    if (!el) return;
+
+    const headerOffset = bannerHeight + 64 + 120;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }, [currentStep, bannerHeight]);
+
   if (!hydrated) {
     return (
       <div className="min-h-screen bg-background">
@@ -214,6 +342,20 @@ export default function ListPropertyPage() {
     );
   }
 
+  if (draftAvailable && !draftDismissed) {
+    return (
+      <>
+        <DraftResolutionView
+          formData={formData}
+          bannerHeight={bannerHeight}
+          onContinue={keepDraft}
+          onStartFresh={discardDraft}
+        />
+        <FeatureTour tourId="list-property" steps={LIST_PROPERTY_TOUR_STEPS} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div
@@ -229,40 +371,6 @@ export default function ListPropertyPage() {
       </div>
 
       <div className="px-4 sm:px-6 py-8 space-y-8">
-        {draftAvailable && !draftDismissed && (
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <div className="flex justify-between gap-4 flex-wrap flex-1">
-              <p className="text-sm text-foreground">
-                You have an unfinished listing. Continue where you left off?
-              </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={discardDraft}
-                  className="text-xs font-medium text-muted hover:text-foreground transition-colors"
-                >
-                  Start fresh
-                </button>
-                <button
-                  type="button"
-                  onClick={keepDraft}
-                  className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
-                >
-                  Continue draft
-                </button>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={keepDraft}
-              aria-label="Dismiss"
-              className="text-muted hover:text-foreground transition-colors"
-            >
-              <LuX className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
         <PropertyStepper
           currentStep={currentStep}
           completedSteps={completedSteps}
