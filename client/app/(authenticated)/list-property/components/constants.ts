@@ -1,4 +1,3 @@
-
 import type { ElementType } from "react";
 import {
   LuBuilding2,
@@ -142,7 +141,6 @@ export interface FeatureGroup {
   defaultOpen?: boolean;
   items: FeatureItem[];
 }
-
 
 export const FEATURE_GROUPS: FeatureGroup[] = [
   {
@@ -1044,6 +1042,6 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   },
 ];
 
-
-
 export const FEATURES: FeatureItem[] = FEATURE_GROUPS.flatMap((g) => g.items);
+
+export const MAX_IMAGES = 20;

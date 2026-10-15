@@ -1,4 +1,4 @@
-import { Role } from "../types";
+import { PopulatedUser, Role } from "../types";
 import { createClient } from "./client";
 
 export async function signInWithEmail(email: string, password: string) {
@@ -106,7 +106,6 @@ export async function getCurrentUser() {
   } = await supabase.auth.getUser();
 
   if (error) {
-    // "Auth session missing" simply means signed out.
     if (error.name === "AuthSessionMissingError") return null;
     throw error;
   }

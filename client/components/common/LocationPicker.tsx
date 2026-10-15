@@ -141,3 +141,24 @@ export const LocationPicker = memo(function LocationPicker({
     </div>
   );
 });
+
+export function LocationPickerSkeleton() {
+  return (
+    <div className="relative w-full h-100 bg-muted animate-pulse rounded-xl overflow-hidden">
+      <div className="absolute inset-0 opacity-40 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-size-[32px_32px]" />
+
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="w-6 h-6 rounded-full border-2 border-border bg-background/60" />
+      </div>
+
+      <div className="absolute top-3 right-3 flex flex-col gap-2">
+        <div className="w-8 h-8 rounded-md bg-background/70 border border-border" />
+        <div className="w-8 h-8 rounded-md bg-background/70 border border-border" />
+      </div>
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-9 w-40 rounded-full bg-background/70 border border-border" />
+
+      <span className="sr-only">Loading map…</span>
+    </div>
+  );
+}

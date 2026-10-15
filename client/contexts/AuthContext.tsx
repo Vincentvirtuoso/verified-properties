@@ -105,8 +105,8 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
     whatsappNumber: profile.whatsapp_number ?? "",
     avatar: profile.avatar ?? "",
 
-    // Supabase Auth owns the password.
-    // This field only exists because the existing frontend type requires it.
+   
+   
     passwordHash: "",
 
     roles: profile.roles ?? ["viewer"],
@@ -115,7 +115,7 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
     isEmailVerified: profile.is_email_verified ?? false,
     isPhoneVerified: profile.is_phone_verified ?? false,
 
-    // PopulatedUser expects the populated Company object here.
+   
     companyId: company,
     companyRole: profile.company_role ?? undefined,
 
@@ -140,7 +140,7 @@ function toProfileUpdates(updates: Partial<PopulatedUser>) {
     out.whatsapp_number = updates.whatsappNumber;
   if (updates.avatar !== undefined) out.avatar = updates.avatar;
   if (updates.roles !== undefined)
-    // "company" is granted only by the company onboarding RPC.
+   
     out.roles = updates.roles.filter((r) => r !== Role.Company);
   if (updates.activeRole !== undefined && updates.activeRole !== Role.Company)
     out.active_role = updates.activeRole;
@@ -215,8 +215,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initialize();
 
-    // Keep state in sync with sign-in/out in other tabs, token refresh,
-    // and email-link sessions.
     const supabase = createClient();
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -225,7 +223,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        // Defer to avoid calling Supabase inside the auth callback.
         setTimeout(() => {
           if (mounted) void loadUser();
         }, 0);
@@ -271,8 +268,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-        // Supabase creates auth.users; the handle_new_user() trigger
-        // creates the profiles row with name, phone and WhatsApp.
+       
+       
         const { session } = await signUpWithEmail(
           newUser.email,
           password,
@@ -284,11 +281,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         );
 
-        // Company details are collected later on /complete-registration.
+       
         void company;
 
         if (!session) {
-          // Email confirmation is required before a session exists.
+         
           return false;
         }
 
@@ -356,7 +353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-        // Upload avatar first so a failed upload never partially applies.
+       
         let avatar = updates.avatar;
         if (files?.avatar) {
           avatar = await uploadUserFile(
@@ -367,7 +364,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
         }
 
-        // Merge any existing metadata rather than clobbering it.
+       
         const mergedUpdates: Partial<PopulatedUser> = {
           ...updates,
           avatar,

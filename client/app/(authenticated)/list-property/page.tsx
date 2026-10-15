@@ -104,9 +104,7 @@ function DraftResolutionView({
       >
         <div className="px-4 sm:px-6 py-4">
           <h1 className="text-xl font-bold text-foreground">List a Property</h1>
-          <p className="text-sm text-muted">
-            Resolve your draft to continue
-          </p>
+          <p className="text-sm text-muted">Resolve your draft to continue</p>
         </div>
       </div>
 
@@ -201,6 +199,8 @@ export default function ListPropertyPage() {
     completedSteps,
     markCompleted,
     keepDraft,
+    missingPhotoCount,
+    photoSaveFailed,
   } = useListPropertyForm();
 
   const scrollToFirstError = useFormScrollOnError();
@@ -232,6 +232,15 @@ export default function ListPropertyPage() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+
+    const invalidStep = (
+      ["basic", "details", "location", "media"] as const
+    ).find((step) => !validateStep(step));
+    if (invalidStep) {
+      goToStep(invalidStep);
+      return setIsSubmitting(false);
+    }
+
     try {
       const payload = new FormData();
 
@@ -240,7 +249,6 @@ export default function ListPropertyPage() {
       payload.append("listingPurpose", formData.listingPurpose);
       payload.append("category", formData.category);
       payload.append("type", formData.type);
-      payload.append("ownerType", formData.ownerType);
       payload.append("price", formData.price);
       payload.append("currency", formData.currency);
       payload.append("negotiable", String(formData.negotiable));
@@ -262,13 +270,10 @@ export default function ListPropertyPage() {
       formData.imageFiles.forEach((file, i) => {
         payload.append("images", file);
         payload.append(
-          `imageSection[${i}]`,
+          `imageSection_${i}`,
           formData.imageSections[i] ?? "general",
         );
       });
-
-      const filteredVideos = formData.videoLinks.filter(Boolean);
-      payload.append("videoLinks", JSON.stringify(filteredVideos));
 
       payload.append("documentTypes", JSON.stringify(formData.documentTypes));
 
@@ -305,7 +310,6 @@ export default function ListPropertyPage() {
 
   useEffect(() => setHydrated(true), []);
 
-  // Scroll to top of step content whenever the step changes.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -401,13 +405,21 @@ export default function ListPropertyPage() {
               />
             )}
             {currentStep === "media" && (
-              <StepMedia formData={formData} updateField={updateField} />
-            )}
+              <StepMedia
+                formData={formData}
+                updateField={updateField}
+                errors={errors}
+                photoSaveFailed={photoSaveFailed}
+                missingPhotoCount={missingPhotoCount}
+                />
+              )}
             {currentStep === "review" && (
               <StepReview
-                formData={formData}
-                onEdit={handleEditStep}
-                isSubmitting={isSubmitting}
+              formData={formData}
+              onEdit={handleEditStep}
+              isSubmitting={isSubmitting}
+              photoSaveFailed={photoSaveFailed}
+              missingPhotoCount={missingPhotoCount}
               />
             )}
           </div>

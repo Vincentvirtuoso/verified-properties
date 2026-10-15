@@ -12,6 +12,14 @@ import type {
 } from "@affilhomes/shared/types";
 import { Role } from "@affilhomes/shared/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { isInNigeria } from "@affilhomes/shared/utils/geo";
+import {
+  saveDraftPhotos,
+  loadDraftPhotos,
+  clearDraftPhotos,
+  type DraftPhoto,
+} from "@affilhomes/shared/utils/draft-photos";
+import { MAX_IMAGES } from "../components/constants";
 
 export type ListPropertyStep =
   | "basic"
@@ -60,6 +68,7 @@ export interface ListPropertyFormData {
 
 const STORAGE_KEY = "listPropertyFormData";
 const COMPLETED_STEPS_KEY = `${STORAGE_KEY}:completedSteps`;
+const PHOTO_SAVE_DEBOUNCE_MS = 400;
 
 const getDefaultData = (
   ownerType: ListPropertyFormData["ownerType"] = "",
@@ -159,6 +168,13 @@ function resolveAllowedStep(
   return STEPS.indexOf(requested) <= maxIndex ? requested : STEPS[maxIndex];
 }
 
+function draftPhotoToFile(photo: DraftPhoto): File {
+  return new File([photo.blob], photo.name, {
+    type: photo.type,
+    lastModified: photo.lastModified,
+  });
+}
+
 export function useListPropertyForm() {
   const { user } = useAuth();
 
@@ -175,9 +191,14 @@ export function useListPropertyForm() {
     Partial<Record<keyof ListPropertyFormData, string>>
   >({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const [photosHydrated, setPhotosHydrated] = useState(false);
 
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftDismissed, setDraftDismissed] = useState(false);
+  const [missingPhotoCount, setMissingPhotoCount] = useState(0);
+  const [photoSaveFailed, setPhotoSaveFailed] = useState(false);
+
+  const PHOTO_COUNT_KEY = `${STORAGE_KEY}:photoCount`;
 
   const stepIndex = STEPS.indexOf(currentStep);
 
@@ -206,6 +227,42 @@ export function useListPropertyForm() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const hasText = hasMeaningfulContent(readInitialFormData());
+    const expected = Number(window.localStorage.getItem(PHOTO_COUNT_KEY) ?? 0);
+
+    loadDraftPhotos()
+      .catch((e) => {
+        console.error(e, "Failed to restore draft photos");
+        return [] as DraftPhoto[];
+      })
+      .then((photos) => {
+        if (cancelled) return;
+        if (hasText || photos.length > 0) setDraftAvailable(true);
+        if (photos.length > 0) {
+          setFormData((prev) =>
+            prev.imageFiles.length > 0
+              ? prev
+              : {
+                  ...prev,
+                  imageFiles: photos.map(draftPhotoToFile),
+                  imageSections: photos.map(
+                    (p) => (p.section ?? "general") as MediaSection,
+                  ),
+                },
+          );
+        }
+        setMissingPhotoCount(Math.max(expected - photos.length, 0));
+        setPhotosHydrated(true);
+      });
+
+    setIsInitialized(true);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (
       isInitialized &&
       userOwnerType &&
@@ -217,11 +274,39 @@ export function useListPropertyForm() {
 
   useEffect(() => {
     if (isInitialized && typeof window !== "undefined") {
-      const { imageFiles, ...rest } = formData;
+      const { imageFiles, imageSections, ...rest } = formData;
       void imageFiles;
+      void imageSections;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(rest));
     }
   }, [formData, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized || !photosHydrated || typeof window === "undefined") {
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      localStorage.setItem(PHOTO_COUNT_KEY, String(formData.imageFiles.length));
+      const save =
+        formData.imageFiles.length === 0
+          ? clearDraftPhotos()
+          : saveDraftPhotos(formData.imageFiles, formData.imageSections);
+      save
+        .then(() => setPhotoSaveFailed(false))
+        .catch((e) => {
+          console.error(e, "Failed to save draft photos");
+          setPhotoSaveFailed(true);
+        });
+    }, PHOTO_SAVE_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(handle);
+  }, [
+    formData.imageFiles,
+    formData.imageSections,
+    isInitialized,
+    photosHydrated,
+  ]);
 
   useEffect(() => {
     if (!isInitialized || typeof window === "undefined") return;
@@ -248,7 +333,6 @@ export function useListPropertyForm() {
     }
   }, [currentStep, isInitialized]);
 
-  // URL → State (back/forward, manual hash edits), with step gating
   useEffect(() => {
     const syncFromUrl = () => {
       const requested = readStepFromHash();
@@ -267,7 +351,7 @@ export function useListPropertyForm() {
       window.removeEventListener("hashchange", syncFromUrl);
     };
   }, [completedSteps]);
-  
+
   const updateField = useCallback(
     <K extends keyof ListPropertyFormData>(
       key: K,
@@ -321,6 +405,30 @@ export function useListPropertyForm() {
         if (!formData.address.trim()) newErrors.address = "Address is required";
         if (!formData.city.trim()) newErrors.city = "City is required";
         if (!formData.state.trim()) newErrors.state = "State is required";
+        if (!formData.country.trim()) newErrors.country = "Country is required";
+
+        if (!formData.coordinates) {
+          newErrors.coordinates = "Pin the exact location on the map";
+        } else if (
+          formData.country.trim().toLowerCase() === "nigeria" &&
+          !isInNigeria(formData.coordinates.lat, formData.coordinates.lng)
+        ) {
+          newErrors.coordinates = "The pin must be inside Nigeria";
+        }
+      }
+
+      if (step === "media") {
+        if (formData.imageFiles.length === 0) {
+          newErrors.imageFiles =
+            "Add at least one photo. The first photo becomes the cover.";
+        }
+        if (formData.imageFiles.length > MAX_IMAGES) {
+          newErrors.imageFiles = `Up to ${MAX_IMAGES} photos allowed`;
+        }
+          if (formData.imageSections.length !== formData.imageFiles.length) {
+            newErrors.imageFiles =
+              "Photo sections are out of sync. Please re-add the photos.";
+          }
       }
 
       setErrors(newErrors);
@@ -344,9 +452,15 @@ export function useListPropertyForm() {
     setErrors({});
     setDraftAvailable(false);
     setCompletedSteps([]);
+    void clearDraftPhotos().catch((e) =>
+      console.error(e, "Failed to clear draft photos"),
+    );
+    setMissingPhotoCount(0);
+    setPhotoSaveFailed(false);
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(COMPLETED_STEPS_KEY);
+      localStorage.removeItem(PHOTO_COUNT_KEY);
       window.history.replaceState(
         null,
         "",
@@ -370,6 +484,7 @@ export function useListPropertyForm() {
     formData,
     errors,
     isInitialized,
+    photosHydrated,
     completedSteps,
     markCompleted,
     updateField,
@@ -384,5 +499,8 @@ export function useListPropertyForm() {
     draftDismissed,
     discardDraft,
     keepDraft,
+    missingPhotoCount,
+    photoSaveFailed,
   };
+  
 }

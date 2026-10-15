@@ -17,7 +17,7 @@ import {
   type ListingPurpose,
 } from "@affilhomes/shared/types";
 import Select from "@affilhomes/shared/ui/Select";
-import { PROPERTY_CATEGORY_LABELS, PROPERTY_TYPE_LABELS } from "@/utils";
+import { PROPERTY_CATEGORY_LABELS, PROPERTY_TYPE_LABELS, PROPERTY_TYPES_BY_CATEGORY } from "@/utils";
 
 const PURPOSE_OPTIONS = [
   {
@@ -46,46 +46,7 @@ export const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = (
   label: PROPERTY_CATEGORY_LABELS[value],
 }));
 
-const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
-  residential: [
-    "singleFamilyHouse",
-    "detachedHouse",
-    "semiDetachedHouse",
-    "terraceHouse",
-    "bungalow",
-    "mansion",
-    "apartment",
-    "selfContainedApartment",
-    "servicedApartment",
-    "guestRoom",
-    "guestHouse",
-    "studentHostel",
-    "duplex",
-    "detachedDuplex",
-    "semiDetachedDuplex",
-    "terraceDuplex",
-    "duplexWithBQ",
-    "duplexWithPenthouse",
-    "duplexVilla",
-    "duplexMaisonette",
-    "gardenDuplex",
-    "smartDuplex",
-    "maisonette",
-    "penthouse",
-  ],
-  commercial: ["officeSpace", "retailShop", "warehouse"],
-  industrial: ["factory", "industrialPark", "coldStorage"],
-  agricultural: ["farm", "farmhouse"],
-  land: [
-    "residentialLand",
-    "commercialLand",
-    "agriculturalLand",
-    "mixedUseLand",
-  ],
-  mixedUse: ["mixedUseDevelopment"],
-  hospitality: ["hotel", "resortAndEventCenter"],
-  institutional: ["schoolOrHospital"],
-};
+
 
 export const TYPES_BY_CATEGORY: Record<
   PropertyCategory,

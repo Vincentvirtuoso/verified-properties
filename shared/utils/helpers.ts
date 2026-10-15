@@ -4,7 +4,7 @@ export const imageLoader = ({ src, width, quality }: ImageLoaderProps) => {
   return `${src}?w=${width}&q=${quality || 75}`;
 };
 
-import { isValidElement, type ElementType, type ReactNode } from "react";
+import { isValidElement, type ElementType } from "react";
 
 const COMPONENT_SYMBOLS = new Set([
   Symbol.for("react.memo"),
@@ -23,3 +23,14 @@ export function isComponentType(value: unknown): value is ElementType {
   return typeof tag === "symbol" && COMPONENT_SYMBOLS.has(tag);
 }
 
+export function isAuthServiceError(
+  error: { name?: string; status?: number } | null,
+): boolean {
+  if (!error) return false;
+  if (error.name === "AuthSessionMissingError") return false;
+  return (
+    error.name === "AuthRetryableFetchError" ||
+    error.status === undefined ||
+    error.status >= 500
+  );
+}

@@ -15,7 +15,7 @@ import type {
   PropertyFeature,
   PropertyDocument,
   PropertyLocation,
-} from "@affilhomes/shared/types/property";
+} from "@affilhomes/shared/types";
 import type { PropertyFilterState } from "@affilhomes/shared/types";
 import { cn } from "@/lib/utils";
 

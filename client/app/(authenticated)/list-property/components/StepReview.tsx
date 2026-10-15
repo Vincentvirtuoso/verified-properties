@@ -21,6 +21,8 @@ import {
   PROPERTY_CATEGORY_LABELS,
   PROPERTY_FEATURE_LABELS,
 } from "@/utils";
+import { useEffect, useState } from "react";
+import { PhotoDraftNotices } from "./PhotoDraftNotices";
 
 const PURPOSE_LABEL: Record<string, string> = {
   rent: "For Rent",
@@ -31,23 +33,7 @@ const OWNER_LABEL: Record<string, string> = {
   landlord: "Landlord / Owner",
   company: "Company",
 };
-const CATEGORY_LABEL: Record<string, string> = {
-  residential: "Residential",
-  commercial: "Commercial",
-  industrial: "Industrial",
-  land: "Land",
-  mixedUse: "Mixed Use",
-  hospitality: "Hospitality",
-  institutional: "Institutional",
-};
-const FEATURE_LABEL: Record<string, string> = {
-  boysQuarters: "Boys Quarters",
-  penthouse: "Penthouse",
-  garden: "Garden",
-  smartHome: "Smart Home",
-  furnished: "Furnished",
-  serviced: "Serviced",
-};
+
 const DOC_LABEL: Record<string, string> = Object.fromEntries(
   DOCUMENT_TYPES.map(({ value, label }) => [value, label]),
 );
@@ -111,9 +97,23 @@ interface StepReviewProps {
   formData: ListPropertyFormData;
   onEdit: (step: ListPropertyStep) => void;
   isSubmitting?: boolean;
+  missingPhotoCount: number;
+  photoSaveFailed: boolean;
 }
 
-export function StepReview({ formData, onEdit }: StepReviewProps) {
+export function StepReview({
+  formData,
+  onEdit,
+  missingPhotoCount,
+  photoSaveFailed,
+}: StepReviewProps) {
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = formData.imageFiles.map((file) => URL.createObjectURL(file));
+    setPreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [formData.imageFiles]);
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4 p-5 rounded-xl bg-primary/5 border border-primary/20">
@@ -240,78 +240,68 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
         onEdit={onEdit}
       >
         <div className="space-y-3">
+          <PhotoDraftNotices
+            missingPhotoCount={missingPhotoCount}
+            photoSaveFailed={photoSaveFailed}
+          />
+
           {formData.imageFiles.length > 0 ? (
             <div>
-              <p className="text-xs text-muted mb-2">
+              <p className="mb-2 text-xs text-muted">
                 {formData.imageFiles.length} photo
-                {formData.imageFiles.length !== 1 ? "s" : ""} uploaded
+                {formData.imageFiles.length !== 1 ? "s" : ""} added
               </p>
               <div className="grid grid-cols-5 gap-2">
-                {formData.imageFiles.slice(0, 10).map((file, i) => {
-                  const url = URL.createObjectURL(file);
-                  return (
-                    <div
-                      key={i}
-                      className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted"
-                    >
-                      <img
-                        src={url}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                        onLoad={() => URL.revokeObjectURL(url)}
-                      />
-                      {i === 0 && (
-                        <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[9px] font-semibold px-1 py-0.5 rounded">
-                          Cover
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+                {previews.slice(0, 10).map((url, i) => (
+                  <div
+                    key={url}
+                    className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
+                  >
+                    <img
+                      src={url}
+                      alt={formData.imageFiles[i]?.name ?? ""}
+                      className="h-full w-full object-cover"
+                    />
+                    {i === 0 && (
+                      <span className="absolute bottom-1 left-1 rounded bg-primary px-1 py-0.5 text-[9px] font-semibold text-primary-foreground">
+                        Cover
+                      </span>
+                    )}
+                  </div>
+                ))}
                 {formData.imageFiles.length > 10 && (
-                  <div className="aspect-square rounded-lg bg-muted border border-border flex items-center justify-center text-xs text-muted font-medium">
+                  <div className="flex aspect-square items-center justify-center rounded-lg border border-border bg-muted text-xs font-medium text-muted">
                     +{formData.imageFiles.length - 10}
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted italic">No photos uploaded</p>
-          )}
-
-          {formData.videoLinks.some(Boolean) && (
-            <div className="pt-1 border-t border-border">
-              <p className="text-xs text-muted mb-1">Video links</p>
-              {formData.videoLinks.filter(Boolean).map((link, i) => (
-                <p key={i} className="text-xs text-primary truncate">
-                  {link}
-                </p>
-              ))}
-            </div>
+            <p className="text-sm italic text-muted">No photos added</p>
           )}
 
           {formData.documentTypes.length > 0 ? (
-            <div className="pt-3 border-t border-border">
-              <div className="flex items-start gap-2 mb-2">
-                <LuShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="border-t border-border pt-3">
+              <div className="mb-2 flex items-start gap-2">
+                <LuShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-xs text-muted">
-                  Documents declared — pending verification. Our team will
+                  Documents declared, pending verification. Our team will
                   contact you to collect copies.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {formData.documentTypes.map((type) => (
                   <Badge key={type} variant="outline" className="text-[10px]">
-                    <LuFileText className="h-3 w-3 mr-1 inline" />
+                    <LuFileText className="mr-1 inline h-3 w-3" />
                     {DOC_LABEL[type] ?? type}
                   </Badge>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-xs text-muted pt-1 border-t border-border">
-              No ownership documents declared yet — your listing stays live
-              without a verified badge until you do.
+            <p className="border-t border-border pt-1 text-xs text-muted">
+              No ownership documents declared yet. Your listing stays live
+              without a verified badge until you declare them.
             </p>
           )}
         </div>

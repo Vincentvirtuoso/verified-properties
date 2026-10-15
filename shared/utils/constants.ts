@@ -428,6 +428,54 @@ export const PROPERTY_FEATURE_LABELS: Record<PropertyFeature, string> = {
   serviced: "Serviced",
 };
 
+export const PROPERTY_FEATURES = Object.entries(PROPERTY_FEATURE_LABELS).map(
+  ([value, label]) => ({
+    value: value as PropertyFeature,
+    label,
+  }),
+);
+
+export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
+  residential: [
+    "singleFamilyHouse",
+    "detachedHouse",
+    "semiDetachedHouse",
+    "terraceHouse",
+    "bungalow",
+    "mansion",
+    "apartment",
+    "selfContainedApartment",
+    "servicedApartment",
+    "guestRoom",
+    "guestHouse",
+    "studentHostel",
+    "duplex",
+    "detachedDuplex",
+    "semiDetachedDuplex",
+    "terraceDuplex",
+    "duplexWithBQ",
+    "duplexWithPenthouse",
+    "duplexVilla",
+    "duplexMaisonette",
+    "gardenDuplex",
+    "smartDuplex",
+    "maisonette",
+    "penthouse",
+  ],
+  commercial: ["officeSpace", "retailShop", "warehouse"],
+  industrial: ["factory", "industrialPark", "coldStorage"],
+  agricultural: ["farm", "farmhouse"],
+  land: [
+    "residentialLand",
+    "commercialLand",
+    "agriculturalLand",
+    "mixedUseLand",
+  ],
+  mixedUse: ["mixedUseDevelopment"],
+  hospitality: ["hotel", "resortAndEventCenter"],
+  institutional: ["schoolOrHospital"],
+};
+
 export const LISTING_PURPOSE_LABELS: Record<ListingPurpose, string> = {
   rent: "For Rent",
   sale: "For Sale",

@@ -217,7 +217,7 @@ export function StepDetails({
             name="bedrooms"
             type="number"
             placeholder="0"
-            value={Number(formData.bedrooms)}
+            value={formData.bedrooms}
             onChange={(e) => updateField("bedrooms", e.target.value)}
             required
             error={errors.bedrooms}

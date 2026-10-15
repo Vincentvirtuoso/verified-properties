@@ -18,8 +18,6 @@ export async function createClientFromServer() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Server Components cannot always write cookies.
-            // The proxy/session refresh flow handles that case.
           }
         },
       },
