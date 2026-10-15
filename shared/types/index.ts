@@ -14,6 +14,7 @@ export interface Testimonial {
 }
 
 export * from "./property";
+export * from "./property.sub";
 export * from "./filters";
 export * from "./stats";
 export * from "./user";

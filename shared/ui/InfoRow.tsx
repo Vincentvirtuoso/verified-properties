@@ -58,8 +58,8 @@ export function InfoRow({
         isLink ? "hover:bg-muted/10 active:bg-muted" : ""
       } ${className}`}
     >
-      <div className="flex items-center gap-2.5 text-sm text-muted-foreground min-w-0">
-        {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70" />}
+      <div className="flex items-center gap-2.5 text-sm text-muted min-w-0">
+        {Icon && <Icon className="h-4 w-4 shrink-0 text-muted/70" />}
         <span
           className={cn("truncate", hideLabelOnMobile && "hidden sm:block")}
         >
@@ -89,7 +89,7 @@ export function InfoRow({
         )}
 
         {isLink && (
-          <LuChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:text-primary group-hover:scale-105 group-hover:translate-x-1.25 transition-all" />
+          <LuChevronRight className="h-4 w-4 text-muted/40 shrink-0 group-hover:text-primary group-hover:scale-105 group-hover:translate-x-1.25 transition-all" />
         )}
       </div>
     </div>

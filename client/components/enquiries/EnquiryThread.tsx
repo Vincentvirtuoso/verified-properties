@@ -183,7 +183,7 @@ export function EnquiryThread({
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="md:hidden -ml-1 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+            className="md:hidden -ml-1 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-muted/30 hover:text-foreground"
             aria-label="Back to enquiries"
           >
             <LuArrowLeft className="h-5 w-5" />
@@ -194,7 +194,7 @@ export function EnquiryThread({
               {isAgentSide ? enquiry.buyerName : enquiry.agentName}
             </p>
 
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-xs text-muted">
               {enquiry.propertyTitle}
               {isAgentSide && enquiry.buyerPhone && (
                 <>
@@ -234,7 +234,7 @@ export function EnquiryThread({
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-3xl space-y-6">
           {loading && events.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted">
               Loading messages...
             </p>
           )}
@@ -243,7 +243,7 @@ export function EnquiryThread({
             <section key={group.key}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
-                <span className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[10px] font-medium text-muted-foreground shadow-sm">
+                <span className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[10px] font-medium text-muted shadow-sm">
                   {group.label}
                 </span>
                 <div className="h-px flex-1 bg-border" />
@@ -269,7 +269,7 @@ export function EnquiryThread({
 
       {isClosed || readOnly ? (
         <div className="shrink-0 border-t border-border bg-card px-4 py-3">
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted">
             {isClosed
               ? "This enquiry is closed."
               : `Only ${enquiry.agentName} can reply to this conversation.`}
@@ -309,9 +309,7 @@ function MessageBubble({
           <div
             className={cn(
               "mt-1.5 flex items-center gap-1 text-[10px]",
-              isMine
-                ? "justify-end text-primary-foreground/65"
-                : "text-muted-foreground",
+              isMine ? "justify-end text-primary-foreground/65" : "text-muted",
             )}
           >
             {event.sender === "assistant" && <span>Assistant ·</span>}
@@ -363,7 +361,7 @@ function CallCard({
               )}
             </p>
 
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-[11px] text-muted">
               {format(event.timestamp, "EEE, do MMMM yyyy · HH:mm")}
               {event.outcome === "answered" &&
                 ` · ${minutes}:${String(seconds).padStart(2, "0")}`}
@@ -373,7 +371,7 @@ function CallCard({
           {event.transcript && (
             <button
               onClick={() => setExpanded((value) => !value)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-muted hover:text-foreground"
               aria-label={expanded ? "Hide transcript" : "Show transcript"}
               aria-expanded={expanded}
             >
@@ -388,14 +386,14 @@ function CallCard({
         </div>
 
         {event.summary && (
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-xs leading-relaxed text-muted">
             {event.summary}
           </p>
         )}
 
         {expanded && event.transcript && (
           <div className="mt-3 border-t border-border pt-3">
-            <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted-foreground">
+            <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted">
               {event.transcript}
             </p>
           </div>
@@ -501,7 +499,7 @@ function ChatComposer({
             "flex-1 resize-none rounded-2xl border border-border",
             isOverflowing ? "overflow-y-auto" : "overflow-hidden",
             "bg-background px-4 py-2.5 text-sm leading-5 text-foreground",
-            "placeholder:text-muted-foreground",
+            "placeholder:text-muted",
             "focus:outline-none focus:ring-2 focus:ring-ring",
             "disabled:cursor-not-allowed disabled:opacity-50",
           )}

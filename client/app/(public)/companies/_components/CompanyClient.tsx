@@ -86,7 +86,7 @@ export default function CompanyPage({
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-muted-foreground bg-muted">
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-muted bg-muted">
                     {company.name.charAt(0)}
                   </div>
                 )}
@@ -130,7 +130,7 @@ export default function CompanyPage({
             </div>
 
             {/* Contact Info */}
-            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted">
               <a
                 href={`mailto:${company.contactEmail}`}
                 className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -184,11 +184,9 @@ export default function CompanyPage({
           </div>
         ) : (
           <div className="text-center py-20 bg-muted/30 rounded-2xl border border-dashed">
-            <LuBuilding className="mx-auto w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-lg">
-              No listings available yet
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <LuBuilding className="mx-auto w-12 h-12 text-muted mb-4" />
+            <p className="text-muted text-lg">No listings available yet</p>
+            <p className="text-sm text-muted mt-1">
               This company hasn&apos;t posted any properties.
             </p>
           </div>

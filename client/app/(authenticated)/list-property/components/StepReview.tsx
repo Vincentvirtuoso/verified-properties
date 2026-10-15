@@ -16,7 +16,11 @@ import type {
   ListPropertyFormData,
   ListPropertyStep,
 } from "../hooks/useListPropertyForm";
-import { DOCUMENT_TYPES } from "@/utils";
+import {
+  DOCUMENT_TYPES,
+  PROPERTY_CATEGORY_LABELS,
+  PROPERTY_FEATURE_LABELS,
+} from "@/utils";
 
 const PURPOSE_LABEL: Record<string, string> = {
   rent: "For Rent",
@@ -81,7 +85,7 @@ function ReviewSection({
         <button
           type="button"
           onClick={() => onEdit(step)}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          className="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors"
         >
           <LuPencil className="h-3 w-3" />
           Edit
@@ -95,7 +99,7 @@ function ReviewSection({
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-1.5 text-sm">
-      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-muted shrink-0">{label}</span>
       <span className="text-foreground font-medium text-right">
         {value || "—"}
       </span>
@@ -118,7 +122,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
           <p className="text-sm font-semibold text-foreground">
             Almost there — review your listing
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Check all details carefully before submitting. You can edit any
             section by clicking &quot;Edit&quot;.
           </p>
@@ -147,12 +151,16 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
           />
           <Row
             label="Category"
-            value={formData.category ? CATEGORY_LABEL[formData.category] : "—"}
+            value={
+              formData.category
+                ? PROPERTY_CATEGORY_LABELS[formData.category]
+                : "—"
+            }
           />
           <Row label="Type" value={formData.type || "—"} />
           {formData.description && (
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-1">Description</p>
+              <p className="text-xs text-muted mb-1">Description</p>
               <p className="text-sm text-foreground line-clamp-4">
                 {formData.description}
               </p>
@@ -174,7 +182,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
               <span className="font-semibold text-primary">
                 {formatPrice(formData.price, formData.currency)}
                 {formData.negotiable && (
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  <span className="ml-2 text-xs font-normal text-muted">
                     (Negotiable)
                   </span>
                 )}
@@ -192,11 +200,11 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
           {formData.area && <Row label="Area" value={`${formData.area} sqm`} />}
           {formData.features.length > 0 && (
             <div className="pt-3">
-              <p className="text-xs text-muted-foreground mb-2">Features</p>
+              <p className="text-xs text-muted mb-2">Features</p>
               <div className="flex flex-wrap gap-1.5">
                 {formData.features.map((f) => (
                   <Badge key={f} variant="secondary">
-                    {FEATURE_LABEL[f] ?? f}
+                    {PROPERTY_FEATURE_LABELS[f] ?? f}
                   </Badge>
                 ))}
               </div>
@@ -234,7 +242,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
         <div className="space-y-3">
           {formData.imageFiles.length > 0 ? (
             <div>
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-xs text-muted mb-2">
                 {formData.imageFiles.length} photo
                 {formData.imageFiles.length !== 1 ? "s" : ""} uploaded
               </p>
@@ -261,21 +269,19 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
                   );
                 })}
                 {formData.imageFiles.length > 10 && (
-                  <div className="aspect-square rounded-lg bg-muted border border-border flex items-center justify-center text-xs text-muted-foreground font-medium">
+                  <div className="aspect-square rounded-lg bg-muted border border-border flex items-center justify-center text-xs text-muted font-medium">
                     +{formData.imageFiles.length - 10}
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic">
-              No photos uploaded
-            </p>
+            <p className="text-sm text-muted italic">No photos uploaded</p>
           )}
 
           {formData.videoLinks.some(Boolean) && (
             <div className="pt-1 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-1">Video links</p>
+              <p className="text-xs text-muted mb-1">Video links</p>
               {formData.videoLinks.filter(Boolean).map((link, i) => (
                 <p key={i} className="text-xs text-primary truncate">
                   {link}
@@ -288,7 +294,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
             <div className="pt-3 border-t border-border">
               <div className="flex items-start gap-2 mb-2">
                 <LuShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted">
                   Documents declared — pending verification. Our team will
                   contact you to collect copies.
                 </p>
@@ -303,7 +309,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+            <p className="text-xs text-muted pt-1 border-t border-border">
               No ownership documents declared yet — your listing stays live
               without a verified badge until you do.
             </p>
@@ -311,7 +317,7 @@ export function StepReview({ formData, onEdit }: StepReviewProps) {
         </div>
       </ReviewSection>
 
-      <p className="text-xs text-muted-foreground text-center px-4">
+      <p className="text-xs text-muted text-center px-4">
         By submitting, you confirm that all information is accurate and that you
         have the right to list this property. Your listing will be reviewed
         before going live.

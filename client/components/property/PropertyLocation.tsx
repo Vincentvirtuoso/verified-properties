@@ -68,7 +68,7 @@ export function LocationPlaceholder({
   const renderMap = () => {
     if (mapFailed) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+        <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted">
           Map preview unavailable
         </div>
       );
@@ -115,9 +115,7 @@ export function LocationPlaceholder({
         <LuMapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">Location</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {displayLocation}
-          </p>
+          <p className="mt-1 text-sm text-muted">{displayLocation}</p>
           <a
             href={googleMapsUrl}
             target="_blank"

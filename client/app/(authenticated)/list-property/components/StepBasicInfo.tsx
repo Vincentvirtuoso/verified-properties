@@ -11,12 +11,13 @@ import {
   LuTrendingUp,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import type {
-  PropertyCategory,
-  PropertyType,
-  ListingPurpose,
+import {
+  type PropertyCategory,
+  type PropertyType,
+  type ListingPurpose,
 } from "@affilhomes/shared/types";
 import Select from "@affilhomes/shared/ui/Select";
+import { PROPERTY_CATEGORY_LABELS, PROPERTY_TYPE_LABELS } from "@/utils";
 
 const PURPOSE_OPTIONS = [
   {
@@ -38,59 +39,68 @@ const PURPOSE_OPTIONS = [
   icon: React.ReactNode;
 }[];
 
-const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = [
-  { value: "residential", label: "Residential" },
-  { value: "commercial", label: "Commercial" },
-  { value: "industrial", label: "Industrial" },
-  { value: "land", label: "Land" },
-  { value: "mixedUse", label: "Mixed Use" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "institutional", label: "Institutional" },
-];
+export const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = (
+  Object.keys(PROPERTY_CATEGORY_LABELS) as PropertyCategory[]
+).map((value) => ({
+  value,
+  label: PROPERTY_CATEGORY_LABELS[value],
+}));
 
-const TYPES_BY_CATEGORY: Record<
+const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
+  residential: [
+    "singleFamilyHouse",
+    "detachedHouse",
+    "semiDetachedHouse",
+    "terraceHouse",
+    "bungalow",
+    "mansion",
+    "apartment",
+    "selfContainedApartment",
+    "servicedApartment",
+    "guestRoom",
+    "guestHouse",
+    "studentHostel",
+    "duplex",
+    "detachedDuplex",
+    "semiDetachedDuplex",
+    "terraceDuplex",
+    "duplexWithBQ",
+    "duplexWithPenthouse",
+    "duplexVilla",
+    "duplexMaisonette",
+    "gardenDuplex",
+    "smartDuplex",
+    "maisonette",
+    "penthouse",
+  ],
+  commercial: ["officeSpace", "retailShop", "warehouse"],
+  industrial: ["factory", "industrialPark", "coldStorage"],
+  agricultural: ["farm", "farmhouse"],
+  land: [
+    "residentialLand",
+    "commercialLand",
+    "agriculturalLand",
+    "mixedUseLand",
+  ],
+  mixedUse: ["mixedUseDevelopment"],
+  hospitality: ["hotel", "resortAndEventCenter"],
+  institutional: ["schoolOrHospital"],
+};
+
+export const TYPES_BY_CATEGORY: Record<
   PropertyCategory,
   { value: PropertyType; label: string }[]
-> = {
-  residential: [
-    { value: "singleFamilyHouse", label: "Single Family House" },
-    { value: "apartment", label: "Apartment" },
-    { value: "terrace", label: "Terrace" },
-    { value: "detachedDuplex", label: "Detached Duplex" },
-    { value: "semiDetachedDuplex", label: "Semi-Detached Duplex" },
-    { value: "terraceDuplex", label: "Terrace Duplex" },
-    { value: "duplexWithBQ", label: "Duplex with BQ" },
-    { value: "duplexWithPenthouse", label: "Duplex with Penthouse" },
-    { value: "duplexVilla", label: "Duplex Villa" },
-    { value: "duplexMaisonette", label: "Duplex Maisonette" },
-    { value: "gardenDuplex", label: "Garden Duplex" },
-    { value: "smartDuplex", label: "Smart Duplex" },
-    { value: "studentHostel", label: "Student Hostel" },
-    { value: "servicedApartment", label: "Serviced Apartment" },
-  ],
-  commercial: [
-    { value: "officeSpace", label: "Office Space" },
-    { value: "retailShop", label: "Retail Shop" },
-    { value: "warehouse", label: "Warehouse" },
-  ],
-  industrial: [
-    { value: "factory", label: "Factory" },
-    { value: "industrialPark", label: "Industrial Park" },
-    { value: "coldStorage", label: "Cold Storage" },
-  ],
-  land: [
-    { value: "residentialLand", label: "Residential Land" },
-    { value: "commercialLand", label: "Commercial Land" },
-    { value: "agriculturalLand", label: "Agricultural Land" },
-    { value: "mixedUseLand", label: "Mixed Use Land" },
-  ],
-  mixedUse: [{ value: "mixedUseDevelopment", label: "Mixed Use Development" }],
-  hospitality: [
-    { value: "hotel", label: "Hotel" },
-    { value: "resortAndEventCenter", label: "Resort & Event Center" },
-  ],
-  institutional: [{ value: "schoolOrHospital", label: "School / Hospital" }],
-};
+> = Object.fromEntries(
+  (Object.keys(PROPERTY_TYPES_BY_CATEGORY) as PropertyCategory[]).map(
+    (category) => [
+      category,
+      PROPERTY_TYPES_BY_CATEGORY[category].map((value) => ({
+        value,
+        label: PROPERTY_TYPE_LABELS[value],
+      })),
+    ],
+  ),
+) as Record<PropertyCategory, { value: PropertyType; label: string }[]>;
 
 interface StepBasicInfoProps {
   formData: ListPropertyFormData;
@@ -113,6 +123,8 @@ export function StepBasicInfo({
   const handleCategoryChange = (value: string) => {
     updateField("category", value as PropertyCategory);
   };
+
+  console.log(formData);
 
   return (
     <div className="space-y-8">
@@ -182,7 +194,7 @@ export function StepBasicInfo({
                     className={`px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-all duration-200 ${
                       isSelected
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-background text-muted-foreground hover:border-muted-foreground/40"
+                        : "border-border bg-background text-muted hover:border-muted-foreground/40"
                     }`}
                   >
                     {cat.label}
@@ -200,6 +212,7 @@ export function StepBasicInfo({
           {formData.category && availableTypes.length > 0 && (
             <Select
               options={availableTypes}
+              key={`${formData.category}-${formData.type ? "has-type" : "empty"}`}
               label="Property Type"
               error={errors.type}
               value={formData.type}

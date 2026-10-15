@@ -89,7 +89,7 @@ export default function CoursesPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               All Courses
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted mt-1">
               Explore our full library of expert-led courses
             </p>
           </div>
@@ -105,18 +105,18 @@ export default function CoursesPage() {
 
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
           <div className="relative flex-1">
-            <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <input
               type="text"
               placeholder="Search courses..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
               >
                 <LuX className="h-4 w-4" />
               </button>
@@ -124,7 +124,7 @@ export default function CoursesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <LuSlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
+            <LuSlidersHorizontal className="h-4 w-4 text-muted hidden sm:block" />
             {TYPE_OPTIONS.map((opt) => (
               <Badge
                 key={opt.value}
@@ -159,14 +159,14 @@ export default function CoursesPage() {
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="text-sm text-muted-foreground hover:text-primary whitespace-nowrap"
+              className="text-sm text-muted hover:text-primary whitespace-nowrap"
             >
               Clear filters
             </button>
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-sm text-muted mb-6">
           Showing {filteredCourses.length} of {MOCK_COURSES.length} courses
         </p>
 
@@ -181,7 +181,7 @@ export default function CoursesPage() {
             <h3 className="text-lg font-medium text-foreground">
               No courses found
             </h3>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted mt-1">
               Try adjusting your search or filters
             </p>
             <Button

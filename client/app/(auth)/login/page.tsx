@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FiLock, FiMail } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { ProfileRole } from "@/utils";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -45,14 +46,12 @@ const LoginForm = () => {
         router.push(safeCallbackUrl);
         return;
       }
-      const roleRoutes: Record<string, string> = {
-        buyer: "/",
+      const roleRoutes: Record<ProfileRole, string> = {
+        viewer: "/",
         agent: "/dashboard",
-        landlord: "/dashboard",
-        developer: "/dashboard",
         company: "/company/dashboard",
       };
-      const redirectTo = roleRoutes[user.activeRole] || "/";
+      const redirectTo = roleRoutes[user.activeRole as ProfileRole] || "/";
       router.push(redirectTo);
     }
   }, [isAuthenticated, user, router, safeCallbackUrl]);

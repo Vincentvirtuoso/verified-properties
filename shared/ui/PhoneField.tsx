@@ -167,7 +167,7 @@ export function PhoneField({
               {selectedCountry.code}
             </span>
             <FiChevronDown
-              className={`ml-auto text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+              className={`ml-auto text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
               size={14}
             />
           </button>
@@ -179,7 +179,7 @@ export function PhoneField({
             onChange={handleLocalNumberChange}
             placeholder={selectedCountry.placeholder}
             required={required}
-            className="flex-1 bg-background px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="flex-1 bg-background px-4 py-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none"
           />
         </div>
 
@@ -212,7 +212,7 @@ export function PhoneField({
                       <div className="font-medium text-popover-foreground text-sm">
                         {country.name}
                       </div>
-                      <div className="text-xs text-muted-foreground font-mono">
+                      <div className="text-xs text-muted font-mono">
                         {country.code}
                       </div>
                     </div>

@@ -30,13 +30,13 @@ export function PropertiesResultsHeader({
     <div className="bg-card rounded-2xl p-4 shadow-sm border border-border mb-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <p className="text-muted-foreground line-clamp-2" aria-live="polite">
+          <p className="text-muted line-clamp-2" aria-live="polite">
             <span className="font-semibold text-foreground text-lg">
               {resultCount}
             </span>{" "}
             {resultCount === 1 ? "property" : "properties"} found
             {debouncedSearchQuery && (
-              <span className="text-muted-foreground">
+              <span className="text-muted">
                 {" "}
                 for &quot;{debouncedSearchQuery}&quot;
               </span>
@@ -74,7 +74,7 @@ export function PropertiesResultsHeader({
             ))}
           </select>
           <svg
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

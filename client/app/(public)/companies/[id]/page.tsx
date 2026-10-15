@@ -171,7 +171,7 @@ export default function AgentsPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
             Our Agents
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted text-lg">
             Connect with experienced real estate professionals across Nigeria
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function AgentsPage() {
         {/* Search & Controls */}
         <div className="bg-card rounded-2xl border border-border p-4 mb-6">
           <div className="relative mb-4">
-            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
             <input
               type="text"
               value={searchQuery}
@@ -187,14 +187,14 @@ export default function AgentsPage() {
               placeholder="Search agents by name, company, location, or specialization..."
               className="w-full pl-12 pr-12 py-3 bg-background border border-border rounded-xl text-base
                          focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-                         transition-all text-foreground placeholder:text-muted-foreground"
+                         transition-all text-foreground placeholder:text-muted"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors"
               >
-                <LuX className="w-4 h-4 text-muted-foreground" />
+                <LuX className="w-4 h-4 text-muted" />
               </button>
             )}
           </div>
@@ -325,7 +325,7 @@ export default function AgentsPage() {
                     "p-2 transition-colors",
                     viewMode === "grid"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-card text-muted-foreground hover:bg-secondary",
+                      : "bg-card text-muted hover:bg-secondary",
                   )}
                 >
                   <FiGrid className="w-4 h-4" />
@@ -336,7 +336,7 @@ export default function AgentsPage() {
                     "p-2 transition-colors",
                     viewMode === "list"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-card text-muted-foreground hover:bg-secondary",
+                      : "bg-card text-muted hover:bg-secondary",
                   )}
                 >
                   <LuList className="w-4 h-4" />
@@ -348,7 +348,7 @@ export default function AgentsPage() {
 
         {/* Result Count */}
         <div className="mb-6">
-          <p className="text-muted-foreground">
+          <p className="text-muted">
             Showing{" "}
             <span className="font-semibold text-foreground">
               {filteredAgents.length}
@@ -364,9 +364,7 @@ export default function AgentsPage() {
             {loadError}
           </p>
         ) : !agents ? (
-          <p className="py-16 text-center text-muted-foreground">
-            Loading agents...
-          </p>
+          <p className="py-16 text-center text-muted">Loading agents...</p>
         ) : filteredAgents.length > 0 ? (
           <div
             className={cn(
@@ -392,11 +390,11 @@ export default function AgentsPage() {
           </div>
         ) : (
           <div className="text-center py-16 bg-card rounded-2xl border border-border">
-            <LuSearch className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <LuSearch className="w-16 h-16 text-muted mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">
               No agents found
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted mb-6">
               Try adjusting your filters or search criteria
             </p>
             <button
@@ -458,7 +456,7 @@ function AgentCardGrid({ agent }: { agent: Agent }) {
             {agent.name}
           </h3>
           {agent.company && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+            <p className="text-sm text-muted flex items-center gap-1 mt-1">
               <LuBuilding className="w-3 h-3" />
               {agent.company}
             </p>
@@ -466,19 +464,19 @@ function AgentCardGrid({ agent }: { agent: Agent }) {
 
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Active Listings:</span>
+              <span className="text-muted">Active Listings:</span>
               <span className="font-semibold text-foreground">
                 {agent.activeListings}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total Deals:</span>
+              <span className="text-muted">Total Deals:</span>
               <span className="font-semibold text-foreground">
                 {agent.totalListings}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Specializations:</span>
+              <span className="text-muted">Specializations:</span>
               <span className="font-semibold text-foreground">
                 {agent.propertyTypes.length}
               </span>
@@ -486,7 +484,7 @@ function AgentCardGrid({ agent }: { agent: Agent }) {
           </div>
 
           <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted">
               <LuMapPin className="w-3 h-3 shrink-0" />
               <span className="line-clamp-1">
                 {agent.locations.slice(0, 2).join(", ")}
@@ -538,13 +536,11 @@ function AgentCardList({ agent }: { agent: Agent }) {
                   )}
                 </h3>
                 {agent.company && (
-                  <p className="text-sm text-muted-foreground">
-                    {agent.company}
-                  </p>
+                  <p className="text-sm text-muted">{agent.company}</p>
                 )}
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Listings</p>
+                <p className="text-sm text-muted">Listings</p>
                 <p className="text-xl font-bold text-primary">
                   {agent.activeListings}
                 </p>
@@ -552,16 +548,16 @@ function AgentCardList({ agent }: { agent: Agent }) {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-4">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1 text-sm text-muted">
                 <LuMapPin className="w-4 h-4" />
                 <span>{agent.locations.slice(0, 2).join(", ")}</span>
               </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1 text-sm text-muted">
                 <LuHouse className="w-4 h-4" />
                 <span>{agent.propertyTypes.slice(0, 3).join(", ")}</span>
               </div>
               {agent.phone && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 text-sm text-muted">
                   <LuPhone className="w-4 h-4" />
                   <span>{agent.phone}</span>
                 </div>

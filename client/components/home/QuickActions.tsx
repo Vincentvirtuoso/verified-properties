@@ -38,9 +38,7 @@ const ActionLink = ({
         </h3>
         <FaArrowRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary text-sm" />
       </div>
-      <p className="text-sm text-muted-foreground leading-snug line-clamp-2">
-        {desc}
-      </p>
+      <p className="text-sm text-muted leading-snug line-clamp-2">{desc}</p>
     </div>
   </motion.a>
 );
@@ -57,7 +55,7 @@ const QuickActions = () => {
               <h2 className="text-2xl font-black tracking-tight mb-2">
                 Essential Tools
               </h2>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted text-sm">
                 Everything you need to navigate the market safely.
               </p>
             </div>

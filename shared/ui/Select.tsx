@@ -9,6 +9,7 @@ export interface SelectOption {
 }
 
 export type SelectProps = {
+  id?: string;
   label?: string;
   options: SelectOption[];
   required?: boolean;
@@ -16,6 +17,7 @@ export type SelectProps = {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  name?: string;
   showPlaceholder?: boolean;
 };
 const Select = ({
@@ -23,27 +25,39 @@ const Select = ({
   options,
   required,
   className,
+  value,
+  id,
   error,
   onChange,
   showPlaceholder = true,
+  ...props
 }: SelectProps) => {
+  const selectId = id
+    ? id
+    : label
+      ? `select-${label.replace(/\s+/g, "-").toLowerCase()}`
+      : undefined;
+
   return (
     <div>
-      {label && (
-        <FieldLabel htmlFor={label}>
+      {label && selectId && (
+        <FieldLabel htmlFor={selectId}>
           {label}
           {required && <span className="text-destructive ml-1">*</span>}
         </FieldLabel>
       )}
-      <div className="relative" id={label}>
+      <div className="relative">
         <select
+          id={selectId}
           aria-label={label}
+          value={value ?? ""}
           className={cn(
             "bg-background border border-border rounded-xl px-5 py-2.5 text-sm w-full appearance-none pr-10 cursor-pointer text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-border/80 transition-colors",
             className,
           )}
           onChange={(e) => onChange(e.target.value)}
           required={required}
+          {...props}
         >
           {showPlaceholder && label && <option value="">Select {label}</option>}
           {options.map((option) => (
@@ -52,7 +66,7 @@ const Select = ({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted">
           <LuChevronDown className="h-4 w-4" />
         </div>
       </div>

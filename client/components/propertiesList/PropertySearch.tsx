@@ -31,7 +31,7 @@ export function PropertySearch({ search }: PropertySearchProps) {
       <div className="relative max-w-2xl">
         <form onSubmit={handleSearchSubmit} role="search">
           <div className="relative">
-            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+            <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
@@ -47,7 +47,7 @@ export function PropertySearch({ search }: PropertySearchProps) {
               aria-autocomplete="list"
               aria-label="Search properties"
               autoComplete="off"
-              className="w-full pl-12 pr-12 py-3 bg-background border border-border rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent shadow-sm transition-all text-foreground placeholder:text-muted-foreground"
+              className="w-full pl-12 pr-12 py-3 bg-background border border-border rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent shadow-sm transition-all text-foreground placeholder:text-muted"
             />
             {searchQuery && (
               <button
@@ -56,7 +56,7 @@ export function PropertySearch({ search }: PropertySearchProps) {
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors"
                 aria-label="Clear search"
               >
-                <LuX className="w-4 h-4 text-muted-foreground" />
+                <LuX className="w-4 h-4 text-muted" />
               </button>
             )}
           </div>

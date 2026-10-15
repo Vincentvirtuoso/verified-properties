@@ -72,10 +72,8 @@ export function StatCard({
       </div>
       <div className="min-w-0">
         <p className="text-2xl font-bold text-foreground truncate">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        {sub && (
-          <p className="text-xs text-muted-foreground/70 mt-0.5">{sub}</p>
-        )}
+        <p className="text-xs text-muted">{label}</p>
+        {sub && <p className="text-xs text-muted/70 mt-0.5">{sub}</p>}
       </div>
       {action && (
         <div className="ml-auto">

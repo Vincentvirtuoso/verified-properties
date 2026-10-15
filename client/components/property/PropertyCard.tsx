@@ -276,7 +276,7 @@ export function PropertyCard({
                 <p className="text-primary font-bold text-2xl tracking-tight">
                   {formatPrice(discountedPrice)}
                 </p>
-                <p className="text-muted-foreground text-sm line-through">
+                <p className="text-muted text-sm line-through">
                   {formatPrice(price)}
                 </p>
               </div>
@@ -301,12 +301,12 @@ export function PropertyCard({
           {title}
         </h3>
 
-        <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1 shrink-0">
+        <p className="text-muted text-sm mt-1 flex items-center gap-1 shrink-0">
           <LuMapPin className="shrink-0" />
           <span className="line-clamp-1">{locationString}</span>
         </p>
 
-        <div className="flex items-center gap-5 mt-auto pt-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-5 mt-auto pt-4 text-sm text-muted">
           <div className="flex items-center gap-1.5">
             <FaBed className="text-lg" />
             <span className="font-medium">{bedrooms}</span>
@@ -363,7 +363,7 @@ export function PropertyCard({
           </div>
 
           {createdAt && (
-            <div className="flex items-center gap-1.5 text-muted-foreground/60 shrink-0 ml-2">
+            <div className="flex items-center gap-1.5 text-muted/60 shrink-0 ml-2">
               <FiClock size={13} className="shrink-0" />
               <span className="whitespace-nowrap">
                 {formatRelativeTime(createdAt)}

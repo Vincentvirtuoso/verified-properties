@@ -21,7 +21,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+          className="mt-4 text-lg md:text-xl text-muted max-w-2xl mx-auto"
         >
           Learn from industry experts. Structured courses, podcasts, and
           real‑world case studies to help you build wealth through property.

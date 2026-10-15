@@ -374,18 +374,18 @@ export default function FileUpload({
             className="hidden"
             accept={accept || effectiveAllowedTypes.join(",")}
           />
-          <FiFolder className="w-10 h-10 text-muted-foreground mb-3" />
+          <FiFolder className="w-10 h-10 text-muted mb-3" />
           <p className="text-sm font-medium text-foreground mb-1">
             Click to upload or drag and drop
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted">
             {description ||
               `Upload documents (${effectiveAllowedTypes
                 .map((t) => t.split("/").pop()?.toUpperCase())
                 .join(", ")}) up to ${maxSizeInMB}MB`}
           </p>
           {effectiveMaxFiles > 1 && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted mt-2">
               Max {effectiveMaxFiles} files
             </p>
           )}
@@ -404,9 +404,7 @@ export default function FileUpload({
                       {fileMeta.name}
                     </p>
                     {config.showSize && (
-                      <p className="text-xs text-muted-foreground">
-                        {fileMeta.size}
-                      </p>
+                      <p className="text-xs text-muted">{fileMeta.size}</p>
                     )}
                     {fileMeta.status === "uploading" && config.showProgress && (
                       <div className="mt-1.5 w-full bg-slate-200 dark:bg-neutral-700 rounded-full h-1.5">
@@ -436,7 +434,7 @@ export default function FileUpload({
                       e.stopPropagation();
                       removeFile(fileMeta.id);
                     }}
-                    className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1 text-muted hover:text-destructive hover:bg-destructive/10 rounded transition-colors opacity-0 group-hover:opacity-100"
                     aria-label="Remove file"
                   >
                     <FiX className="w-4 h-4" />

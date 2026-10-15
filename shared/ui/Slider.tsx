@@ -114,7 +114,7 @@ export const Slider: React.FC<SliderProps> = ({
 
   return (
     <div className={`w-full select-none ${className}`}>
-      <div className="flex justify-between text-sm text-muted-foreground mb-2">
+      <div className="flex justify-between text-sm text-muted mb-2">
         <span>{formatLabel(value[0])}</span>
         <span>{formatLabel(value[1])}</span>
       </div>

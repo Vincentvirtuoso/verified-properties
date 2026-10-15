@@ -113,20 +113,20 @@ export default function ContactForm({
       <div className="p-5">
         <div className="mb-4">
           <p className="text-sm font-bold text-foreground">Send Enquiry</p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
             <LuPhoneCall className="h-3.5 w-3.5 text-primary shrink-0" />
             An assistant calls you back moments after you submit
           </p>
         </div>
 
         {isOwnListing ? (
-          <p className="text-sm text-muted-foreground">This is your listing.</p>
+          <p className="text-sm text-muted">This is your listing.</p>
         ) : sent ? (
           <div className="space-y-3 text-sm">
             <p className="flex items-center gap-2 font-semibold text-foreground">
               <RiCheckLine className="h-4 w-4 text-success" /> Enquiry sent
             </p>
-            <p className="text-muted-foreground">
+            <p className="text-muted">
               The agent has your message and number. You can follow the
               conversation in your enquiries.
             </p>
@@ -140,7 +140,7 @@ export default function ContactForm({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              <label className="block text-xs font-semibold text-muted mb-1.5">
                 Your Name
               </label>
               <input
@@ -152,11 +152,11 @@ export default function ContactForm({
                   setForm({ ...form, name: e.target.value });
                 }}
                 placeholder="John Doe"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              <label className="block text-xs font-semibold text-muted mb-1.5">
                 Phone Number
               </label>
               <input
@@ -168,11 +168,11 @@ export default function ContactForm({
                   setForm({ ...form, phone: e.target.value });
                 }}
                 placeholder="+234 800 000 0000"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              <label className="block text-xs font-semibold text-muted mb-1.5">
                 Message
               </label>
               <textarea
@@ -183,7 +183,7 @@ export default function ContactForm({
                   setTouched((t) => ({ ...t, message: true }));
                   setForm({ ...form, message: e.target.value });
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
               />
             </div>
 

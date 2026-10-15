@@ -193,7 +193,7 @@ export default function AICallingPageClient() {
           <h1 className="mt-4 text-3xl sm:text-5xl font-bold tracking-tight leading-tight text-balance">
             {content.headline}
           </h1>
-          <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto text-pretty">
+          <p className="mt-5 text-lg text-muted max-w-xl mx-auto text-pretty">
             {content.intro}
           </p>
         </div>
@@ -236,11 +236,11 @@ export default function AICallingPageClient() {
                         </span>
                         {step.title}
                       </h3>
-                      <span className="shrink-0 rounded-full bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                      <span className="shrink-0 rounded-full bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-muted">
                         {step.timing}
                       </span>
                     </div>
-                    <p className="mt-2 text-muted-foreground leading-relaxed text-pretty">
+                    <p className="mt-2 text-muted leading-relaxed text-pretty">
                       {step.body}
                     </p>
                   </div>
@@ -257,9 +257,7 @@ export default function AICallingPageClient() {
             <h2 className="text-xl font-semibold text-foreground">
               {content.ctaTitle}
             </h2>
-            <p className="mt-2 text-muted-foreground text-pretty">
-              {content.ctaBody}
-            </p>
+            <p className="mt-2 text-muted text-pretty">{content.ctaBody}</p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild size="sm" className="rounded-full py-3">
@@ -277,9 +275,7 @@ export default function AICallingPageClient() {
               </Button>
             </div>
 
-            <p className="mt-6 text-xs text-muted-foreground">
-              {content.footnote}
-            </p>
+            <p className="mt-6 text-xs text-muted">{content.footnote}</p>
           </div>
         </div>
       </section>

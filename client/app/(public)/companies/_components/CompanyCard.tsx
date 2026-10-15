@@ -31,7 +31,7 @@ export function CompanyCard({ company }: { company: Company }) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <Building2 className="h-6 w-6 text-muted-foreground" />
+            <Building2 className="h-6 w-6 text-muted" />
           )}
         </div>
 
@@ -60,19 +60,19 @@ export function CompanyCard({ company }: { company: Company }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-sm text-muted">
           <Building2 className="h-3.5 w-3.5" />
           <span>{company.activeListings} listings</span>
         </div>
       </div>
 
       <div className="mt-4 space-y-1.5 text-sm">
-        <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+        <div className="flex items-center gap-1.5 text-muted truncate">
           <Mail className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{company.contactEmail}</span>
         </div>
         {company.contactPhone && (
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted">
             <Phone className="h-3.5 w-3.5 shrink-0" />
             <span>{company.contactPhone}</span>
           </div>

@@ -54,7 +54,7 @@ export function MobileFilterDrawer({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground"
+            className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted"
           >
             <LuX className="w-5 h-5" />
           </button>

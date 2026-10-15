@@ -60,7 +60,7 @@ export function CompanyDirectory({ initialCompanies }: Props) {
         </Select> */}
       </div>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted">
         Showing {filtered.length}{" "}
         {filtered.length === 1 ? "company" : "companies"}
       </p>
@@ -72,7 +72,7 @@ export function CompanyDirectory({ initialCompanies }: Props) {
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
+        <div className="text-center py-16 text-muted">
           No companies found. Try adjusting your search or filter.
         </div>
       )}

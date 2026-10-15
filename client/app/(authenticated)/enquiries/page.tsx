@@ -94,7 +94,7 @@ export default function EnquiriesPage() {
           <h1 className="text-lg font-semibold text-foreground">
             {isAgentSide ? "Enquiries" : "My Enquiries"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted mt-0.5">
             {isAgentSide
               ? "Buyers who've reached out about your listings"
               : "Your conversations about properties you've enquired on"}
@@ -123,7 +123,7 @@ export default function EnquiriesPage() {
             onChanged={loadEnquiries}
           />
         ) : (
-          <div className="flex-1 hidden md:flex items-center justify-center text-sm text-muted-foreground">
+          <div className="flex-1 hidden md:flex items-center justify-center text-sm text-muted">
             Select a conversation to view messages and calls
           </div>
         )}
@@ -131,4 +131,3 @@ export default function EnquiriesPage() {
     </div>
   );
 }
-

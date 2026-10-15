@@ -71,7 +71,7 @@ const StatsAndPartners = ({
         </div>
 
         <div className="py-10 border-t border-border/60">
-          <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-8">
+          <p className="text-center text-sm font-semibold text-muted uppercase tracking-widest mb-8">
             Trusted by Industry Leaders
           </p>
 

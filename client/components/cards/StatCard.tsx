@@ -32,9 +32,7 @@ export const StatCard = ({ stat, index }: StatCardProps) => (
           ? stat.value.toLocaleString()
           : stat.value}
       </h4>
-      <p className="text-sm font-medium text-muted-foreground truncate">
-        {stat.label}
-      </p>
+      <p className="text-sm font-medium text-muted truncate">{stat.label}</p>
     </div>
   </motion.div>
 );

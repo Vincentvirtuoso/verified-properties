@@ -282,7 +282,7 @@ function DashboardCard({
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-muted-foreground truncate">{label}</p>
+        <p className="text-sm text-muted truncate">{label}</p>
         <p className={`text-2xl font-bold truncate ${className || ""}`}>
           {value}
         </p>
@@ -311,7 +311,7 @@ function RecentListings({
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       {listings.length === 0 ? (
         <div className="bg-muted/50 border border-border rounded-2xl p-8 text-center">
-          <p className="text-muted-foreground">No listings found yet.</p>
+          <p className="text-muted">No listings found yet.</p>
         </div>
       ) : (
         <>

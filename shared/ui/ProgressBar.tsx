@@ -13,7 +13,7 @@ export function ProgressBar({
   return (
     <div>
       <div className="flex justify-between text-xs mb-1.5">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="text-muted">{label}</span>
         <span className="font-medium text-foreground">
           {value} / {max}
         </span>

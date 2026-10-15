@@ -10,20 +10,15 @@ export function PropertyNotFound({ slug }: PropertyNotFoundProps) {
     <main className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 py-20">
       <div className="w-full max-w-lg text-center">
         <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
-          <LuHouse
-            className="h-11 w-11 text-muted-foreground"
-            aria-hidden="true"
-          />
+          <LuHouse className="h-11 w-11 text-muted" aria-hidden="true" />
         </div>
 
-        <p className="text-sm font-medium text-muted-foreground">
-          Property not found
-        </p>
+        <p className="text-sm font-medium text-muted">Property not found</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
           This listing is no longer available
         </h1>
 
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-base leading-relaxed text-muted">
           It may have been sold, rented, or removed.
           {slug && (
             <>
@@ -55,7 +50,7 @@ export function PropertyNotFound({ slug }: PropertyNotFoundProps) {
           </Link>
         </div>
 
-        <p className="mt-10 text-sm text-muted-foreground">
+        <p className="mt-10 text-sm text-muted">
           Need help?{" "}
           <Link
             href="/support"

@@ -14,7 +14,7 @@ const Footer = () => {
           />
           <div>
             <h4 className="font-semibold mb-4 text-foreground">Explore</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-muted">
               <li>
                 <Link
                   href="/properties"
@@ -43,7 +43,7 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="font-semibold mb-4 text-foreground">Company</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-muted">
               <li>
                 <Link
                   href="/about"
@@ -80,13 +80,13 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="font-semibold mb-4 text-foreground">Contact</h4>
-            <address className="not-italic text-sm text-muted-foreground space-y-2">
+            <address className="not-italic text-sm text-muted space-y-2">
               <p>info@verifiedproperties.ng</p>
               <p>8a, Dar‑Es‑Salam, Wuse 2, Abuja</p>
             </address>
           </div>
         </div>
-        <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
+        <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted">
           <p>
             © {new Date().getFullYear()} Verified Properties. All rights
             reserved.

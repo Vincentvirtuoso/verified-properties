@@ -76,9 +76,7 @@ function CompaniesStructuredData({
 // ---------- Server Component ----------
 export default async function CompaniesPage() {
   // Verified companies, or ones with a live listing.
-  const companies = await fetchPublicCompanies(await cr()).catch(
-    () => [],
-  );
+  const companies = await fetchPublicCompanies(await cr()).catch(() => []);
 
   return (
     <>
@@ -89,7 +87,7 @@ export default async function CompaniesPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               Real Estate Companies & Professionals
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-muted">
               Browse verified agencies, developers, and brokers. Find the right
               partner for your next property.
             </p>

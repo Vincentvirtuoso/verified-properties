@@ -11,9 +11,15 @@ import {
   LuShieldCheck,
 } from "react-icons/lu";
 import type { ListPropertyFormData } from "../hooks/useListPropertyForm";
-import type { PropertyDocumentType } from "@affilhomes/shared/types";
+import {
+  MEDIA_SECTIONS,
+  type MediaSection,
+  type PropertyDocumentType,
+} from "@affilhomes/shared/types";
 import Image from "next/image";
 import { DOCUMENT_TYPES } from "@/utils";
+import Select from "@affilhomes/shared/ui/Select";
+import { Checkbox } from "@affilhomes/shared/ui";
 
 interface StepMediaProps {
   formData: ListPropertyFormData;
@@ -28,11 +34,14 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
 
   const handleImageFiles = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const incoming = Array.from(e.target.files);
-    updateField(
-      "imageFiles",
-      [...formData.imageFiles, ...incoming].slice(0, 20),
-    );
+    const room = 20 - formData.imageFiles.length;
+    const accepted = Array.from(e.target.files).slice(0, Math.max(room, 0));
+
+    updateField("imageFiles", [...formData.imageFiles, ...accepted]);
+    updateField("imageSections", [
+      ...formData.imageSections,
+      ...accepted.map(() => "general" as MediaSection),
+    ]);
     e.target.value = "";
   };
 
@@ -40,6 +49,17 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
     updateField(
       "imageFiles",
       formData.imageFiles.filter((_, i) => i !== index),
+    );
+    updateField(
+      "imageSections",
+      formData.imageSections.filter((_, i) => i !== index),
+    );
+  };
+
+  const setImageSection = (index: number, section: MediaSection) => {
+    updateField(
+      "imageSections",
+      formData.imageSections.map((s, i) => (i === index ? section : s)),
     );
   };
 
@@ -72,11 +92,11 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
             onChange={handleImageFiles}
             className="hidden"
           />
-          <LuUpload className="h-7 w-7 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+          <LuUpload className="h-7 w-7 text-muted group-hover:text-primary transition-colors mb-2" />
           <p className="text-sm font-medium text-foreground">
             Click to upload photos
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted mt-1">
             JPEG, PNG, WebP — max 10MB each
           </p>
         </div>
@@ -86,30 +106,37 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
             {formData.imageFiles.map((file, i) => {
               const url = URL.createObjectURL(file);
               return (
-                <div
-                  key={i}
-                  className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted"
-                >
-                  <Image
-                    src={url}
-                    alt={file.name}
-                    className="w-full h-full object-cover"
-                    onLoad={() => URL.revokeObjectURL(url)}
-                    fill
+                <div key={i} className="space-y-1.5">
+                  <div className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+                    <Image
+                      src={url}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                      onLoad={() => URL.revokeObjectURL(url)}
+                      fill
+                    />
+                    {i === 0 && (
+                      <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                        Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Remove photo"
+                    >
+                      <LuX className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <Select
+                    value={formData.imageSections[i] ?? "general"}
+                    onChange={(value) =>
+                      setImageSection(i, value as MediaSection)
+                    }
+                    aria-label="Where this photo belongs"
+                    options={MEDIA_SECTIONS}
                   />
-                  {i === 0 && (
-                    <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                      Cover
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Remove photo"
-                  >
-                    <LuX className="h-3 w-3" />
-                  </button>
                 </div>
               );
             })}
@@ -143,14 +170,12 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
                 className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                   isSelected
                     ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-muted-foreground/30"
+                    : "border-border bg-card hover:border-muted/30"
                 }`}
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={isSelected}
                   onChange={() => toggleDocType(value as PropertyDocumentType)}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring shrink-0"
                 />
                 <span className="text-sm font-medium text-foreground">
                   {label}
@@ -168,7 +193,7 @@ export function StepMedia({ formData, updateField }: StepMediaProps) {
                 {formData.documentTypes.length} document
                 {formData.documentTypes.length !== 1 ? "s" : ""} declared
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Your listing will show as &quot;Documents declared — pending
                 verification&quot; once published. A verification team member
                 will contact you to collect copies and complete the review.

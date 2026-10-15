@@ -25,7 +25,7 @@ import { Slider } from "@affilhomes/shared/ui/Slider";
 const fieldClass = cn(
   "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm",
   "text-foreground outline-none transition-all",
-  "placeholder:text-muted-foreground/60",
+  "placeholder:text-muted/60",
   "hover:border-border/80",
   "focus:border-primary focus:ring-4 focus:ring-primary/10",
 );
@@ -70,7 +70,7 @@ function SelectField({
       >
         {children}
       </select>
-      <LuChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <LuChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
     </div>
   );
 }
@@ -97,7 +97,7 @@ function FilterSection({
         <span className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
           {title}
         </span>
-        <span className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition group-hover:bg-primary/10 group-hover:text-primary">
+        <span className="flex h-6 w-6 items-center justify-center rounded-md text-muted transition group-hover:bg-primary/10 group-hover:text-primary">
           {expanded ? (
             <LuChevronUp className="h-4 w-4" />
           ) : (
@@ -202,7 +202,7 @@ export function AdvancedFilters({
           value={filters.priceRange}
           onChange={(value) => onFilterChange({ priceRange: value })}
         />
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted">
           {formatPrice(filters.priceRange[0])} –{" "}
           {formatPrice(filters.priceRange[1])}
         </p>
@@ -349,9 +349,7 @@ export function AdvancedFilters({
         <div className="space-y-3">
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Min
-              </label>
+              <label className="mb-1 block text-xs text-muted">Min</label>
               <input
                 type="number"
                 value={filters.minArea}
@@ -364,9 +362,7 @@ export function AdvancedFilters({
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Max
-              </label>
+              <label className="mb-1 block text-xs text-muted">Max</label>
               <input
                 type="number"
                 value={filters.maxArea}
@@ -379,7 +375,7 @@ export function AdvancedFilters({
               />
             </div>
           </div>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted">
             {filters.minArea} – {filters.maxArea} m²
           </p>
         </div>
@@ -402,7 +398,7 @@ export function AdvancedFilters({
             <button
               type="button"
               onClick={clearAllDocs}
-              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary"
+              className="rounded-md px-3 py-1.5 text-xs text-muted transition-colors hover:bg-secondary"
             >
               Clear
             </button>
@@ -418,7 +414,7 @@ export function AdvancedFilters({
 
           <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border p-2">
             {filteredDocuments.length === 0 ? (
-              <p className="py-2 text-center text-sm text-muted-foreground">
+              <p className="py-2 text-center text-sm text-muted">
                 {docSearchTerm
                   ? "No matching documents"
                   : "No documents available"}

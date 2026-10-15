@@ -62,7 +62,7 @@ export default function CourseDetailPage() {
               {course.difficulty}
             </Badge>
             {(course.type === "video" || course.type === "audio") && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="text-xs text-muted flex items-center gap-1">
                 <LuClock className="h-3 w-3" />
                 {course.duration}
               </span>
@@ -78,9 +78,7 @@ export default function CourseDetailPage() {
             {course.title}
           </h1>
 
-          <p className="text-muted-foreground leading-relaxed">
-            {course.description}
-          </p>
+          <p className="text-muted leading-relaxed">{course.description}</p>
 
           {course.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -172,7 +170,7 @@ function AudioContent({
         <div>
           <button
             onClick={() => setShowTranscript(!showTranscript)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
           >
             {showTranscript ? <LuChevronUp /> : <LuChevronDown />}
             {showTranscript ? "Hide Transcript" : "Show Transcript"}
@@ -224,20 +222,18 @@ function ModuleAccordion({
         className="w-full flex items-center justify-between px-5 py-4 text-left bg-card hover:bg-muted/20 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground">{icon}</span>
+          <span className="text-muted">{icon}</span>
           <span className="font-medium text-foreground">
             {index + 1}. {module.title}
           </span>
           {(module.type === "video" || module.type === "audio") && (
-            <span className="text-xs text-muted-foreground">
-              {module.duration}
-            </span>
+            <span className="text-xs text-muted">{module.duration}</span>
           )}
         </div>
         {isOpen ? (
-          <LuChevronUp className="h-5 w-5 text-muted-foreground" />
+          <LuChevronUp className="h-5 w-5 text-muted" />
         ) : (
-          <LuChevronDown className="h-5 w-5 text-muted-foreground" />
+          <LuChevronDown className="h-5 w-5 text-muted" />
         )}
       </button>
 

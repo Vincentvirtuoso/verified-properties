@@ -19,7 +19,7 @@ export function PropertiesHeader({
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
           Properties
         </h1>
-        <p className="text-muted-foreground mt-2 text-base sm:text-lg">
+        <p className="text-muted mt-2 text-base sm:text-lg">
           Discover premium homes across Nigeria
         </p>
       </div>
@@ -44,7 +44,7 @@ export function PropertiesHeader({
               ${
                 currentType === value
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+                  : "text-muted hover:bg-secondary hover:text-secondary-foreground"
               }
             `}
           >

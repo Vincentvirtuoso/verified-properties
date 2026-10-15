@@ -83,7 +83,7 @@ export default function CompanyEnquiriesPage() {
   if (user.activeRole !== Role.Company) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6 text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           Switch to your Company account to view team enquiries.
         </p>
       </div>
@@ -93,7 +93,7 @@ export default function CompanyEnquiriesPage() {
   if (!company) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6 text-center">
-        <p className="text-sm text-muted-foreground">No company found.</p>
+        <p className="text-sm text-muted">No company found.</p>
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function CompanyEnquiriesPage() {
             <h1 className="text-lg font-semibold text-foreground">
               Team Enquiries
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted mt-0.5">
               Every conversation your team is having with buyers
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function CompanyEnquiriesPage() {
                   </option>
                 ))}
               </select>
-              <LuChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <LuChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             </div>
           )}
           {loadError && (
@@ -162,7 +162,7 @@ export default function CompanyEnquiriesPage() {
             onBack={() => setSelectedId(null)}
           />
         ) : (
-          <div className="flex-1 hidden md:flex items-center justify-center text-sm text-muted-foreground">
+          <div className="flex-1 hidden md:flex items-center justify-center text-sm text-muted">
             Select a conversation to view messages and calls
           </div>
         )}

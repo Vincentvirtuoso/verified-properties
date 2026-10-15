@@ -45,7 +45,7 @@ export function PropertyStepper({
         </div>
       </div>
 
-      <ol className="hidden sm:flex items-center w-full">
+      <ol className="sm:flex hidden items-center w-full">
         {STEPS.map((step, index) => {
           const isCompleted =
             completedSteps.includes(step) || index < currentIndex;

@@ -149,7 +149,7 @@ const ProfileMenu = ({
         <DropdownTrigger asChild>
           <button
             aria-label="Open user menu"
-            className="p-1 rounded-md hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+            className="p-1 rounded-md hover:bg-muted/30 transition-colors text-muted hover:text-foreground cursor-pointer focus:outline-none"
           >
             {isMainOpen ? (
               <LuChevronUp size={20} />
@@ -210,7 +210,7 @@ const ProfileMenu = ({
                 {contextActions.map(({ href, icon: Icon, label }) => (
                   <Link key={href} href={href}>
                     <DropdownItem
-                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted-foreground rounded-md transition-colors"
+                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted rounded-md transition-colors"
                       icon={<Icon className="w-4 h-4 text-primary/80" />}
                     >
                       <span className="font-medium text-xs">{label}</span>

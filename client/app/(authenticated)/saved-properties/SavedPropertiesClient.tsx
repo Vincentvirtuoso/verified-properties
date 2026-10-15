@@ -117,7 +117,7 @@ export default function SavedPropertiesClient({
               Saved properties
             </h1>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-base">
               Keep track of properties you love and come back to them when
               you&apos;re ready.
             </p>
@@ -133,7 +133,7 @@ export default function SavedPropertiesClient({
                 {properties.length}
               </span>
 
-              <span className="text-muted-foreground">
+              <span className="text-muted">
                 {properties.length === 1 ? "property" : "properties"}
               </span>
             </div>
@@ -159,7 +159,7 @@ export default function SavedPropertiesClient({
                 <div className="relative w-full lg:max-w-md">
                   <FiSearch
                     aria-hidden="true"
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
                   />
 
                   <input
@@ -175,7 +175,7 @@ export default function SavedPropertiesClient({
                       type="button"
                       onClick={() => setSearch("")}
                       aria-label="Clear search"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:text-foreground"
                     >
                       <FiX />
                     </button>
@@ -197,7 +197,7 @@ export default function SavedPropertiesClient({
                           "rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
                           filter === item.value
                             ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                            : "text-muted hover:bg-muted/30 hover:text-foreground",
                         )}
                       >
                         {item.label}
@@ -210,7 +210,7 @@ export default function SavedPropertiesClient({
                     onClick={() => setShowFilters((s) => !s)}
                     aria-expanded={showFilters}
                     aria-label="Toggle filters"
-                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition hover:text-foreground sm:hidden"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-muted transition hover:text-foreground sm:hidden"
                   >
                     {showFilters ? <FiX /> : <FiSliders />}
                   </button>
@@ -242,7 +242,7 @@ export default function SavedPropertiesClient({
                             "flex-1 rounded-full px-3 py-2 text-sm font-medium transition",
                             filter === item.value
                               ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-muted/30",
+                              : "text-muted hover:bg-muted/30",
                           )}
                         >
                           {item.label}
@@ -256,7 +256,7 @@ export default function SavedPropertiesClient({
 
             {hasResults && (
               <div className="mb-5">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted">
                   Showing{" "}
                   <span className="font-semibold text-foreground">
                     {filteredProperties.length}
@@ -268,7 +268,7 @@ export default function SavedPropertiesClient({
 
             {hasResults && (
               <div className="mb-5">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted">
                   Showing{" "}
                   <span className="font-semibold text-foreground">
                     {filteredProperties.length}
@@ -328,7 +328,7 @@ function EmptySavedProperties() {
         <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary">
           <FiHeart size={34} strokeWidth={1.7} />
 
-          <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-background bg-card text-muted-foreground shadow-sm">
+          <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-background bg-card text-muted shadow-sm">
             <LuHouse size={13} />
           </span>
         </div>
@@ -337,7 +337,7 @@ function EmptySavedProperties() {
           Nothing saved yet
         </h2>
 
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 text-sm leading-6 text-muted">
           Properties you save will appear here, making it easy to compare and
           revisit your favourites.
         </p>

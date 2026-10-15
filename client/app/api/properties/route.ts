@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@affilhomes/shared/supabase/client";
 import { uploadUserFile } from "@affilhomes/shared/supabase";
 import { slugifyTitle } from "@affilhomes/shared/supabase";
+import { isInNigeria } from "@affilhomes/shared/utils/geo";
 
 /**
  * POST /api/properties — create a listing from the List Property form.
@@ -70,6 +71,11 @@ export async function POST(request: Request) {
   const bedrooms = Number(str("bedrooms"));
   const bathrooms = Number(str("bathrooms"));
   const area = str("area") ? Number(str("area")) : 0;
+  const latRaw = str("latitude");
+  const lngRaw = str("longitude");
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+  const locationVisibility = str("locationVisibility");
 
   if (!title) return bad("Title is required");
   if (!LISTING_PURPOSES.includes(listingPurpose)) return bad("Invalid purpose");
@@ -84,6 +90,11 @@ export async function POST(request: Request) {
   if (!Number.isFinite(bathrooms) || bathrooms < 0)
     return bad("Invalid bathrooms");
   if (!Number.isFinite(area) || area < 0) return bad("Invalid area");
+  if (!latRaw || !lngRaw || !Number.isFinite(lat) || !Number.isFinite(lng))
+    return bad("Pin the property location on the map");
+  if (!isInNigeria(lat, lng)) return bad("The pin must be inside Nigeria");
+  if (!["public", "private"].includes(locationVisibility))
+    return bad("Invalid location visibility");
 
   const images = form.getAll("images").filter(isFile);
   if (images.length > MAX_IMAGES)
@@ -111,8 +122,6 @@ export async function POST(request: Request) {
 
   const slug = slugifyTitle(title);
 
-  // New listings are saved as drafts. Publishing is gated by verification
-  // in the database (can_publish_listings).
   const { data: property, error: insertError } = await supabase
     .from("properties")
     .insert({
@@ -136,6 +145,9 @@ export async function POST(request: Request) {
       bedrooms,
       bathrooms,
       area,
+      latitude: lat,
+      longitude: lng,
+      location_visibility: locationVisibility,
       // Video tours are uploaded from My Listings and reviewed by admins.
       video_links: [],
     })

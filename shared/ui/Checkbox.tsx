@@ -107,7 +107,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           </div>
 
           {label && (
-            <span className="leading-5 text-muted-foreground peer-checked:text-foreground transition-colors">
+            <span className="leading-5 text-muted peer-checked:text-foreground transition-colors">
               {label}
             </span>
           )}

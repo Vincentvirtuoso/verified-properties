@@ -39,7 +39,7 @@ type VerificationStatus =
   | "unverified";
 
 const TONE: Record<Tone, string> = {
-  neutral: "bg-muted text-muted-foreground",
+  neutral: "bg-muted text-muted",
   pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   danger: "bg-destructive/10 text-destructive",
@@ -194,7 +194,7 @@ export default function VerificationPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-foreground">Verification</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           Verified accounts can submit listings for review. We check your
           government ID and, for companies, your CAC documents.
         </p>
@@ -230,9 +230,7 @@ export default function VerificationPage() {
 
       {suspension && (
         <Card tone="danger" title="Your account is suspended">
-          <p className="text-sm text-muted-foreground">
-            Reason: {suspension.reason}
-          </p>
+          <p className="text-sm text-muted">Reason: {suspension.reason}</p>
           <AppealSection
             open={hasOpenAppeal("suspension", suspension.subjectId)}
             busy={busy}
@@ -255,11 +253,11 @@ export default function VerificationPage() {
 
           {agentStatus === "pending" && (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted">
                 Thanks for submitting. Review usually takes a few business days.
               </p>
               {(docs ?? []).length > 0 && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted">
                   {(docs ?? []).length} uploaded
                 </span>
               )}
@@ -278,14 +276,14 @@ export default function VerificationPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted">
                           <LuFileText className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-foreground">
                             {ID_DOC_LABEL[d.docType]}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted">
                             {ID_STATUS[d.status].label}
                           </p>
                         </div>
@@ -294,7 +292,7 @@ export default function VerificationPage() {
                     </div>
 
                     {d.reviewNote && d.status !== "approved" && (
-                      <div className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                      <div className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted">
                         <LuMessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         <span>{d.reviewNote}</span>
                       </div>
@@ -306,7 +304,7 @@ export default function VerificationPage() {
           )}
 
           {agentStatus === "verified" && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted">
               Your account is verified. You can now submit listings.
             </p>
           )}
@@ -336,7 +334,7 @@ export default function VerificationPage() {
                   Request verification
                 </Button>
                 {!hasUsableId && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted">
                     Upload an ID first to request verification.
                   </span>
                 )}
@@ -356,7 +354,7 @@ export default function VerificationPage() {
 
       {companyId && (
         <Card title="Company verification">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted">
             We check your CAC certificate. You can follow the status on your{" "}
             <Link
               href="/company/dashboard"
@@ -382,7 +380,7 @@ export default function VerificationPage() {
 
       {!isAgent && !companyId && (
         <Card title="Get verified">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted">
             Become an agent or register a company to get verified.
           </p>
           <div>
@@ -434,7 +432,7 @@ function NoteFromTeam({ note }: { note: string }) {
   return (
     <div className="rounded-lg bg-muted px-3 py-2 text-sm">
       <p className="font-medium text-foreground">Note from our team</p>
-      <p className="text-muted-foreground">{note}</p>
+      <p className="text-muted">{note}</p>
     </div>
   );
 }
@@ -523,7 +521,7 @@ function AppealSection({
   return (
     <div className="space-y-3 border-t border-border pt-4">
       {open ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           Your appeal is with our team. We'll reply here.
         </p>
       ) : editing ? (
@@ -543,7 +541,7 @@ function AppealSection({
           </Button>
         </div>
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted">
         Need more help?{" "}
         <Link
           href={`/support?subject=${encodeURIComponent(label)}`}
@@ -601,7 +599,6 @@ function AppealForm({
       />
 
       <div className="flex items-center justify-end gap-3">
-
         <div className="flex gap-2">
           <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
             Cancel

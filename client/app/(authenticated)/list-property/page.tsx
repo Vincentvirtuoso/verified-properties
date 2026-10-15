@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PropertyStepper } from "./components/PropertyStepper";
 import { StepBasicInfo } from "./components/StepBasicInfo";
@@ -14,30 +14,62 @@ import { useListPropertyForm, STEPS } from "./hooks/useListPropertyForm";
 import type { ListPropertyStep } from "./hooks/useListPropertyForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { LuX } from "react-icons/lu";
+import {
+  LuSparkles,
+  LuHouse,
+  LuMapPinned,
+  LuFileCheck,
+  LuSave,
+  LuRocket,
+} from "react-icons/lu";
+import { useFormScrollOnError } from "@/hooks/useFormScrollOnError";
 
 const LIST_PROPERTY_TOUR_STEPS = [
   {
-    title: "Welcome to the listing wizard",
+    icon: LuSparkles,
+    title: "Welcome — let's list your property",
     description:
-      "We'll walk you through five short steps. Your progress is saved automatically, so you can leave and come back anytime.",
+      "This takes about 5 minutes across five short steps: Basic Info, Details & Price, Location, Photos & Documents, and a final Review. You can jump back to any completed step at any time using the progress bar above.",
   },
   {
+    icon: LuHouse,
+    title: "Start with the basics",
+    description:
+      'Tell us whether it\'s for sale or rent, pick a category and type, and write a clear title and description. A specific, descriptive title (e.g. "3-Bedroom Duplex in Lekki Phase 1") gets more views than a vague one.',
+  },
+  {
+    icon: LuMapPinned,
+    title: "Drop a pin on the map",
+    description:
+      "Along with your address, you can drag a pin to the exact spot on the map. This is optional, but listings with a precise location get more serious inquiries — buyers like knowing exactly where they're looking.",
+  },
+  {
+    icon: LuFileCheck,
     title: "Documents? Just tell us what you have",
     description:
-      "No need to upload anything now. Select which ownership documents exist for this property — our team will reach out separately to collect copies.",
+      "No uploading required at this stage — just select which ownership documents exist for the property (e.g. Certificate of Occupancy, Deed of Assignment). Our verification team will reach out separately to collect copies and complete the review.",
   },
   {
-    title: "Verification doesn't block you",
+    icon: LuSave,
+    title: "Nothing gets lost",
     description:
-      "Your listing goes live right away without a verified badge. Declaring documents starts the verification process, it doesn't delay publishing.",
+      "Your progress saves automatically as you go. If you close the tab or come back later, you'll be offered the chance to continue right where you left off — no retyping needed.",
+  },
+  {
+    icon: LuRocket,
+    title: "You're ready to publish",
+    description:
+      "Submitting takes your listing live immediately — it doesn't need to wait for document verification. A verified badge is added later, once your documents are reviewed. Good luck with the listing!",
   },
 ];
 
 export default function ListPropertyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<ListPropertyStep[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
   const { bannerHeight } = useBannerHeightContext();
+  const stepContentRef = useRef<HTMLDivElement | null>(null);
 
   const {
     currentStep,
@@ -53,23 +85,28 @@ export default function ListPropertyPage() {
     draftAvailable,
     draftDismissed,
     discardDraft,
+    completedSteps,
+    markCompleted,
     keepDraft,
   } = useListPropertyForm();
 
-  const markCompleted = (step: ListPropertyStep) => {
-    setCompletedSteps((prev) => (prev.includes(step) ? prev : [...prev, step]));
-  };
+  const scrollToFirstError = useFormScrollOnError();
 
   const handleContinue = () => {
     if (currentStep === "review") {
       handleSubmit();
       return;
     }
+
     const valid = validateStep(currentStep);
-    if (valid) {
-      markCompleted(currentStep);
-      handleNext();
+
+    if (!valid) {
+      scrollToFirstError(stepContentRef.current);
+      return;
     }
+
+    markCompleted(currentStep);
+    handleNext();
   };
 
   const handleBack = () => {
@@ -104,18 +141,22 @@ export default function ListPropertyPage() {
       payload.append("state", formData.state);
       payload.append("country", formData.country);
       if (formData.coordinates) {
-        payload.append("coordinates", JSON.stringify(formData.coordinates));
+        payload.append("latitude", String(formData.coordinates.lat));
+        payload.append("longitude", String(formData.coordinates.lng));
       }
+      payload.append("locationVisibility", formData.locationVisibility);
 
-      formData.imageFiles.forEach((file) => {
+      formData.imageFiles.forEach((file, i) => {
         payload.append("images", file);
+        payload.append(
+          `imageSection[${i}]`,
+          formData.imageSections[i] ?? "general",
+        );
       });
 
       const filteredVideos = formData.videoLinks.filter(Boolean);
       payload.append("videoLinks", JSON.stringify(filteredVideos));
 
-      // Declared document types only — no files. Verification team
-      // follows up separately to collect copies.
       payload.append("documentTypes", JSON.stringify(formData.documentTypes));
 
       const res = await fetch("/api/properties", {
@@ -149,6 +190,30 @@ export default function ListPropertyPage() {
     review: "Review your listing",
   };
 
+  useEffect(() => setHydrated(true), []);
+
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
+            <div className="h-6 w-40 rounded bg-muted animate-pulse" />
+            <div className="mt-2 h-4 w-56 rounded bg-muted animate-pulse" />
+          </div>
+        </div>
+        <div className="px-4 sm:px-6 py-8">
+          <div className="max-w-3xl mx-auto bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="space-y-4">
+              <div className="h-8 w-2/3 rounded bg-muted animate-pulse" />
+              <div className="h-24 w-full rounded bg-muted animate-pulse" />
+              <div className="h-24 w-full rounded bg-muted animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div
@@ -157,7 +222,7 @@ export default function ListPropertyPage() {
       >
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <h1 className="text-xl font-bold text-foreground">List a Property</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted">
             Step {stepIndex + 1} of {STEPS.length} — {stepTitle[currentStep]}
           </p>
         </div>
@@ -166,33 +231,35 @@ export default function ListPropertyPage() {
       <div className="px-4 sm:px-6 py-8 space-y-8">
         {draftAvailable && !draftDismissed && (
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-sm text-foreground">
-              You have an unfinished listing. Continue where you left off?
-            </p>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={discardDraft}
-                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Start fresh
-              </button>
-              <button
-                type="button"
-                onClick={keepDraft}
-                className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
-              >
-                Continue draft
-              </button>
-              <button
-                type="button"
-                onClick={keepDraft}
-                aria-label="Dismiss"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LuX className="h-4 w-4" />
-              </button>
+            <div className="flex justify-between gap-4 flex-wrap flex-1">
+              <p className="text-sm text-foreground">
+                You have an unfinished listing. Continue where you left off?
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={discardDraft}
+                  className="text-xs font-medium text-muted hover:text-foreground transition-colors"
+                >
+                  Start fresh
+                </button>
+                <button
+                  type="button"
+                  onClick={keepDraft}
+                  className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
+                >
+                  Continue draft
+                </button>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={keepDraft}
+              aria-label="Dismiss"
+              className="text-muted hover:text-foreground transition-colors"
+            >
+              <LuX className="h-4 w-4" />
+            </button>
           </div>
         )}
 
@@ -203,37 +270,39 @@ export default function ListPropertyPage() {
         />
 
         <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
-          {currentStep === "basic" && (
-            <StepBasicInfo
-              formData={formData}
-              errors={errors}
-              updateField={updateField}
-            />
-          )}
-          {currentStep === "details" && (
-            <StepDetails
-              formData={formData}
-              errors={errors}
-              updateField={updateField}
-            />
-          )}
-          {currentStep === "location" && (
-            <StepLocation
-              formData={formData}
-              errors={errors}
-              updateField={updateField}
-            />
-          )}
-          {currentStep === "media" && (
-            <StepMedia formData={formData} updateField={updateField} />
-          )}
-          {currentStep === "review" && (
-            <StepReview
-              formData={formData}
-              onEdit={handleEditStep}
-              isSubmitting={isSubmitting}
-            />
-          )}
+          <div ref={stepContentRef}>
+            {currentStep === "basic" && (
+              <StepBasicInfo
+                formData={formData}
+                errors={errors}
+                updateField={updateField}
+              />
+            )}
+            {currentStep === "details" && (
+              <StepDetails
+                formData={formData}
+                errors={errors}
+                updateField={updateField}
+              />
+            )}
+            {currentStep === "location" && (
+              <StepLocation
+                formData={formData}
+                errors={errors}
+                updateField={updateField}
+              />
+            )}
+            {currentStep === "media" && (
+              <StepMedia formData={formData} updateField={updateField} />
+            )}
+            {currentStep === "review" && (
+              <StepReview
+                formData={formData}
+                onEdit={handleEditStep}
+                isSubmitting={isSubmitting}
+              />
+            )}
+          </div>
 
           <StepNav
             currentStep={currentStep}

@@ -190,10 +190,10 @@ const UserHeaderCard = ({
                     <VerifiedBadge showText={false} />
                   )}
                 </h1>
-                <p className="text-xs text-muted-foreground -mb-1.5 mt-1">
+                <p className="text-xs text-muted -mb-1.5 mt-1">
                   ID:
                   <span className="font-mono bg-inverse px-2 py-1 ml-2 rounded-sm">
-                    {(user._id)}
+                    {user._id}
                   </span>
                 </p>
               </div>
@@ -206,13 +206,13 @@ const UserHeaderCard = ({
           </div>
 
           <div className="flex justify-between items-start mb-2">
-            <div className="text-base text-muted-foreground">
+            <div className="text-base text-muted">
               <span className="font-bold">{greeting}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 mt-3 text-sm">
-            <div className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <div className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors">
               <LuMail className="h-4 w-4 text-primary shrink-0" />
               <span className="truncate">{user.email}</span>
               {user.isEmailVerified ? (
@@ -225,7 +225,7 @@ const UserHeaderCard = ({
               )}
             </div>
             {user.phone && (
-              <div className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <div className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors">
                 <LuPhone className="h-4 w-4 text-primary shrink-0" />
                 <span>{formatPhoneNumber(user.phone)}</span>
                 {user.isPhoneVerified ? (
@@ -282,14 +282,14 @@ const UserHeaderCard = ({
       <Modal open={isModalOpen} onClose={closeSettings}>
         <div className="p-6">
           <h2 className="text-xl font-semibold mb-1">Edit Profile</h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted mb-6">
             Update your personal details{isAgent ? ", credentials" : ""}
             {isCompany ? ", and company settings" : ""}.
           </p>
 
           <div className="space-y-8">
             <section className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
                 Personal details
               </h3>
               <FileUpload
@@ -326,7 +326,7 @@ const UserHeaderCard = ({
 
             {isAgent && (
               <section className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
                   Agent credentials
                 </h3>
                 <Field
@@ -359,7 +359,7 @@ const UserHeaderCard = ({
             {isCompany && company && (
               <>
                 <section className="space-y-4 pt-6 border-t border-border">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
                     Company settings
                   </h3>
                   <FileUpload
@@ -411,10 +411,10 @@ const UserHeaderCard = ({
 
                 <section className="space-y-4 pt-6 border-t border-border">
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
                       Remittance details
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted mt-1">
                       Used to send your share of closed transactions. Only
                       visible to your team's admins.
                     </p>
@@ -446,7 +446,11 @@ const UserHeaderCard = ({
             <Button variant="outline" onClick={closeSettings}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} isLoading={isSaving}>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              isLoading={isSaving}
+            >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>

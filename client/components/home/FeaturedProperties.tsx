@@ -44,7 +44,7 @@ export const FeaturedProperties = ({
   };
 
   const date = new Date();
-  date.setDate(date.getDate() + 7); 
+  date.setDate(date.getDate() + 7);
 
   return (
     <section
@@ -69,7 +69,7 @@ export const FeaturedProperties = ({
                 >
                   Featured Deals
                 </h2>
-                <p className="mt-2 text-sm text-muted-foreground text-pretty sm:text-base">
+                <p className="mt-2 text-sm text-muted text-pretty sm:text-base">
                   Hand-picked, below-market listings across Nigeria&apos;s top
                   locations.
                 </p>
@@ -82,14 +82,12 @@ export const FeaturedProperties = ({
               aria-label="Time remaining on featured prices"
               className="w-full lg:w-auto"
             >
-              <p className="mb-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:justify-start">
+              <p className="mb-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted lg:justify-start">
                 <LuClock aria-hidden="true" className="text-sm" />
                 These prices end in
               </p>
               <div className="flex justify-center lg:justify-start">
-                <Countdown
-                  targetDate={date.toLocaleDateString()}
-                />
+                <Countdown targetDate={date.toLocaleDateString()} />
               </div>
             </div>
           </div>
@@ -132,7 +130,7 @@ export const FeaturedProperties = ({
             <h3 className="text-lg font-semibold">
               No featured deals right now
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground text-pretty">
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted text-pretty">
               New deals land every week. Check back soon, or browse everything
               currently on the market.
             </p>

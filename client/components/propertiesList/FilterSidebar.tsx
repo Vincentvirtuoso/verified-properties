@@ -83,16 +83,14 @@ export const FilterSidebar = ({
             <div>
               <h2 className="text-sm font-semibold text-foreground">Filters</h2>
 
-              <p className="text-xs text-muted-foreground">
-                Refine your search
-              </p>
+              <p className="text-xs text-muted">Refine your search</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={clearAllFilters}
-            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:text-primary"
             aria-label="Clear all property filters"
           >
             Clear all

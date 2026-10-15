@@ -2,7 +2,9 @@
 
 import {
   forwardRef,
+  useEffect,
   useId,
+  useRef,
   useState,
   type InputHTMLAttributes,
   type MouseEvent,
@@ -30,6 +32,17 @@ export interface FieldProps extends NativeInputProps {
   className?: string;
   /** Classes for the <input> itself. */
   inputClassName?: string;
+  /**
+   * When true, the field scrolls into view (and focuses) as soon as an
+   * error appears. Useful for long forms where the errored field may be
+   * off-screen.
+   */
+  scrollOnError?: boolean;
+  /**
+   * When true, focuses the input after scrolling. Defaults to `true`
+   * when `scrollOnError` is enabled.
+   */
+  focusOnError?: boolean;
 }
 
 export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
@@ -46,6 +59,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
     inputClassName,
     id,
     disabled,
+    scrollOnError = false,
+    focusOnError = false,
     ...inputProps
   },
   ref,
@@ -55,19 +70,45 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   const errorId = `${inputId}-error`;
 
   const [showPassword, setShowPassword] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const isPassword = type === "password";
   const resolvedType = isPassword && showPassword ? "text" : type;
 
   const IconSlot = iconElement ?? (Icon ? <Icon /> : null);
 
+  const isControlled = inputProps.value !== undefined;
+
+
   const togglePasswordVisibility = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setShowPassword((prev) => !prev);
   };
 
+  useEffect(() => {
+    if (!scrollOnError || !error) return;
+    const node = wrapperRef.current;
+    if (!node) return;
+
+    const raf = requestAnimationFrame(() => {
+      node.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      if (focusOnError ?? true) {
+        const input =
+          (ref && "current" in ref ? ref.current : null) ??
+          node.querySelector<HTMLInputElement>("input");
+        input?.focus({ preventScroll: true });
+      }
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [Boolean(error), scrollOnError, focusOnError]);
+
   return (
-    <div className={cn("space-y-1", className)}>
+    <div ref={wrapperRef} className={cn("space-y-1", className)}>
       {label && (
         <FieldLabel htmlFor={inputId} required={required}>
           {label}
@@ -87,8 +128,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           id={inputId}
           name={name ?? undefined}
           type={resolvedType}
-          value={inputProps.value}
-          defaultValue={inputProps.defaultValue}
+          value={isControlled ? inputProps.value : undefined}
+          defaultValue={isControlled ? undefined : inputProps.defaultValue}
           onChange={inputProps.onChange}
           placeholder={placeholder}
           required={required}
@@ -121,7 +162,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
       </div>
 
       {error && (
-        <p id={errorId} role="alert" className="mt-1 text-xs text-destructive inline-flex gap-1 items-center">
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-1 text-xs text-destructive inline-flex gap-1 items-center"
+        >
           <svg
             className="w-3.5 h-3.5 shrink-0"
             viewBox="0 0 16 16"

@@ -106,7 +106,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
             </p>
 
             {affiliatedCompanyName && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+              <p className="text-xs text-muted flex items-center gap-1 mt-0.5 truncate">
                 <RiBuildingLine size={12} className="shrink-0" />
                 <span className="truncate">{affiliatedCompanyName}</span>
               </p>
@@ -151,7 +151,7 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
         {email && (
           <a
             href={`mailto:${email}`}
-            className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors truncate pt-0.5"
+            className="flex items-center justify-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors truncate pt-0.5"
           >
             <RiMailLine size={13} className="shrink-0" />
             <span className="truncate">{email}</span>

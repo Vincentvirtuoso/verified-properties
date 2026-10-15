@@ -198,9 +198,7 @@ function ConfirmDialog({
             >
               {title}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-              {message}
-            </p>
+            <p className="mt-1 text-sm text-muted leading-relaxed">{message}</p>
           </div>
         </div>
 

@@ -40,7 +40,7 @@ export default function LearningStatsSection() {
                 <Counter from={0} to={stat.value} duration={2.5} />
                 {stat.suffix}
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
+              <p className="mt-2 text-sm text-muted">{stat.label}</p>
             </div>
           ))}
         </div>

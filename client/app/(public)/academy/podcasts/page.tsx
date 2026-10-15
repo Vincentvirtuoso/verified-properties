@@ -18,7 +18,7 @@ export default function PodcastsPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-foreground">
             Podcasts
           </h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
+          <p className="text-muted mt-2 max-w-2xl">
             Expert conversations on real estate, joint ventures, and market
             trends. Tap any episode to listen.
           </p>
@@ -47,7 +47,7 @@ export default function PodcastsPage() {
                 </div>
               </div>
               <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <div className="flex items-center gap-2 text-xs text-muted mb-2">
                   <LuClock className="w-3 h-3" />
                   <span>{podcast.duration}</span>
                   <span className="mx-1">•</span>
@@ -56,7 +56,7 @@ export default function PodcastsPage() {
                 <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
                   {podcast.title}
                 </h3>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-auto">
+                <p className="text-sm text-muted flex items-center gap-1 mt-auto">
                   <LuMic className="w-3 h-3" />
                   {podcast.host}
                 </p>

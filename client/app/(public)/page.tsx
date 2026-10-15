@@ -96,7 +96,7 @@ export default function HomePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search properties, locations..."
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-lg py-3 px-4"
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted text-lg py-3 px-4"
                 aria-label="Property search"
               />
               <Button type="submit" size="lg" disabled={!searchQuery.trim()}>

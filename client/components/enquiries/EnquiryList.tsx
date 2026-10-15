@@ -22,7 +22,7 @@ export function EnquiryList({
   if (enquiries.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           {isAgentSide
             ? "No enquiries yet on your listings."
             : "You haven't enquired about any properties yet."}
@@ -58,7 +58,7 @@ export function EnquiryList({
                   <span className="shrink-0 h-2 w-2 rounded-full bg-primary" />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate mt-0.5">
+              <p className="text-xs text-muted truncate mt-0.5">
                 {isAgentSide ? enquiry.propertyTitle : enquiry.agentName}
               </p>
               {showAgentName && (
@@ -67,10 +67,10 @@ export function EnquiryList({
                 </p>
               )}
               <div className="flex items-center gap-1.5 mt-1">
-                <p className="text-xs text-muted-foreground truncate flex-1">
+                <p className="text-xs text-muted truncate flex-1">
                   {enquiry.lastEventPreview}
                 </p>
-                <span className="text-[10px] text-muted-foreground shrink-0">
+                <span className="text-[10px] text-muted shrink-0">
                   {formatRelativeTime(enquiry.lastEventAt, { addSuffix: true })}
                 </span>
               </div>

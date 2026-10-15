@@ -24,6 +24,7 @@ import { Role } from "@affilhomes/shared/types";
 import { Brandmark } from "./BrandMark";
 import { FiBarChart2 } from "react-icons/fi";
 import { ListingsIcon } from "@affilhomes/shared/icons";
+import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 
 type SidebarSlot =
   | { kind: "count"; value: number; max?: number }
@@ -104,6 +105,13 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           icon: <ListingsIcon />,
           category: "Management",
           slot: { kind: "count", value: 4, max: 99 },
+        },
+        {
+          href: "/list-property",
+          label: "List Property",
+          icon: <ListNewPropertyIcon />,
+          category: "Management",
+          slot: { kind: "label", value: "Draft", tone: "warning" },
         },
         {
           href: "/saved-properties",
@@ -260,9 +268,7 @@ const NavItem = ({ link, active, collapsed, onClose }: NavItemProps) => {
     <>
       <span
         className={`shrink-0 text-xl ${
-          !active &&
-          !disabled &&
-          "text-muted-foreground group-hover:text-primary"
+          !active && !disabled && "text-muted group-hover:text-primary"
         }`}
       >
         {icon}
@@ -280,7 +286,7 @@ const NavItem = ({ link, active, collapsed, onClose }: NavItemProps) => {
       )}
 
       {!active && !disabled && !collapsed && !slot && (
-        <LuChevronRight className="h-4 w-4 -translate-x-2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+        <LuChevronRight className="h-4 w-4 -translate-x-2 text-muted opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
       )}
     </>
   );
@@ -352,7 +358,7 @@ const SidebarContent = ({
         {Object.entries(groupedLinks).map(([category, items]) => (
           <div key={category} className="space-y-1">
             {!collapsed && (
-              <h4 className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+              <h4 className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-muted/60">
                 {category}
               </h4>
             )}
@@ -458,7 +464,7 @@ export const Sidebar = ({
               {!collapsed && <Brandmark logoOnly logoSize={40} />}
               <button
                 onClick={onCollapsedChange}
-                className="p-2 rounded-lg hover:bg-inverse transition-colors text-muted-foreground"
+                className="p-2 rounded-lg hover:bg-inverse transition-colors text-muted"
               >
                 {collapsed ? <LuChevronRight /> : <LuChevronLeft />}
               </button>
@@ -505,7 +511,7 @@ export const Sidebar = ({
                   <Brandmark logoOnly logoSize={40} />
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-full hover:bg-inverse text-muted-foreground"
+                    className="p-2 rounded-full hover:bg-inverse text-muted"
                   >
                     <LuX className="w-6 h-6" />
                   </button>

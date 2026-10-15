@@ -112,7 +112,7 @@ export default function CompanyListingsPage() {
   if (!user) return null;
   if (!company) {
     return (
-      <p className="p-10 text-center text-muted-foreground">
+      <p className="p-10 text-center text-muted">
         You are not part of a company yet.
       </p>
     );
@@ -156,7 +156,7 @@ export default function CompanyListingsPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {company.name} listings
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted">
             Every listing posted for the company by your team.
           </p>
         </div>
@@ -166,7 +166,7 @@ export default function CompanyListingsPage() {
       </div>
 
       {!canPublish && (
-        <p className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-border bg-card p-4 text-sm text-muted">
           Your company is waiting for verification. Listings can be published
           once it&apos;s approved.
         </p>
@@ -177,7 +177,7 @@ export default function CompanyListingsPage() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`rounded-full px-3 py-1 text-sm ${filter === f.key ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground"}`}
+            className={`rounded-full px-3 py-1 text-sm ${filter === f.key ? "bg-primary/10 font-semibold text-primary" : "text-muted"}`}
           >
             {f.label} (
             {f.key === "all"
@@ -195,9 +195,7 @@ export default function CompanyListingsPage() {
       )}
 
       {visible.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">
-          No listings here yet.
-        </p>
+        <p className="py-10 text-center text-muted">No listings here yet.</p>
       ) : (
         <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
           {visible.map((r) => (
@@ -215,7 +213,7 @@ export default function CompanyListingsPage() {
                     r.title
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted">
                   {r.city} · {formatPrice(r.price, { currency: r.currency })} ·
                   by {r.ownerName} · {r.enquiries} enquir
                   {r.enquiries === 1 ? "y" : "ies"}

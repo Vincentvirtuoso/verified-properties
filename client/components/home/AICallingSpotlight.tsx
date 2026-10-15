@@ -212,7 +212,7 @@ export function AICallingSpotlight() {
                 {content.headline}
               </h2>
 
-              <p className="mt-4 max-w-md text-muted-foreground leading-relaxed text-pretty">
+              <p className="mt-4 max-w-md text-muted leading-relaxed text-pretty">
                 {content.body}
               </p>
 
@@ -224,7 +224,7 @@ export function AICallingSpotlight() {
                 {content.secondaryLabel && content.secondaryHref && (
                   <Link
                     href={content.secondaryHref}
-                    className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                    className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                   >
                     {content.secondaryLabel}
                   </Link>

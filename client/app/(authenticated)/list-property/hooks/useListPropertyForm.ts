@@ -8,6 +8,7 @@ import type {
   ListingPurpose,
   PropertyFeature,
   PropertyDocumentType,
+  MediaSection,
 } from "@affilhomes/shared/types";
 import { Role } from "@affilhomes/shared/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,15 +49,17 @@ export interface ListPropertyFormData {
   state: string;
   country: string;
   coordinates: { lat: number; lng: number } | null;
+  locationVisibility: "public" | "private";
 
   imageFiles: File[];
+  imageSections: MediaSection[];
   videoLinks: string[];
-  // Declared only — no file upload at listing time. Admin team collects
-  // the actual files separately once a document type is declared.
+
   documentTypes: PropertyDocumentType[];
 }
 
 const STORAGE_KEY = "listPropertyFormData";
+const COMPLETED_STEPS_KEY = `${STORAGE_KEY}:completedSteps`;
 
 const getDefaultData = (
   ownerType: ListPropertyFormData["ownerType"] = "",
@@ -82,10 +85,10 @@ const getDefaultData = (
   imageFiles: [],
   videoLinks: [""],
   documentTypes: [],
+  imageSections: [],
+  locationVisibility: "private",
 });
 
-// Fields worth treating form state as "non-empty" when deciding whether
-// to offer draft restoration — i.e. the user actually typed something.
 function hasMeaningfulContent(data: ListPropertyFormData): boolean {
   return Boolean(
     data.title.trim() ||
@@ -95,19 +98,84 @@ function hasMeaningfulContent(data: ListPropertyFormData): boolean {
   );
 }
 
+function readInitialFormData(
+  ownerType: ListPropertyFormData["ownerType"] = "",
+): ListPropertyFormData {
+  if (typeof window === "undefined") return getDefaultData(ownerType);
+
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+  if (!saved) return getDefaultData(ownerType);
+
+  try {
+    const parsed = JSON.parse(saved) as Partial<ListPropertyFormData>;
+    const restored: ListPropertyFormData = {
+      ...getDefaultData(ownerType),
+      ...parsed,
+      imageFiles: [],
+      bedrooms: parsed.bedrooms ?? "",
+      bathrooms: parsed.bathrooms ?? "",
+      type: parsed.type ?? "",
+      category: parsed.category ?? "",
+      price: parsed.price ?? "",
+      area: parsed.area ?? "",
+    };
+    return hasMeaningfulContent(restored)
+      ? restored
+      : getDefaultData(ownerType);
+  } catch {
+    return getDefaultData(ownerType);
+  }
+}
+
+function readInitialCompletedSteps(): ListPropertyStep[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(COMPLETED_STEPS_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is ListPropertyStep =>
+      STEPS.includes(s as ListPropertyStep),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function readStepFromHash(): ListPropertyStep {
+  if (typeof window === "undefined") return "basic";
+  const hash = window.location.hash.slice(1);
+  return STEPS.includes(hash as ListPropertyStep)
+    ? (hash as ListPropertyStep)
+    : "basic";
+}
+
+function resolveAllowedStep(
+  requested: ListPropertyStep,
+  completed: ListPropertyStep[],
+): ListPropertyStep {
+  const firstIncomplete = STEPS.findIndex((s) => !completed.includes(s));
+  const maxIndex = firstIncomplete === -1 ? STEPS.length - 1 : firstIncomplete;
+  return STEPS.indexOf(requested) <= maxIndex ? requested : STEPS[maxIndex];
+}
+
 export function useListPropertyForm() {
   const { user } = useAuth();
 
-  const [formData, setFormData] =
-    useState<ListPropertyFormData>(getDefaultData());
-  const [currentStep, setCurrentStep] = useState<ListPropertyStep>("basic");
+  const [formData, setFormData] = useState<ListPropertyFormData>(() =>
+    readInitialFormData(),
+  );
+  const [completedSteps, setCompletedSteps] = useState<ListPropertyStep[]>(
+    readInitialCompletedSteps,
+  );
+  const [currentStep, setCurrentStep] = useState<ListPropertyStep>(() =>
+    resolveAllowedStep(readStepFromHash(), readInitialCompletedSteps()),
+  );
   const [errors, setErrors] = useState<
     Partial<Record<keyof ListPropertyFormData, string>>
   >({});
   const [isInitialized, setIsInitialized] = useState(false);
-  // Set once, on mount, if a meaningful draft was found — lets the page
-  // show a "Continue where you left off?" prompt instead of silently
-  // dropping the user back into a half-filled form.
+
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftDismissed, setDraftDismissed] = useState(false);
 
@@ -126,13 +194,7 @@ export function useListPropertyForm() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as ListPropertyFormData;
-          const restored: ListPropertyFormData = {
-            ...getDefaultData(),
-            ...parsed,
-            imageFiles: [],
-          };
-          if (hasMeaningfulContent(restored)) {
-            setFormData(restored);
+          if (hasMeaningfulContent(parsed)) {
             setDraftAvailable(true);
           }
         } catch (e) {
@@ -155,14 +217,57 @@ export function useListPropertyForm() {
 
   useEffect(() => {
     if (isInitialized && typeof window !== "undefined") {
-      // Draft text/selection fields only — File objects can't be
-      // serialised and must be re-selected on return.
       const { imageFiles, ...rest } = formData;
       void imageFiles;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(rest));
     }
   }, [formData, isInitialized]);
 
+  useEffect(() => {
+    if (!isInitialized || typeof window === "undefined") return;
+    try {
+      localStorage.setItem(COMPLETED_STEPS_KEY, JSON.stringify(completedSteps));
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") console.warn(err);
+    }
+  }, [completedSteps, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized || typeof window === "undefined") return;
+    const target = `#${currentStep}`;
+    if (window.location.hash === target) return;
+
+    const hashIsValid = STEPS.includes(
+      window.location.hash.slice(1) as ListPropertyStep,
+    );
+
+    if (hashIsValid) {
+      window.history.pushState(null, "", target);
+    } else {
+      window.history.replaceState(null, "", target);
+    }
+  }, [currentStep, isInitialized]);
+
+  // URL → State (back/forward, manual hash edits), with step gating
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const requested = readStepFromHash();
+      const next = resolveAllowedStep(requested, completedSteps);
+
+      if (next !== requested) {
+        window.history.replaceState(null, "", `#${next}`);
+      }
+      setCurrentStep((prev) => (prev === next ? prev : next));
+    };
+
+    window.addEventListener("popstate", syncFromUrl);
+    window.addEventListener("hashchange", syncFromUrl);
+    return () => {
+      window.removeEventListener("popstate", syncFromUrl);
+      window.removeEventListener("hashchange", syncFromUrl);
+    };
+  }, [completedSteps]);
+  
   const updateField = useCallback(
     <K extends keyof ListPropertyFormData>(
       key: K,
@@ -224,6 +329,10 @@ export function useListPropertyForm() {
     [formData],
   );
 
+  const markCompleted = useCallback((step: ListPropertyStep) => {
+    setCompletedSteps((prev) => (prev.includes(step) ? prev : [...prev, step]));
+  }, []);
+
   const handleNext = useCallback(() => {
     if (validateStep(currentStep)) goNext();
   }, [validateStep, currentStep, goNext]);
@@ -234,8 +343,15 @@ export function useListPropertyForm() {
     setCurrentStep("basic");
     setErrors({});
     setDraftAvailable(false);
+    setCompletedSteps([]);
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(COMPLETED_STEPS_KEY);
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
     }
   }, [userOwnerType]);
 
@@ -254,6 +370,8 @@ export function useListPropertyForm() {
     formData,
     errors,
     isInitialized,
+    completedSteps,
+    markCompleted,
     updateField,
     goToStep,
     goNext,

@@ -18,6 +18,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.leaflet-container{
+  z-index: 10;
+}
+
 .sidebar {
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);

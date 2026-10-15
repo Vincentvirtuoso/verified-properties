@@ -140,7 +140,7 @@ export default function MyListingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">My listings</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted">
             Submit a listing for review. It goes live after our team approves
             it.
           </p>
@@ -155,7 +155,7 @@ export default function MyListingsPage() {
           <p className="font-semibold text-destructive">
             Your account is suspended
           </p>
-          <p className="text-muted-foreground">Reason: {suspension.reason}</p>
+          <p className="text-muted">Reason: {suspension.reason}</p>
           <div className="flex flex-wrap gap-2">
             {!openAppeal("suspension", suspension.subjectId) ? (
               <Button
@@ -166,7 +166,7 @@ export default function MyListingsPage() {
                 Appeal
               </Button>
             ) : (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted">
                 Appeal sent — waiting for a reply.
               </span>
             )}
@@ -184,13 +184,13 @@ export default function MyListingsPage() {
       {!canPublish && !suspension && (
         <div className="rounded-2xl border border-border bg-card p-4 text-sm">
           {isCompany ? (
-            <p className="text-muted-foreground">
+            <p className="text-muted">
               Your company is waiting for verification. You can submit listings
               once our team approves your documents.
             </p>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-muted-foreground">
+              <p className="text-muted">
                 {agentStatus === "pending"
                   ? "Your verification is being reviewed. You can submit listings once it's approved."
                   : "Get verified to submit your listings. You'll need a government ID."}
@@ -211,7 +211,7 @@ export default function MyListingsPage() {
       )}
 
       {listings && listings.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">
+        <p className="py-10 text-center text-muted">
           You have no listings yet.
         </p>
       ) : (
@@ -244,7 +244,7 @@ export default function MyListingsPage() {
                         p.title
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted">
                       {p.location?.city} ·{" "}
                       {formatPrice(p.price, { currency: p.currency })}
                     </p>
@@ -273,7 +273,7 @@ export default function MyListingsPage() {
                 </div>
 
                 {p.reviewNote && review !== "approved" && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted">
                     Note from our team: {p.reviewNote}
                   </p>
                 )}
@@ -286,7 +286,7 @@ export default function MyListingsPage() {
                 )}
                 {rejectedDocs.map((d) => (
                   <div key={d.id} className="space-y-1 text-xs">
-                    <p className="text-muted-foreground">
+                    <p className="text-muted">
                       Document &quot;{d.title ?? d.type}&quot;:{" "}
                       {d.reviewStatus === "rejected"
                         ? "rejected"
@@ -333,7 +333,7 @@ function AppealRow({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {open ? (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted">
           Appeal sent — waiting for a reply.
         </span>
       ) : (
@@ -409,7 +409,7 @@ function VideoSection({
             <span className="font-medium text-foreground">
               {v.fileName ?? "Video"}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-muted">
               {v.youtubeVideoId
                 ? v.youtubePrivacy === "public"
                   ? "On the Affilhomes YouTube channel"
@@ -429,20 +429,18 @@ function VideoSection({
             {!v.youtubeVideoId && v.status !== "approved" && (
               <button
                 onClick={() => remove(v.id)}
-                className="text-muted-foreground hover:text-destructive"
+                className="text-muted hover:text-destructive"
               >
                 Remove
               </button>
             )}
           </div>
           {v.reviewNote && v.status !== "approved" && (
-            <p className="text-muted-foreground">
-              Note from our team: {v.reviewNote}
-            </p>
+            <p className="text-muted">Note from our team: {v.reviewNote}</p>
           )}
           {v.status === "rejected" && !v.storageDeletedAt && (
             <>
-              <p className="text-muted-foreground">
+              <p className="text-muted">
                 Rejected videos are kept for 30 days for appeals, then deleted.
               </p>
               <AppealRow
@@ -472,7 +470,7 @@ function VideoSection({
           >
             Upload video tour
           </Button>
-          <span className="text-muted-foreground">
+          <span className="text-muted">
             Up to 500 MB. Our team reviews it, then posts it on the Affilhomes
             YouTube channel.
           </span>

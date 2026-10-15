@@ -4,7 +4,7 @@ import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
-import { SectionHeader, InfoRow,  } from "@affilhomes/shared/ui";
+import { SectionHeader, InfoRow } from "@affilhomes/shared/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, AgentSubRole, Company } from "@affilhomes/shared/types";
 import { formatCompactPrice } from "@/lib/formatters";
@@ -143,7 +143,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
                       >
                         {roleLabels[role as ProfileRole]}
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      <p className="mt-0.5 truncate text-xs text-muted">
                         {roleDescriptions[role as ProfileRole]}
                       </p>
                     </div>
@@ -157,7 +157,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
                       ) : isActive ? (
                         <LuCheck className="h-4 w-4 text-primary" />
                       ) : (
-                        <LuArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                        <LuArrowUpRight className="h-4 w-4 text-muted" />
                       )}
                     </span>
 
@@ -336,7 +336,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
             <h3 className="text-sm font-semibold text-foreground">
               Company accounts can&apos;t switch roles
             </h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-xs leading-relaxed text-muted">
               This account is set up as a corporate workspace. If you need to
               use it differently, contact support and we&apos;ll sort it out.
             </p>

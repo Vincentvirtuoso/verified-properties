@@ -1,0 +1,47 @@
+export const NIGERIA_STATE_CENTERS: Record<string, [number, number]> = {
+  Abia: [5.532, 7.486],
+  Adamawa: [9.2035, 12.4954],
+  "Akwa Ibom": [5.0377, 7.9128],
+  Anambra: [6.2104, 7.0742],
+  Bauchi: [10.3158, 9.8442],
+  Bayelsa: [4.9247, 6.2676],
+  Benue: [7.7322, 8.5391],
+  Borno: [11.8311, 13.151],
+  "Cross River": [4.9517, 8.322],
+  Delta: [6.1983, 6.7337],
+  Ebonyi: [6.3249, 8.1137],
+  Edo: [6.335, 5.6037],
+  Ekiti: [7.6211, 5.2214],
+  Enugu: [6.4584, 7.5464],
+  Gombe: [10.2897, 11.1673],
+  Imo: [5.484, 7.0351],
+  Jigawa: [11.7564, 9.3388],
+  Kaduna: [10.5222, 7.4383],
+  Kano: [12.0022, 8.592],
+  Katsina: [12.9908, 7.6018],
+  Kebbi: [12.4539, 4.1975],
+  Kogi: [7.8023, 6.7333],
+  Kwara: [8.4966, 4.5421],
+  Lagos: [6.5244, 3.3792],
+  Nasarawa: [8.4939, 8.5147],
+  Niger: [9.6139, 6.5569],
+  Ogun: [7.1475, 3.3619],
+  Ondo: [7.2571, 5.2058],
+  Osun: [7.7719, 4.5566],
+  Oyo: [7.3775, 3.947],
+  Plateau: [9.8965, 8.8583],
+  Rivers: [4.8156, 7.0498],
+  Sokoto: [13.0059, 5.2476],
+  Taraba: [8.8937, 11.3596],
+  Yobe: [11.7478, 11.9608],
+  Zamfara: [12.1704, 6.6641],
+  "FCT (Abuja)": [9.0765, 7.3986],
+};
+
+export function getRegionCenter(
+  state: string,
+  country: string,
+): [number, number] | null {
+  if (country.trim().toLowerCase() !== "nigeria") return null;
+  return NIGERIA_STATE_CENTERS[state] ?? null;
+}

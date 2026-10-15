@@ -27,9 +27,7 @@ export default function JvPropertiesPage() {
         </p>
 
         {items === null && (
-          <p className="text-sm text-muted-foreground">
-            Loading opportunities...
-          </p>
+          <p className="text-sm text-muted">Loading opportunities...</p>
         )}
         {error && (
           <p className="text-sm text-destructive">
@@ -37,7 +35,7 @@ export default function JvPropertiesPage() {
           </p>
         )}
         {items?.length === 0 && !error && (
-          <p className="py-10 text-center text-muted-foreground">
+          <p className="py-10 text-center text-muted">
             No joint-venture opportunities are live right now.
           </p>
         )}

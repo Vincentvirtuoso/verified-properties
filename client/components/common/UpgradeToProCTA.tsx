@@ -41,7 +41,7 @@ export function UpgradeToProCTA({ variant = "card" }: UpgradeToProCTAProps) {
             — follow up on every enquiry automatically.
           </span>
         </div>
-        <LuChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <LuChevronRight className="h-4 w-4 shrink-0 text-muted" />
       </Link>
     );
   }
@@ -56,7 +56,7 @@ export function UpgradeToProCTA({ variant = "card" }: UpgradeToProCTAProps) {
           <h2 className="text-lg font-semibold">
             Upgrade to Pro for AI Calling
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted">
             Automatically follow up on every enquiry with an AI call, so no lead
             goes cold waiting on a reply.
           </p>
