@@ -29,42 +29,47 @@ import {
 import { useFormScrollOnError } from "@/hooks/useFormScrollOnError";
 
 const LIST_PROPERTY_TOUR_STEPS = [
-  // ...unchanged
   {
     icon: LuSparkles,
-    title: "Welcome — let's list your property",
+    title: "Welcome, let's list your property",
     description:
-      "This takes about 5 minutes across five short steps: Basic Info, Details & Price, Location, Photos & Documents, and a final Review. You can jump back to any completed step at any time using the progress bar above.",
+      "This takes about 5 minutes across five steps: Basic Info, Details & Price, Location, Photos & Documents, and Review. Your progress is saved as you go, so you can stop at any point and come back to it.",
   },
   {
     icon: LuHouse,
     title: "Start with the basics",
     description:
-      'Tell us whether it\'s for sale or rent, pick a category and type, and write a clear title and description. A specific, descriptive title (e.g. "3-Bedroom Duplex in Lekki Phase 1") gets more views than a vague one.',
+      'Tell us whether the property is for sale or rent, then pick a category and type. Write a clear title, such as "3-Bedroom Duplex in Lekki Phase 1". Specific titles get more views than vague ones.',
   },
   {
     icon: LuMapPinned,
-    title: "Drop a pin on the map",
+    title: "Pin the exact location",
     description:
-      "Along with your address, you can drag a pin to the exact spot on the map. This is optional, but listings with a precise location get more serious inquiries — buyers like knowing exactly where they're looking.",
-  },
-  {
-    icon: LuFileCheck,
-    title: "Documents? Just tell us what you have",
-    description:
-      "No uploading required at this stage — just select which ownership documents exist for the property (e.g. Certificate of Ownership, Deed of Assignment). Our verification team will reach out separately to collect copies and complete the review.",
+      "Move the map until the crosshair sits on the building's entrance, then tap Drop pin here. The pin is required. You choose whether buyers see it publicly or only after they send an enquiry.",
   },
   {
     icon: LuSave,
-    title: "Nothing gets lost",
+    title: "Your draft is saved on this device",
     description:
-      "Your progress saves automatically as you go. If you close the tab or come back later, you'll be offered the chance to continue right where you left off — no retyping needed.",
+      "Your text and photos are saved in this browser as you work. When you come back, you'll see a summary of your draft with the option to continue. Drafts stay on this device and browser only, so they won't appear on another phone or computer.",
+  },
+  {
+    icon: LuFileCheck,
+    title: "Photos and documents",
+    description:
+      "Add at least one photo. The first photo becomes the cover, and you can change it at any time. If your browser clears saved photos, we'll tell you which ones to add again. For documents, you only select which ones you have. You don't need to upload them now. Our verification team will contact you to collect copies.",
+  },
+  {
+    icon: LuTrash2,
+    title: "Continue or start fresh",
+    description:
+      "On your return, choose Continue draft to pick up where you left off, or Start fresh to delete the draft. Deleting a draft can't be undone.",
   },
   {
     icon: LuRocket,
-    title: "You're ready to publish",
+    title: "Submit your listing",
     description:
-      "Submitting takes your listing live immediately — it doesn't need to wait for document verification. A verified badge is added later, once your documents are reviewed. Good luck with the listing!",
+      "When you submit, your listing is saved to your account. Declared documents are reviewed separately, and a verified badge is added once they've been checked.",
   },
 ];
 

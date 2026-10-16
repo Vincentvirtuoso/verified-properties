@@ -321,7 +321,7 @@ export function StepMedia({
       <section>
         <SectionHeader
           icon={LuVideo}
-          title="Video Tour (Optional)"
+          title="Video Tour"
           description="Add a video after saving, from My Listings."
         />
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
