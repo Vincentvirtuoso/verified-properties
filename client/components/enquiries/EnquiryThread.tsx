@@ -20,6 +20,7 @@ import {
   updateEnquiryStage,
   type EnquiryStage,
 } from "@affilhomes/shared/supabase";
+import Select from "@affilhomes/shared/ui/Select";
 
 const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -211,18 +212,13 @@ export function EnquiryThread({
           </div>
 
           {isAgentSide && !isClosed && !readOnly ? (
-            <select
+            <Select
+              options={STAGES.map((stage) => ({ value: stage, label: stage }))}
               value={stage}
-              onChange={(e) => handleStage(e.target.value as EnquiryStage)}
+              onChange={(value) => handleStage(value as EnquiryStage)}
               aria-label="Enquiry stage"
-              className="shrink-0 rounded-full border-0 bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {STAGES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              className="shrink-0 rounded-full border-0 px-2.5 py-1 text-[11px] font-medium capitalize text-primary min-w-25"
+            />
           ) : (
             <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary">
               {isClosed ? closedLabel : stage}

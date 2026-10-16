@@ -11,7 +11,7 @@ import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { EnquiriesSkeleton } from "@/components/enquiries/EnquirySkeleton";
 
-const USE_MOCK = process.env.NEXT_DEV_MODE === "development";
+const USE_MOCK = process.env.NEXT_PUBLIC_DEV_MODE === "development";
 
 const fetchMyEnquiries = USE_MOCK ? fetchMockMyEnquiries : fetchRealMyEnquiries;
 
