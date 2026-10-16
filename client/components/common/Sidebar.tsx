@@ -45,7 +45,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     return [
       { href: "/", label: "Home", icon: <LuHouse /> },
       { href: "/properties", label: "Search Properties", icon: <LuSearch /> },
-      { href: "/help", label: "Support", icon: <LuCircleHelp /> },
+      { href: "/support", label: "Support", icon: <LuCircleHelp /> },
     ];
   }
 
