@@ -24,6 +24,8 @@ import {
 import { LuBuilding } from "react-icons/lu";
 import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
+import { AuthFormSkeleton } from "./FormSkeleton";
+import Link from "next/link";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 
@@ -81,12 +83,34 @@ function CompleteRegistrationForm() {
     );
   }
 
+  if (authLoading) return <AuthFormSkeleton variant={initialRole} />;
+
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950">
-        <p className="text-gray-500 animate-pulse text-sm">
-          Loading user context...
-        </p>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-xl p-8 text-center space-y-4">
+          <h2 className="text-xl font-bold text-foreground">Please sign in</h2>
+          <p className="text-sm text-muted">
+            You need an account to complete registration. Sign in or create one
+            to continue.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <Link
+              href={`/login?redirect=${encodeURIComponent(
+                window.location.pathname + window.location.search,
+              )}`}
+              className="flex-1 inline-flex items-center justify-center h-11 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="flex-1 inline-flex items-center justify-center h-11 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+            >
+              Create account
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -460,16 +484,13 @@ function CompleteRegistrationForm() {
 }
 
 export default function CompleteRegistration() {
+  const variant =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("role") === Role.Company
+      ? "company"
+      : "agent";
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
-          <div className="text-gray-500 dark:text-gray-400 animate-pulse text-sm">
-            Loading registration modules...
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthFormSkeleton variant={variant} />}>
       <CompleteRegistrationForm />
     </Suspense>
   );

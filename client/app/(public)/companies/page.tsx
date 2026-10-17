@@ -36,17 +36,12 @@ export const metadata: Metadata = {
   },
 };
 
-// ---------- Structured Data ----------
-function CompaniesStructuredData({
-  companies,
-}: {
-  companies: Company[]; // adjust to your type
-}) {
+function CompaniesStructuredData({ companies }: { companies: Company[] }) {
   const itemListElement = companies.map((company, index) => ({
     "@type": "ListItem",
     position: index + 1,
     item: {
-      "@type": "RealEstateAgent", // or Organization
+      "@type": "RealEstateAgent",
       name: company.name,
       url: `https://yourdomain.com/companies/${company.slug}`,
       logo: company.logo,
@@ -73,10 +68,8 @@ function CompaniesStructuredData({
   );
 }
 
-// ---------- Server Component ----------
 export default async function CompaniesPage() {
-  // Verified companies, or ones with a live listing.
-  const companies = await fetchPublicCompanies(await createClient()).catch(
+  const companies = await fetchPublicCompanies( createClient()).catch(
     () => [],
   );
 

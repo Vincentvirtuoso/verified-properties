@@ -62,7 +62,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "px-8 py-3 text-lg gap-2.5": size === "lg",
         "px-10 py-4 text-xl gap-3": size === "xl",
       },
-      href && "hover:text-primary",
+      // href && "hover:text-primary",
       className,
     );
 

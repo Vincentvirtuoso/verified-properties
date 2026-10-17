@@ -50,6 +50,8 @@
   --info: #3b82f6;
   --info-foreground: #ffffff;
 
+   --skeleton: var(--color-neutral-200);
+
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:
@@ -98,6 +100,8 @@
     --warning-foreground: #ffffff;
     --info: #1e3a8a;
     --info-foreground: #ffffff;
+
+    --skeleton: var(--color-neutral-800); 
   }
 }
 
@@ -164,6 +168,8 @@
   --color-navbar-bg: var(--navbar-bg);
   --color-navbar-foreground: var(--navbar-foreground);
   --color-navbar-border: var(--navbar-border);
+
+   --color-skeleton: var(--skeleton);
 
   --spacing-sidebar-expanded: var(--sidebar-width-expanded);
   --spacing-sidebar-collapsed: var(--sidebar-width-collapsed);
