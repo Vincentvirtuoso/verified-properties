@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { FaSearch, FaArrowDown, FaStar } from "react-icons/fa";
-import { useRouter } from "next/navigation";
+import { FaSearch, FaArrowDown } from "react-icons/fa";
 import { fetchFeaturedProperties, fetchStats } from "@/lib/api";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { PopulatedProperty, Stats } from "@affilhomes/shared/types";
@@ -11,11 +10,13 @@ import StatsAndPartners from "@/components/home/StatsAndPatners";
 import QuickActions from "@/components/home/QuickActions";
 import { FeaturedProperties } from "@/components/home/FeaturedProperties";
 import { AICallingSpotlight } from "@/components/home/AICallingSpotlight";
+import { HomeSearchModal } from "@/components/home/HomeSearchModal";
 import { properties } from "@/data/properties";
 
 export default function HomePage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+
   const [featuredProperties, setFeaturedProperties] = useState<
     PopulatedProperty[]
   >([]);
@@ -69,15 +70,10 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSearch = useCallback(
-    (e: React.SubmitEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (searchQuery.trim()) {
-        router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
-      }
-    },
-    [searchQuery, router],
-  );
+  const handleSearch = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSearchModalOpen(true);
+  }, []);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -99,13 +95,14 @@ export default function HomePage() {
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted text-lg py-3 px-4"
                 aria-label="Property search"
               />
-              <Button type="submit" size="lg" disabled={!searchQuery.trim()}>
+              <Button type="submit" size="lg">
                 <FaSearch />
               </Button>
             </div>
           </form>
         </div>
       </div>
+
       <FeaturedProperties
         properties={featuredProperties}
         propertyError={propertyError}
@@ -126,6 +123,12 @@ export default function HomePage() {
           <FaArrowDown className="rotate-180 w-5 h-5" />
         </button>
       )}
+
+      <HomeSearchModal
+        open={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        initialQuery={searchQuery}
+      />
     </>
   );
 }

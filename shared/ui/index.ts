@@ -21,3 +21,4 @@ export * from "./Table";
 export * from "./TagOverflow";
 export * from "./Textarea";
 export * from "./VerifiedBadge";
+export * from "./Skeleton";

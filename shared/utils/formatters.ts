@@ -31,41 +31,146 @@ export function formatPrice(
 }
 
 export interface FormatRelativeTimeOptions {
+  /** Append "ago" / "in …" (default: true) */
   addSuffix?: boolean;
+
+  /** Differences ≤ this many seconds are treated as "just now" (default: 0) */
   justNowThresholdSeconds?: number;
+
+  /**
+   * Use abbreviated units.
+   * Examples: "3 mins", "1 hr", "2 days", "1 wk"
+   * Ignored when `style` is provided.
+   */
+  short?: boolean;
+
+  /**
+   * Unit length. Takes precedence over `short`.
+   * - "long"   → "3 minutes"
+   * - "short"  → "3 mins"
+   * - "narrow" → "3m"
+   */
+  style?: "long" | "short" | "narrow";
+
+  /**
+   * How to express relative days (and similar).
+   * - "always" → "1 day ago" / "in 1 day"
+   * - "auto"   → "yesterday" / "tomorrow" / "today"
+   */
+  numeric?: "always" | "auto";
+
+  /** Rounding strategy when converting to a unit count (default: "floor") */
+  rounding?: "floor" | "round" | "ceil";
+
+  /** Reference point instead of `Date.now()` (useful for tests) */
+  now?: Date | string | number;
 }
 
 const INTERVALS = [
-  { label: "year", seconds: 31_536_000 },
-  { label: "month", seconds: 2_592_000 },
-  { label: "week", seconds: 604_800 },
-  { label: "day", seconds: 86_400 },
-  { label: "hour", seconds: 3_600 },
-  { label: "minute", seconds: 60 },
-  { label: "second", seconds: 1 },
+  { label: "year", seconds: 31_536_000, short: "yr", narrow: "y" },
+  { label: "month", seconds: 2_592_000, short: "mo", narrow: "mo" },
+  { label: "week", seconds: 604_800, short: "wk", narrow: "w" },
+  { label: "day", seconds: 86_400, short: "day", narrow: "d" },
+  { label: "hour", seconds: 3_600, short: "hr", narrow: "h" },
+  { label: "minute", seconds: 60, short: "min", narrow: "m" },
+  { label: "second", seconds: 1, short: "sec", narrow: "s" },
 ] as const;
+
+type UnitLabel = (typeof INTERVALS)[number]["label"];
+
+function pluralize(
+  label: string,
+  count: number,
+  style: "long" | "short" | "narrow",
+): string {
+  if (style === "narrow") {
+    const map: Record<UnitLabel, string> = {
+      year: "y",
+      month: "mo",
+      week: "w",
+      day: "d",
+      hour: "h",
+      minute: "m",
+      second: "s",
+    };
+    return map[label as UnitLabel] ?? label;
+  }
+
+  if (style === "short") {
+    const map: Record<UnitLabel, [string, string]> = {
+      year: ["yr", "yrs"],
+      month: ["mo", "mos"],
+      week: ["wk", "wks"],
+      day: ["day", "days"],
+      hour: ["hr", "hrs"],
+      minute: ["min", "mins"],
+      second: ["sec", "secs"],
+    };
+    const [singular, plural] = map[label as UnitLabel] ?? [label, `${label}s`];
+    return count === 1 ? singular : plural;
+  }
+
+  return count === 1 ? label : `${label}s`;
+}
+
+function applyRounding(
+  value: number,
+  method: "floor" | "round" | "ceil",
+): number {
+  switch (method) {
+    case "round":
+      return Math.round(value);
+    case "ceil":
+      return Math.ceil(value);
+    default:
+      return Math.floor(value);
+  }
+}
 
 export function formatRelativeTime(
   timeAgo: Date | string | number,
   options: FormatRelativeTimeOptions = {},
 ): string {
-  const { addSuffix = true, justNowThresholdSeconds = 0 } = options;
+  const {
+    addSuffix = true,
+    justNowThresholdSeconds = 0,
+    short = false,
+    style,
+    numeric = "always",
+    rounding = "floor",
+    now,
+  } = options;
+
+  const resolvedStyle: "long" | "short" | "narrow" =
+    style ?? (short ? "short" : "long");
 
   const date = new Date(timeAgo);
   if (Number.isNaN(date.getTime())) return "Invalid date";
 
-  const diffMs = Date.now() - date.getTime();
-  const diffInSeconds = Math.floor(Math.abs(diffMs) / 1000);
+  const nowDate = now != null ? new Date(now) : new Date();
+  if (Number.isNaN(nowDate.getTime())) return "Invalid date";
+
+  const diffMs = nowDate.getTime() - date.getTime();
+  const absDiffMs = Math.abs(diffMs);
+  const diffInSeconds = Math.floor(absDiffMs / 1000);
   const isFuture = diffMs < 0;
 
   if (diffInSeconds <= justNowThresholdSeconds) return "just now";
 
-  for (const { label, seconds } of INTERVALS) {
-    const count = Math.floor(diffInSeconds / seconds);
+  for (const interval of INTERVALS) {
+    const rawCount = absDiffMs / 1000 / interval.seconds;
+    const count = applyRounding(rawCount, rounding);
+
     if (count < 1) continue;
 
-    const unit = count === 1 ? label : `${label}s`;
-    const core = `${count} ${unit}`;
+    if (numeric === "auto" && interval.label === "day") {
+      if (count === 0) return "today";
+      if (count === 1) return isFuture ? "tomorrow" : "yesterday";
+    }
+
+    const unit = pluralize(interval.label, count, resolvedStyle);
+    const core =
+      resolvedStyle === "narrow" ? `${count}${unit}` : `${count} ${unit}`;
 
     if (!addSuffix) return core;
     return isFuture ? `in ${core}` : `${core} ago`;

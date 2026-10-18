@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FaBed, FaBath, FaExpand, FaFire } from "react-icons/fa";
 import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
 import { RiHeartLine, RiHeartFill } from "react-icons/ri";
@@ -18,6 +18,7 @@ import { imageLoader } from "@/utils";
 import { PopulatedProperty } from "@affilhomes/shared/types/property";
 import { PopulatedUser } from "@affilhomes/shared/types";
 import { cn } from "@/lib/utils";
+import { useCanHover } from "@/hooks/useCanHover";
 
 const defaultImage = "/placeholder-property.png";
 
@@ -48,6 +49,9 @@ export function PropertyCard({
   const { isSaved, toggleSaved } = useSavedProperties();
   const isLiked = isSaved(_id);
 
+  const canHover = useCanHover();
+  const showHoverLayer = !canHover || isHovered;
+
   const discountedPrice = useMemo(() => {
     if (discount?.percentage)
       return price - (price * discount.percentage) / 100;
@@ -73,7 +77,6 @@ export function PropertyCard({
   const locationString = location ? `${location.city}, ${location.state}` : "";
 
   const isCompany = ownerType === "company";
-  // const isAgent = ownerType === Role.Agent;
 
   const ownerName = useMemo(() => {
     if (isCompany) return ownerId.companyId?.name || ownerId.name;
@@ -90,7 +93,6 @@ export function PropertyCard({
 
   const ownerImg = useMemo(() => {
     if (isCompany) return ownerId.companyId?.logo;
-
     return ownerId.avatar;
   }, [ownerId, isCompany]);
 
@@ -131,7 +133,9 @@ export function PropertyCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
-      className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 group cursor-pointer relative h-full flex flex-col"
+      role="article"
+      aria-label={title}
+      className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 group cursor-pointer relative h-full flex flex-col touch-manipulation"
     >
       {status === "active"
         ? hasDiscount && (
@@ -177,12 +181,21 @@ export function PropertyCard({
           onError={() => {
             if (imgSrc !== defaultImage) setImgSrc(defaultImage);
           }}
-          className={`object-cover transition-transform duration-700 ${
-            isHovered ? "scale-110" : "scale-100"
-          }`}
+          className={cn(
+            "object-cover transition-transform duration-700",
+            isHovered && canHover ? "scale-110" : "scale-100",
+          )}
         />
 
-        <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        {/* Gradient overlay — always visible on touch, hover-only on mouse.
+            This is what makes the badges and heart readable on top of the image. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none transition-opacity duration-300",
+            showHoverLayer ? "opacity-100" : "opacity-0",
+          )}
+        />
 
         <div
           className={cn(
@@ -242,30 +255,32 @@ export function PropertyCard({
           )}
         </div>
 
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-4 left-4 right-4 z-10 flex gap-2"
-            >
-              <button
-                onClick={handleLikeClick}
-                className="bg-primary text-primary-foreground p-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-lg text-lg"
-                aria-label={
-                  isLiked ? "Remove from favourites" : "Add to favourites"
-                }
-              >
-                {isLiked ? (
-                  <RiHeartFill className="text-destructive" />
-                ) : (
-                  <RiHeartLine />
-                )}
-              </button>
-            </motion.div>
+        {/* Favourite button — always rendered. Visibility is controlled by
+            `showHoverLayer`, which is permanently true on touch devices. */}
+        <motion.button
+          type="button"
+          onClick={handleLikeClick}
+          whileTap={{ scale: 0.88 }}
+          aria-label={isLiked ? "Remove from favourites" : "Add to favourites"}
+          aria-pressed={isLiked}
+          className={cn(
+            "absolute bottom-3 left-3 z-20 rounded-full shadow-lg",
+            "bg-background/95 backdrop-blur-md hover:bg-background",
+            "flex items-center justify-center",
+            // 44×44 minimum touch target on mobile, 40×40 on desktop
+            "w-11 h-11 sm:w-10 sm:h-10",
+            "transition-all duration-200",
+            showHoverLayer
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-2 pointer-events-none",
           )}
-        </AnimatePresence>
+        >
+          {isLiked ? (
+            <RiHeartFill className="text-destructive text-xl" />
+          ) : (
+            <RiHeartLine className="text-xl text-foreground" />
+          )}
+        </motion.button>
       </div>
 
       <div className="p-5 flex flex-col flex-1">
@@ -346,12 +361,13 @@ export function PropertyCard({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1 mt-0.5">
                 <button
+                  type="button"
                   onClick={handleOwnerClick}
                   className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left"
                 >
                   {ownerName}
                 </button>
-                {isVerified && <VerifiedBadge />}
+                {isVerified && <VerifiedBadge showText={false} />}
               </div>
               <Badge
                 className="text-xs capitalize"
@@ -366,7 +382,7 @@ export function PropertyCard({
             <div className="flex items-center gap-1.5 text-muted/60 shrink-0 ml-2">
               <FiClock size={13} className="shrink-0" />
               <span className="whitespace-nowrap">
-                {formatRelativeTime(createdAt)}
+                {formatRelativeTime(createdAt, { short: true })}
               </span>
             </div>
           )}

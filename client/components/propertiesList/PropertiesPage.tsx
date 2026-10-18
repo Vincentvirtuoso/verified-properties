@@ -11,6 +11,8 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
+
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
 import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";
@@ -33,6 +35,71 @@ import { PropertiesResults } from "./PropertiesResults";
 import { PropertiesPagination } from "./PropertiesPagination";
 
 const PAGE_SIZE = 12;
+
+function PropertyCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border overflow-hidden bg-card">
+      <Skeleton className="aspect-4/3 w-full rounded-none" />
+      <div className="p-4 space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+        <div className="flex gap-3 pt-2">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterSidebarSkeleton() {
+  return (
+    <div
+      className="hidden lg:block w-full lg:w-72 xl:w-80 shrink-0"
+      aria-hidden="true"
+    >
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-6">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            {i < 3 && <Skeleton className="h-10 w-full rounded-lg" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PropertiesResultsSkeleton() {
+  return (
+    <div aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading properties…</span>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <Skeleton className="h-5 w-48" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-28 rounded-full" />
+          <Skeleton className="h-9 w-24 rounded-full lg:hidden" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <PropertyCardSkeleton key={i} />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-center gap-2 mt-8">
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <Skeleton className="h-9 w-9 rounded-full" />
+      </div>
+    </div>
+  );
+}
 
 export function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -65,14 +132,11 @@ export function PropertiesPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<PropertyFilterState>(DEFAULT_FILTERS);
-    const [page, setPage] = useState(1);
-
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setFilters(DEFAULT_FILTERS);
   }, [DEFAULT_FILTERS]);
-
-  
 
   const currentType = (searchParams.get("type") as FilterType) || "all";
 
@@ -232,7 +296,6 @@ export function PropertiesPage() {
     [scrollToList],
   );
 
-
   const totalPages = Math.max(
     1,
     Math.ceil(sortedProperties.length / PAGE_SIZE),
@@ -262,9 +325,34 @@ export function PropertiesPage() {
     },
     [DEFAULT_FILTERS, search],
   );
-useEffect(() => {
-  setPage(1);
-}, [filters, sortBy, currentType, search.debouncedSearchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters, sortBy, currentType, search.debouncedSearchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="px-4 sm:px-6 py-6 sm:py-10">
+          <PropertiesHeader
+            currentType={currentType}
+            onTypeChange={handleTypeChange}
+            isPending={isPending}
+          />
+
+          <PropertySearch search={search} />
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            <FilterSidebarSkeleton />
+
+            <div className="flex-1 scroll-mt-40" ref={listRef}>
+              <PropertiesResultsSkeleton />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

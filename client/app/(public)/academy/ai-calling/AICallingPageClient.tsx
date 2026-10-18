@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@affilhomes/shared/ui/Button";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton"; // adjust path if needed
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,10 +75,14 @@ const OPERATOR_STEPS: Step[] = [
   },
 ];
 
-function usePageVariant(): { variant: PageVariant; content: PageContent } {
-  const { user, isAuthenticated } = useAuth();
+function usePageVariant(): {
+  variant: PageVariant;
+  content: PageContent;
+  isLoading: boolean;
+} {
+  const { user, isAuthenticated, isLoading } = useAuth();
 
-  return useMemo(() => {
+  const result = useMemo(() => {
     const role = user?.activeRole;
 
     if (role === Role.Agent) {
@@ -178,10 +183,72 @@ function usePageVariant(): { variant: PageVariant; content: PageContent } {
       },
     };
   }, [user, isAuthenticated]);
+
+  return { ...result, isLoading };
+}
+
+function PageSkeleton() {
+  return (
+    <div
+      className="min-h-screen bg-background text-foreground"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading AI Calling details…</span>
+
+      {/* Hero */}
+      <section className="py-16 sm:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="mt-4 h-9 sm:h-12 w-full max-w-2xl" />
+          <Skeleton className="mt-3 h-9 sm:h-12 w-3/4 max-w-xl" />
+          <Skeleton className="mt-5 h-5 w-full max-w-lg" />
+          <Skeleton className="mt-2 h-5 w-2/3 max-w-md" />
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section className="pb-16 sm:pb-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-10 sm:space-y-12">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-5 sm:gap-6">
+              <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+              <div className="min-w-0 flex-1 pt-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <Skeleton className="h-5 w-48 max-w-full" />
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                </div>
+                <Skeleton className="mt-2 h-4 w-full" />
+                <Skeleton className="mt-1.5 h-4 w-5/6" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA card */}
+      <section className="pb-20 sm:pb-28">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 flex flex-col items-center">
+            <Skeleton className="h-6 w-48 max-w-full" />
+            <Skeleton className="mt-3 h-4 w-72 max-w-full" />
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Skeleton className="h-10 w-40 rounded-full" />
+              <Skeleton className="h-10 w-32 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 export default function AICallingPageClient() {
-  const { content } = usePageVariant();
+  const { content, isLoading } = usePageVariant();
+
+  if (isLoading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -260,22 +327,22 @@ export default function AICallingPageClient() {
             <p className="mt-2 text-muted text-pretty">{content.ctaBody}</p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild size="sm" className="rounded-full py-3">
-                <Link href={content.primaryHref}>{content.primaryLabel}</Link>
+              <Button
+                size="sm"
+                className="rounded-full py-3"
+                href={content.primaryHref}
+              >
+                {content.primaryLabel}
               </Button>
               <Button
-                asChild
                 size="sm"
                 variant="ghost"
                 className="rounded-full py-3 border border-border"
+                href={content.secondaryHref}
               >
-                <Link href={content.secondaryHref}>
-                  {content.secondaryLabel}
-                </Link>
+                {content.secondaryLabel}
               </Button>
             </div>
-
-            <p className="mt-6 text-xs text-muted">{content.footnote}</p>
           </div>
         </div>
       </section>
