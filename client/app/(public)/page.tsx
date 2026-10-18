@@ -14,7 +14,6 @@ import { HomeSearchModal } from "@/components/home/HomeSearchModal";
 import { properties } from "@/data/properties";
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const [featuredProperties, setFeaturedProperties] = useState<
@@ -70,10 +69,8 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSearch = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSearchModalOpen(true);
-  }, []);
+  const openSearch = useCallback(() => setSearchModalOpen(true), []);
+  const closeSearch = useCallback(() => setSearchModalOpen(false), []);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -85,17 +82,34 @@ export default function HomePage() {
 
       <div className="relative z-20 -mt-6 px-4 sm:px-6 lg:px-8 mb-12">
         <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSearch}>
+          {/*
+            The form is presentational — the input is a readOnly trigger that
+            opens the search dialog on focus/click. Submitting is a no-op so
+            pressing Enter never accidentally navigates.
+          */}
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            role="search"
+            aria-label="Property search"
+          >
             <div className="bg-card rounded-2xl shadow-xl px-2 flex items-center border border-border">
               <input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                readOnly
+                onFocus={openSearch}
+                onClick={openSearch}
                 placeholder="Search properties, locations..."
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted text-lg py-3 px-4"
-                aria-label="Property search"
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted text-lg py-3 px-4 cursor-pointer"
+                aria-label="Open property search"
+                aria-haspopup="dialog"
               />
-              <Button type="submit" size="lg">
+              <Button
+                type="button"
+                size="lg"
+                onClick={openSearch}
+                aria-label="Open property search"
+                aria-haspopup="dialog"
+              >
                 <FaSearch />
               </Button>
             </div>
@@ -124,11 +138,7 @@ export default function HomePage() {
         </button>
       )}
 
-      <HomeSearchModal
-        open={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        initialQuery={searchQuery}
-      />
+      <HomeSearchModal open={searchModalOpen} onClose={closeSearch} />
     </>
   );
 }
