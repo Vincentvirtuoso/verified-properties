@@ -405,3 +405,205 @@ export default function PropertyGallery({
     </>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Lightbox — gesture-first, focus-trapped, keyboard-navigable              */
+/* -------------------------------------------------------------------------- */
+function Lightbox({
+  open,
+  onClose,
+  images,
+  activeIndex,
+  setActiveIndex,
+  prev,
+  next,
+  dragY,
+  opacity,
+  scale,
+  handleDragEnd,
+  getSrc,
+  handleError,
+  bannerHeight,
+}: {
+  open: boolean;
+  onClose: () => void;
+  images: PropertyImage[];
+  activeIndex: number;
+  setActiveIndex: (i: number) => void;
+  prev: () => void;
+  next: () => void;
+  dragY: ReturnType<typeof useMotionValue<number>>;
+  opacity: ReturnType<typeof useTransform<number, number>>;
+  scale: ReturnType<typeof useTransform<number, number>>;
+  handleDragEnd: (
+    e: unknown,
+    info: { offset: { x: number; y: number }; velocity: { x: number; y: number } },
+  ) => void;
+  getSrc: (url?: string) => string;
+  handleError: (url?: string) => void;
+  bannerHeight: number;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const thumbRailRef = useRef<HTMLDivElement>(null);
+
+  /* Focus trap */
+  useEffect(() => {
+    if (!open) return;
+    const container = dialogRef.current;
+    if (!container) return;
+
+    const focusable = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+
+    container.addEventListener("keydown", trap);
+    first?.focus();
+
+    return () => container.removeEventListener("keydown", trap);
+  }, [open]);
+
+  /* Auto-scroll active thumbnail into view */
+  useEffect(() => {
+    if (!open) return;
+    const rail = thumbRailRef.current;
+    const active = rail?.children[activeIndex] as HTMLElement | undefined;
+    active?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeIndex, open]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          style={{ top: bannerHeight }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Property photo gallery"
+        >
+          {/* Backdrop — click to close */}
+          <motion.div
+            className="absolute inset-0 bg-black/95"
+            style={{ opacity }}
+            onClick={onClose}
+          />
+
+          {/* Draggable image container */}
+          <motion.div
+            ref={dialogRef}
+            drag
+            dragElastic={0.7}
+            dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+            onDragEnd={handleDragEnd}
+            style={{ y: dragY, scale }}
+            className="relative w-full max-w-5xl h-[70vh] mx-4 flex items-center justify-center cursor-grab active:cursor-grabbing"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.2 }}
+                className="relative w-full h-full"
+              >
+                <Image
+                  src={getSrc(images[activeIndex]?.url)}
+                  alt={images[activeIndex]?.alt || `Image ${activeIndex + 1}`}
+                  fill
+                  className="object-contain pointer-events-none select-none"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  unoptimized={getSrc(images[activeIndex]?.url)?.includes("images.unsplash.com")}
+                  onError={() => handleError(images[activeIndex]?.url)}
+                  draggable={false}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Close */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-5 right-5 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Close gallery"
+          >
+            <RiCloseLine size={22} aria-hidden="true" />
+          </button>
+
+          {/* Counter */}
+          <div className="absolute top-5 left-5 z-20 text-white/60 text-sm font-medium pointer-events-none">
+            {activeIndex + 1} / {images.length}
+          </div>
+
+          {/* Arrows — hidden on touch via CSS to avoid crowding */}
+          <button
+            type="button"
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white hidden sm:flex"
+            aria-label="Previous image"
+          >
+            <RiArrowLeftLine size={20} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white hidden sm:flex"
+            aria-label="Next image"
+          >
+            <RiArrowRightLine size={20} aria-hidden="true" />
+          </button>
+
+          {/* Thumbnail rail */}
+          <div
+            ref={thumbRailRef}
+            className="absolute bottom-5 left-0 right-0 z-20 flex justify-start sm:justify-center gap-2 px-6 overflow-x-auto py-2 scrollbar-hide"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {images.map((img, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveIndex(i)}
+                aria-label={`Go to image ${i + 1}`}
+                aria-current={i === activeIndex ? "true" : "false"}
+                className={cn(
+                  "relative w-14 h-10 rounded-md overflow-hidden shrink-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                  i === activeIndex
+                    ? "ring-2 ring-violet-400 opacity-100 scale-110"
+                    : "opacity-50 hover:opacity-100",
+                )}
+              >
+                <Image
+                  src={getSrc(img.url)}
+                  alt={img.alt || `Thumb ${i + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                  unoptimized={isUnsplash(img.url)}
+                  onError={() => handleError(img.url)}
+                />
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
