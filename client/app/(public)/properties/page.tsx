@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { PropertiesPage } from "@/components/propertiesList/PropertiesPage";
+import { PropertiesPageSkeleton } from "@/components/propertiesList/PropertiesPageSkeleton";
 
 export const metadata: Metadata = {
   title: "Verified Real Estate Listings | Find Your Next Property",
@@ -37,9 +37,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Suspense
-      fallback={<PageSpinner label="Loading properties page content..." />}
-    >
+    <Suspense fallback={<PropertiesPageSkeleton />}>
       <PropertiesPage />
     </Suspense>
   );
