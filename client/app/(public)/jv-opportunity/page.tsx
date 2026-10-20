@@ -1,259 +1,373 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { LuCheck, LuClock, LuBuilding2, LuArrowRight } from "react-icons/lu";
+import { LuLock, LuShieldAlert, LuInbox } from "react-icons/lu";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { imageLoader } from "@/utils";
-import { useActiveJV } from "@affilhomes/shared/supabase";
+import { Textarea } from "@affilhomes/shared/ui/Textarea";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { STRATEGY_LABELS } from "@/data/jv-requests";
+import {
+  JvApiError,
+  formatJvDate,
+  formatNaira,
+  getJvAccess,
+  listOpenJvRequests,
+  respondToJvRequest,
+  toJvViewer,
+  type JvAccessReason,
+  type JvRequestPublic,
+} from "@/lib/jv-api";
+import { SignInPrompt } from "@/components/common/SignInPrompt";
+import { Centered } from "@affilhomes/shared/ui/Centered";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 
-const PLANS = [
-  {
-    name: "Weekly",
-    price: "â‚¦ 10,000",
-    duration: "week",
-    period: "weekly",
-    icon: LuClock,
-    features: [
-      "Access to 5 JV listings",
-      "Basic property details",
-      "Email support",
-      "Weekly digest",
-    ],
-    popular: false,
-  },
-  {
-    name: "Monthly",
-    price: "â‚¦ 40,000",
-    duration: "month",
-    period: "monthly",
-    icon: LuBuilding2,
-    features: [
-      "Access to all JV listings",
-      "Detailed analytics",
-      "Priority email & chat support",
-      "Monthly market report",
-      "Direct contact with partners",
-    ],
-    popular: true,
-  },
-  {
-    name: "Yearly",
-    price: "â‚¦ 440,000",
-    duration: "year",
-    period: "yearly",
-    icon: LuCheck,
-    features: [
-      "Everything in Monthly",
-      "Early access to new deals",
-      "Dedicated account manager",
-      "Quarterly strategy calls",
-      "Coâ€‘branded marketing materials",
-    ],
-    popular: false,
-  },
-];
+const MIN_MESSAGE = 20;
+const MAX_MESSAGE = 1000;
+
+export const REQUEST_PLACEHOLDERS: Record<string, string> = {
+  "Land partnership": "/jv/placeholders/land-partnership.webp",
+  "Project co-funding": "/jv/placeholders/project-cofunding.webp",
+  "Joint development": "/jv/placeholders/joint-development.webp",
+  Other: "/jv/placeholders/other.webp",
+};
 
 export default function JvOpportunityPage() {
-  const [selectedPlan, setSelectedPlan] = useState<string>("monthly");
-  const jv = useActiveJV(8);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const viewer = useMemo(() => (user ? toJvViewer(user) : null), [user]);
 
-  return (
-    <main className="min-h-screen">
-      <section className="bg-primary py-16 px-4 text-center">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4 text-white">
-          Joint Venture Opportunities
+  const [access, setAccess] = useState<{
+    canBrowse: boolean;
+    reason: JvAccessReason;
+  } | null>(null);
+  const [requests, setRequests] = useState<JvRequestPublic[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [respondError, setRespondError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!viewer) return;
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const nextAccess = await getJvAccess(viewer);
+      setAccess(nextAccess);
+      setRequests(nextAccess.canBrowse ? await listOpenJvRequests(viewer) : []);
+      setLoaded(true);
+    } catch (err) {
+      setLoadError(
+        err instanceof JvApiError
+          ? err.message
+          : "We couldn't load JV requests. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [viewer]);
+
+  useEffect(() => {
+    if (authLoading || !viewer) return;
+    load();
+  }, [authLoading, viewer, load]);
+
+  const openReply = (id: string) => {
+    setReplyingTo(id);
+    setMessage("");
+    setRespondError(null);
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    setMessage("");
+    setRespondError(null);
+  };
+
+  const handleRespond = async (requestId: string) => {
+    if (!viewer || pendingAction) return;
+    const trimmed = message.trim();
+
+    if (trimmed.length < MIN_MESSAGE) {
+      setRespondError(
+        `Please add a little more detail (at least ${MIN_MESSAGE} characters).`,
+      );
+      return;
+    }
+
+    setRespondError(null);
+    setPendingAction(`respond:${requestId}`);
+    try {
+      await respondToJvRequest(viewer, requestId, trimmed);
+      setReplyingTo(null);
+      setMessage("");
+      await load();
+    } catch (err) {
+      setRespondError(
+        err instanceof JvApiError
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  if (authLoading) return <PageLoading />;
+
+  if (!isAuthenticated || !viewer) {
+    return (
+      <SignInPrompt
+        title="Sign in to continue"
+        description="JV requests are for registered agents and companies."
+      />
+    );
+  }
+
+  if (!loaded && loading) return <PageLoading />;
+
+  if (loadError && !loaded) {
+    return (
+      <Centered>
+        <LuShieldAlert
+          className="mx-auto mb-4 h-10 w-10 text-destructive"
+          aria-hidden
+        />
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
+          We couldn&apos;t load JV requests
         </h1>
-        <p className="text-lg max-w-2xl mx-auto opacity-90">
-          Partner with verified developers and earn attractive returns on real
-          estate projects across Nigeria. Choose a plan that fits your
-          investment style.
+        <p className="mb-6 text-subtle">{loadError}</p>
+        <Button onClick={load} isLoading={loading} loadingText="Retrying…">
+          Try again
+        </Button>
+      </Centered>
+    );
+  }
+
+  if (!access) return <PageLoading />;
+
+  if (!access.canBrowse) {
+    const isViewer = access.reason === "role_not_eligible";
+    return (
+      <Centered>
+        <LuLock className="mx-auto mb-4 h-10 w-10 text-primary" aria-hidden />
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
+          {isViewer
+            ? "JV requests are for agents and companies"
+            : "Subscribe to see JV requests"}
+        </h1>
+        <p className="mb-6 text-subtle">
+          {isViewer
+            ? "You can still post a partnership request and follow its responses."
+            : "An active subscription lets you browse open requests and respond to posters."}
         </p>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-4xl font-bold">
-            Choose Your Access Plan
-          </h2>
-          <p className="mt-3 text-subtle max-w-3xl mx-auto">
-            Unlock exclusive joint venture listings and tools. Cancel or upgrade
-            anytime.
-          </p>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-3">
-          {PLANS.map((plan) => {
-            const Icon = plan.icon;
-            const isActive = selectedPlan === plan.period;
-
-            return (
-              <div
-                key={plan.period}
-                onClick={() => setSelectedPlan(plan.period)}
-                className={`relative flex flex-col p-8 bg-card rounded-2xl border-2 cursor-pointer transition-all duration-300
-                  ${isActive ? "border-purple-500 shadow-xl scale-[1.02]" : "border-border hover:border-purple-500/50 hover:shadow-lg"}
-                  ${plan.popular ? "md:-mt-4 md:mb-4" : ""}
-                `}
-              >
-                {plan.popular && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-xs font-bold px-4 py-1 rounded-full text-white">
-                    Most Popular
-                  </span>
-                )}
-
-                <div className="flex items-center gap-3 mb-6">
-                  <div
-                    className={`p-2 rounded-lg ${isActive ? "bg-primary/10 text-primary" : "bg-inverse text-muted"}`}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-muted">
-                      {plan.name}
-                    </h3>
-                    <p className="text-sm text-subtle">Billed {plan.period}</p>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <span className="text-4xl font-extrabold text-muted">
-                    {plan.price}
-                  </span>
-                  <span className="text-subtle ml-2">/{plan.duration}</span>
-                </div>
-
-                <ul className="space-y-3 mb-8 grow">
-                  {plan.features.map((feature, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-3 text-sm text-subtle"
-                    >
-                      <LuCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button variant={isActive ? "primary" : "outline"}>
-                  <Link href={`/subscribe?plan=${plan.period}`}>
-                    Subscribe {plan.name}
-                  </Link>
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 pb-20">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl md:text-4xl font-bold">
-              Explore Active JV Opportunities
-            </h2>
-            <p className="mt-2 text-muted max-w-3xl">
-              Browse handâ€‘picked joint venture projects currently open for
-              investment.
-            </p>
-          </div>
-          <Link
-            href="/jv-properties"
-            className="hidden md:flex items-center gap-1 text-primary font-semibold hover:underline"
-          >
-            View all <LuArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {(jv.items ?? []).map((property) => (
-            <Link
-              key={property._id}
-              href={`/jv-properties/${property.slug}`}
-              className="group bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-border flex flex-col"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <Image
-                  src={"/placeholder-property.png"}
-                  alt={property.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  loader={imageLoader}
-                  sizes="(max-width: 768px) 100vw, 25vw"
-                />
-                <div className="absolute top-3 left-3 bg-inverse/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-semibold text-primary">
-                  ROI {property.roi}%
-                </div>
-                {property.landSize && (
-                  <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
-                    {property.landSize}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 flex flex-col flex-1">
-                <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
-                  {property.title}
-                </h3>
-                <p className="text-sm text-muted mb-2">
-                  {property.location.city}, {property.location.state}
-                </p>
-
-                <div className="flex items-center gap-2 mb-3 text-xs text-muted flex-wrap whitespace-nowrap">
-                  {property.sharingFormula && (
-                    <span className="bg-muted/20 px-2 py-0.5 rounded">
-                      {property.sharingFormula}
-                    </span>
-                  )}
-                  {property.facilitatorFee && (
-                    <span className="bg-muted/20 px-2 py-0.5 rounded">
-                      Fee {property.facilitatorFee.totalPercentage}%
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-auto">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-bold text-primary">
-                      {property.landValue
-                        ? `â‚¦${property.landValue.toLocaleString()}`
-                        : `â‚¦${property.minimumInvestment.toLocaleString()} min`}
-                    </span>
-                    <span className="text-muted">
-                      {property.investmentDuration}
-                    </span>
-                  </div>
-                  {property.totalInvestors !== undefined && (
-                    <div className="mt-2 text-xs text-muted">
-                      {property.totalInvestors}/{property.maxInvestors ?? "âˆž"}{" "}
-                      investors
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="mt-6 text-center md:hidden">
-          <Button variant="outline" asChild>
-            <Link href="/jv-properties">View All Properties</Link>
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
+          {!isViewer && (
+            <Button href="/subscribe" fullWidth>
+              View plans
+            </Button>
+          )}
+          <Button href="/jv-opportunity/new" variant="outline" fullWidth>
+            Post a request
+          </Button>
+          <Button href="/jv-opportunity/mine" variant="outline" fullWidth>
+            My requests
           </Button>
         </div>
-      </section>
+      </Centered>
+    );
+  }
 
-      <section className="bg-foreground/20 mb-10 py-10 px-4 text-center">
-        <h2 className="text-2xl text-muted md:text-3xl font-bold mb-3">
-          Ready to Partner?
-        </h2>
-        <p className="text-subtle max-w-2xl mx-auto mb-6">
-          Join hundreds of smart investors growing wealth through real estate
-          joint ventures.
-        </p>
-        <Button size="lg">
-          <Link href="/register">Get Started Now</Link>
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-12">
+      <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">JV Requests</h1>
+          <p className="mt-2 max-w-2xl text-subtle">
+            Browse open partnership requests. Posters stay anonymous until they
+            accept your response.
+          </p>
+        </div>
+        <Button href="/jv-opportunity/mine" variant="outline">
+          My requests
         </Button>
-      </section>
+      </header>
+
+      {requests.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <LuInbox className="h-6 w-6 text-muted-foreground" aria-hidden />
+          </div>
+          <h2 className="mb-1 text-lg font-semibold text-foreground">
+            No open requests right now
+          </h2>
+          <p className="text-sm text-muted">
+            Check back soon — new partnership requests are posted regularly.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {requests.map((r) => {
+          const verified = r.posterLabel === "Verified poster";
+          const isReplying = replyingTo === r.id;
+          const isSending = pendingAction === `respond:${r.id}`;
+          const anyPending = pendingAction !== null;
+
+          // Map the request type to the placeholder image
+          const placeholderSrc =
+            REQUEST_PLACEHOLDERS[r.requestType] ||
+            REQUEST_PLACEHOLDERS["Other"];
+
+          return (
+            <article
+              key={r.id}
+              className="flex flex-col overflow-hidden rounded-xl border border-border bg-card md:flex-row"
+            >
+              {/* Image Container */}
+              <div className="relative h-48 w-full shrink-0 border-b border-border bg-muted/30 md:h-auto md:w-72 md:border-b-0 md:border-r">
+                <Image
+                  src={placeholderSrc}
+                  alt={r.requestType}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 288px"
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Content Container */}
+              <div className="flex flex-1 flex-col p-6">
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
+                      verified
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted/30 text-muted"
+                    }`}
+                  >
+                    {verified ? (
+                      <VerifiedBadge
+                        className="h-3.5 w-3.5"
+                        aria-hidden
+                        showText={false}
+                      />
+                    ) : (
+                      <LuShieldAlert className="h-3.5 w-3.5" aria-hidden />
+                    )}
+                    {r.posterLabel}
+                  </span>
+                  <span className="text-muted">
+                    Posted {formatJvDate(r.createdAt)}
+                  </span>
+                </div>
+
+                <h2 className="text-lg font-semibold text-foreground">
+                  {r.requestType} · {r.area}
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  {formatNaira(r.budgetMin)} – {formatNaira(r.budgetMax)} ·{" "}
+                  {STRATEGY_LABELS[r.strategyPreference]}
+                </p>
+                <p className="mt-4 whitespace-pre-line text-subtle">
+                  {r.description}
+                </p>
+
+                {!isReplying && (
+                  <div className="mt-auto flex justify-end pt-5">
+                    {r.alreadyResponded ? (
+                      <span className="text-sm text-muted">
+                        You&apos;ve already responded
+                      </span>
+                    ) : (
+                      <Button onClick={() => openReply(r.id)}>Respond</Button>
+                    )}
+                  </div>
+                )}
+
+                {isReplying && (
+                  <div className="mt-4 space-y-3">
+                    <Textarea
+                      label="Your response"
+                      value={message}
+                      onChange={setMessage}
+                      placeholder="Briefly introduce your interest and what you can bring to this request."
+                      rows={3}
+                      maxLength={MAX_MESSAGE}
+                      showCount
+                      disabled={isSending}
+                      error={respondError ?? undefined}
+                      description={`At least ${MIN_MESSAGE} characters. The poster sees this alongside your profile.`}
+                    />
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={cancelReply}
+                        disabled={isSending}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => handleRespond(r.id)}
+                        isLoading={isSending}
+                        loadingText="Sending…"
+                        disabled={!message.trim() || (anyPending && !isSending)}
+                      >
+                        Send response
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </main>
+  );
+}
+
+function PageLoading() {
+  return (
+    <main
+      className="mx-auto max-w-5xl px-4 py-12"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading JV requests…</span>
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="space-y-6">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="flex flex-col overflow-hidden rounded-xl border border-border bg-card md:flex-row"
+          >
+            <Skeleton className="h-48 w-full shrink-0 rounded-none md:h-auto md:w-72" />
+            <div className="flex flex-1 flex-col p-6">
+              <Skeleton className="mb-4 h-4 w-40" />
+              <Skeleton className="mb-2 h-5 w-2/3" />
+              <Skeleton className="mb-4 h-4 w-1/2" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+                <Skeleton className="h-3 w-4/6" />
+              </div>
+              <div className="mt-auto flex justify-end pt-6">
+                <Skeleton className="h-9 w-24" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }

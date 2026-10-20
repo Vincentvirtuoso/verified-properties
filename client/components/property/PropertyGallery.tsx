@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, type PanInfo } from "framer-motion";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
@@ -22,8 +22,6 @@ const SWIPE_PX = 60;
 
 const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 
-
-
 interface PropertyGalleryProps {
   mainImage?: string;
   gallery?: PropertyImage[];
@@ -41,6 +39,12 @@ function gridLayout(count: number) {
   if (count === 2) return { container: "grid-cols-2", main: "" };
   if (count === 3)
     return { container: "grid-cols-2 grid-rows-2", main: "row-span-2" };
+
+  if (count === 4)
+    return {
+      container: "grid-cols-2 grid-rows-2",
+      main: "col-span-2 row-span-1",
+    };
   return {
     container: "grid-cols-4 grid-rows-2",
     main: "col-span-2 row-span-2",
@@ -54,8 +58,14 @@ export default function PropertyGallery({
 }: PropertyGalleryProps) {
   const { bannerHeight } = useBannerHeightContext();
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const photoParam = searchParams.get("photo");
+  const lightboxIndex = photoParam !== null ? parseInt(photoParam, 10) : null;
+
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
 
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -66,7 +76,11 @@ export default function PropertyGallery({
       ...(mainImage ? [{ url: mainImage, alt: title }] : []),
       ...gallery,
     ];
-    return list.length ? list : [{ url: FALLBACK, alt: title }];
+
+    const uniqueList = list.filter(
+      (img, index, self) => index === self.findIndex((t) => t.url === img.url),
+    );
+    return uniqueList.length ? uniqueList : [{ url: FALLBACK, alt: title }];
   }, [mainImage, gallery, title]);
 
   const src = (url: string) => (failedUrls.has(url) ? FALLBACK : url);
@@ -79,22 +93,41 @@ export default function PropertyGallery({
 
   const openAt = (index: number, trigger: HTMLElement) => {
     triggerRef.current = trigger;
-    setLightboxIndex(index);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("photo", index.toString());
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const close = useCallback(() => {
-    setLightboxIndex(null);
-    triggerRef.current?.focus();
-  }, []);
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("photo");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+
+    setTimeout(() => triggerRef.current?.focus(), 100);
+  }, [router, pathname, searchParams]);
 
   const step = useCallback(
     (delta: number) => {
-      setLightboxIndex((i) =>
-        i === null ? null : (i + delta + images.length) % images.length,
-      );
+      if (lightboxIndex === null) return;
+      const nextIndex = (lightboxIndex + delta + images.length) % images.length;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("photo", nextIndex.toString());
+
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [images.length],
+    [lightboxIndex, images.length, router, pathname, searchParams],
   );
+
+  const handleSelect = (index: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("photo", index.toString());
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -178,11 +211,11 @@ export default function PropertyGallery({
         )}
       </div>
 
-      <div className="relative md:hidden">
+      <div className="relative w-full overflow-hidden md:hidden">
         <div
           ref={carouselRef}
           onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto rounded-xl hide-scrollbar"
+          className="flex w-full snap-x snap-mandatory overflow-x-auto rounded-xl hide-scrollbar"
         >
           {images.map((img, i) => (
             <button
@@ -190,14 +223,14 @@ export default function PropertyGallery({
               type="button"
               onClick={(e) => openAt(i, e.currentTarget)}
               aria-label={`Open photo ${i + 1} of ${images.length}`}
-              className="relative h-72 w-full shrink-0 snap-center overflow-hidden bg-muted/30"
+              className="relative h-72 w-screen shrink-0 snap-center overflow-hidden bg-muted/30"
             >
               <Image
                 src={src(img.url)}
                 alt={img.alt || `${title} photo ${i + 1}`}
                 fill
                 priority={i === 0}
-                sizes="200vw"
+                sizes="100vw"
                 className="object-cover"
                 unoptimized={isUnsplash(img.url)}
                 onError={() => markFailed(img.url)}
@@ -212,7 +245,7 @@ export default function PropertyGallery({
         )}
       </div>
 
-      {isOpen && (
+      {isOpen && lightboxIndex >= 0 && lightboxIndex < images.length && (
         <Lightbox
           title={title}
           images={images}
@@ -222,13 +255,12 @@ export default function PropertyGallery({
           onError={markFailed}
           onClose={close}
           onStep={step}
-          onSelect={(i) => setLightboxIndex(i)}
+          onSelect={handleSelect}
         />
       )}
     </>
   );
 }
-
 
 interface LightboxProps {
   title: string;
@@ -280,7 +312,6 @@ function Lightbox({
     setOffset({ x: 0, y: 0 });
   }, []);
 
-  
   const clampOffset = useCallback((x: number, y: number, z: number) => {
     const rect = stageRef.current?.getBoundingClientRect();
     if (!rect) return { x, y };
@@ -292,12 +323,10 @@ function Lightbox({
     };
   }, []);
 
-  
   useEffect(() => {
     setOffset((o) => clampOffset(o.x, o.y, zoom));
   }, [zoom, clampOffset]);
 
-  
   useEffect(() => {
     reset();
   }, [index, reset]);
@@ -315,7 +344,6 @@ function Lightbox({
     });
   }, [index]);
 
-  
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -327,7 +355,6 @@ function Lightbox({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "+" || e.key === "=") setZoom((z) => clampZoom(z * 1.25));
@@ -397,7 +424,6 @@ function Lightbox({
     const g = gesture.current;
 
     if (wasSingle && !g.pinched && !g.moved) {
-      
       const now = Date.now();
       if (now - lastTap.current < DOUBLE_TAP_MS) {
         lastTap.current = 0;
@@ -414,7 +440,6 @@ function Lightbox({
     }
   };
 
-  
   const trapFocus = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !dialogRef.current) return;
     const items = dialogRef.current.querySelectorAll<HTMLElement>(

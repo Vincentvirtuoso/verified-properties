@@ -10,7 +10,6 @@ import {
   LuImage,
   LuFileText,
   LuPencil,
-  LuShieldCheck,
 } from "react-icons/lu";
 import type {
   ListPropertyFormData,
@@ -23,6 +22,7 @@ import {
 } from "@/utils";
 import { useEffect, useState } from "react";
 import { PhotoDraftNotices } from "./PhotoDraftNotices";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
 
 const PURPOSE_LABEL: Record<string, string> = {
   rent: "For Rent",
@@ -283,7 +283,10 @@ export function StepReview({
           {formData.documentTypes.length > 0 ? (
             <div className="border-t border-border pt-3">
               <div className="mb-2 flex items-start gap-2">
-                <LuShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <VerifiedBadge
+                  className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                  showText={false}
+                />
                 <p className="text-xs text-muted">
                   Documents declared, pending verification. Our team will
                   contact you to collect copies.

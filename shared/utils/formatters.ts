@@ -30,39 +30,25 @@ export function formatPrice(
   }).format(num);
 }
 
+export const formatNaira = (
+  raw: string | number | null | undefined,
+): string => {
+  if (raw === null || raw === undefined) return "";
+
+  const str = typeof raw === "string" ? raw.trim() : raw;
+  if (str === "") return "";
+
+  const n = Number(str);
+  return Number.isFinite(n) ? n.toLocaleString("en-NG") : String(raw);
+};
+
 export interface FormatRelativeTimeOptions {
-  /** Append "ago" / "in …" (default: true) */
   addSuffix?: boolean;
-
-  /** Differences ≤ this many seconds are treated as "just now" (default: 0) */
   justNowThresholdSeconds?: number;
-
-  /**
-   * Use abbreviated units.
-   * Examples: "3 mins", "1 hr", "2 days", "1 wk"
-   * Ignored when `style` is provided.
-   */
   short?: boolean;
-
-  /**
-   * Unit length. Takes precedence over `short`.
-   * - "long"   → "3 minutes"
-   * - "short"  → "3 mins"
-   * - "narrow" → "3m"
-   */
   style?: "long" | "short" | "narrow";
-
-  /**
-   * How to express relative days (and similar).
-   * - "always" → "1 day ago" / "in 1 day"
-   * - "auto"   → "yesterday" / "tomorrow" / "today"
-   */
   numeric?: "always" | "auto";
-
-  /** Rounding strategy when converting to a unit count (default: "floor") */
   rounding?: "floor" | "round" | "ceil";
-
-  /** Reference point instead of `Date.now()` (useful for tests) */
   now?: Date | string | number;
 }
 

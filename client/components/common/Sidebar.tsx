@@ -17,6 +17,10 @@ import {
   LuBriefcase,
   LuMessagesSquare,
   LuBookmark,
+  LuClipboardList,
+  LuInbox,
+  LuPlus,
+  LuCreditCard,
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +29,7 @@ import { Brandmark } from "./BrandMark";
 import { FiBarChart2 } from "react-icons/fi";
 import { ListingsIcon } from "@affilhomes/shared/icons";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
+import { cn } from "@/utils";
 
 type SidebarSlot =
   | { kind: "count"; value: number; max?: number }
@@ -49,7 +54,45 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     ];
   }
 
+  const commonExplore: SidebarLink[] = [
+    { href: "/", label: "Home", icon: <LuHouse /> },
+    { href: "/properties", label: "Search Properties", icon: <LuSearch /> },
+  ];
+
+  const commonJv: SidebarLink[] = [
+    {
+      href: "/jv-opportunity",
+      label: "JV Opportunities",
+      icon: <LuBriefcase />,
+      category: "Joint Ventures",
+    },
+    {
+      href: "/jv-opportunity/mine",
+      label: "My JV Requests",
+      icon: <LuClipboardList />,
+      category: "Joint Ventures",
+    },
+    {
+      href: "/jv-opportunity/threads",
+      label: "JV Threads",
+      icon: <LuInbox />,
+      category: "Joint Ventures",
+    },
+    {
+      href: "/jv-opportunity/new",
+      label: "Post JV Request",
+      icon: <LuPlus />,
+      category: "Joint Ventures",
+    },
+  ];
+
   const commonAccount: SidebarLink[] = [
+    {
+      href: "/subscribe",
+      label: "Subscription",
+      icon: <LuCreditCard />,
+      category: "Account",
+    },
     {
       href: "/support",
       label: "Support",
@@ -58,15 +101,11 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     },
   ];
 
-  const commonExplore: SidebarLink[] = [
-    { href: "/", label: "Home", icon: <LuHouse /> },
-    { href: "/properties", label: "Search Properties", icon: <LuSearch /> },
-  ];
-
   switch (role) {
     case Role.Viewer:
       return [
         ...commonExplore,
+        ...commonJv,
         {
           href: "/enquiries",
           label: "Enquiries",
@@ -92,6 +131,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Dashboard",
           icon: <LuLayoutDashboard />,
         },
+        ...commonJv,
         {
           href: "/enquiries",
           label: "Enquiries",
@@ -137,6 +177,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Company Dashboard",
           icon: <LuLayoutDashboard />,
         },
+        ...commonJv,
         {
           href: "/company/enquiries",
           label: "Enquiries",
@@ -175,7 +216,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       ];
 
     default:
-      return [...commonExplore, ...commonAccount];
+      return [...commonExplore, ...commonJv, ...commonAccount];
   }
 }
 
@@ -352,7 +393,10 @@ const SidebarContent = ({
   return (
     <div className="flex h-full flex-col pr-px">
       <nav
-        className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-3"
+        className={cn(
+          "flex-1 space-y-6 overflow-y-auto px-3",
+          collapsed && "hide-scrollbar",
+        )}
         style={{ maxHeight: `calc(100vh - ${bannerHeight + 170}px)` }}
       >
         {Object.entries(groupedLinks).map(([category, items]) => (

@@ -18,6 +18,7 @@ import {
   PropertyOwnerType,
 } from "@affilhomes/shared/types";
 import { VerifiedBadge } from "@affilhomes/shared/ui";
+import CompanyIcon from "@affilhomes/shared/icons/CompanyIcon";
 
 interface OwnerCardProps {
   owner: PopulatedProperty["ownerId"];
@@ -80,19 +81,11 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
       <div className="p-5 space-y-4">
         <div className="flex items-center gap-3.5">
           <div
-            className={`relative w-14 h-14 shrink-0 overflow-hidden bg-muted/10 ring-2 ring-violet-100 dark:ring-violet-900 ${
+            className={`flex items-center justify-center w-14 h-14 shrink-0 overflow-hidden bg-muted/10 ring-2 ring-violet-100 dark:ring-violet-900 ${
               isCompany ? "rounded-xl" : "rounded-full"
             }`}
           >
-            <Image
-              src={imgSrc}
-              alt={name || "Owner image"}
-              fill
-              sizes="56px"
-              loader={imageLoader}
-              onError={() => setImgSrc(isCompany ? defaultLogo : defaultAvatar)}
-              className="object-cover"
-            />
+            <CompanyIcon/>
           </div>
 
           <div className="min-w-0 flex-1">
