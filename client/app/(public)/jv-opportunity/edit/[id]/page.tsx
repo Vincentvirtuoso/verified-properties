@@ -13,11 +13,11 @@ import {
   toJvViewer,
   type JvRequestOwn,
   EDIT_COOLDOWN_HOURS,
+  JvRequestPayload,
 } from "@/lib/jv-api";
 import {
   JvRequestForm,
   type JvRequestFormValues,
-  type JvRequestPayload,
 } from "../../_components/JvRequestForm";
 
 type Params = { id: string };
@@ -149,8 +149,7 @@ export default function EditJvRequestPage({
     );
   }
 
-  const lastUpdatedStr = (request ).updatedAt || request.createdAt;
-  console.log(request);
+  const lastUpdatedStr = request.updatedAt || request.createdAt;
 
   const lastUpdatedTime = new Date(lastUpdatedStr).getTime();
   const timeSinceUpdate = Date.now() - lastUpdatedTime;

@@ -5,10 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@affilhomes/shared/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
-import { JvApiError, createJvRequest, toJvViewer } from "@/lib/jv-api";
+import { JvApiError, JvRequestPayload, createJvRequest, toJvViewer } from "@/lib/jv-api";
 import {
   JvRequestForm,
-  type JvRequestPayload,
 } from "../_components/JvRequestForm";
 
 export default function NewJvRequestPage() {

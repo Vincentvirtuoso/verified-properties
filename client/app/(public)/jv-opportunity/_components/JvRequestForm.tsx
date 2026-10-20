@@ -13,6 +13,7 @@ import {
 } from "@/data/jv-requests";
 import { FiAlertCircle, FiEyeOff, FiMapPin } from "react-icons/fi";
 import { formatNaira } from "@/utils";
+import { JvRequestPayload } from "@/lib/jv-api";
 
 export const MIN_DESCRIPTION = 30;
 export const MAX_DESCRIPTION = 1500;
@@ -23,15 +24,6 @@ export type JvRequestFormValues = {
   requestType: string;
   budgetMin: string;
   budgetMax: string;
-  strategyPreference: JvStrategy;
-  description: string;
-};
-
-export type JvRequestPayload = {
-  area: string;
-  requestType: string;
-  budgetMin: number;
-  budgetMax: number;
   strategyPreference: JvStrategy;
   description: string;
 };
