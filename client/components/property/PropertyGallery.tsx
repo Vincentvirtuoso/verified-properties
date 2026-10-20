@@ -7,10 +7,22 @@ import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiCloseLine,
+  RiZoomInLine,
+  RiZoomOutLine,
 } from "react-icons/ri";
 import type { PropertyImage } from "@affilhomes/shared/types/property";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { cn } from "@/lib/utils";
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const TAP_ZOOM = 2.5;
+const DOUBLE_TAP_MS = 300;
+const SWIPE_PX = 60;
+
+const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
+
 
 interface PropertyGalleryProps {
   mainImage?: string;
@@ -217,6 +229,7 @@ export default function PropertyGallery({
   );
 }
 
+
 interface LightboxProps {
   title: string;
   images: PropertyImage[];
@@ -243,6 +256,51 @@ function Lightbox({
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [panning, setPanning] = useState(false);
+
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef({
+    x: 0,
+    y: 0,
+    originX: 0,
+    originY: 0,
+    moved: false,
+    pinched: false,
+    pinchDist: 0,
+    pinchZoom: 1,
+  });
+  const lastTap = useRef(0);
+
+  const reset = useCallback(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
+
+  // Keep the image edge from leaving the stage.
+  const clampOffset = useCallback((x: number, y: number, z: number) => {
+    const rect = stageRef.current?.getBoundingClientRect();
+    if (!rect) return { x, y };
+    const maxX = (rect.width * (z - 1)) / 2;
+    const maxY = (rect.height * (z - 1)) / 2;
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  }, []);
+
+  // Re-clamp pan whenever zoom changes, and center at 1×.
+  useEffect(() => {
+    setOffset((o) => clampOffset(o.x, o.y, zoom));
+  }, [zoom, clampOffset]);
+
+  // Reset zoom when the photo changes.
+  useEffect(() => {
+    reset();
+  }, [index, reset]);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -257,6 +315,106 @@ function Lightbox({
     });
   }, [index]);
 
+  // Wheel zoom. Needs a non-passive listener to block page scroll.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom((z) => clampZoom(z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Keyboard zoom.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "+" || e.key === "=") setZoom((z) => clampZoom(z * 1.25));
+      else if (e.key === "-") setZoom((z) => clampZoom(z / 1.25));
+      else if (e.key === "0") reset();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [reset]);
+
+  const pointerDistance = () => {
+    const [a, b] = [...pointers.current.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    stageRef.current?.setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    const g = gesture.current;
+    if (pointers.current.size === 1) {
+      g.x = e.clientX;
+      g.y = e.clientY;
+      g.originX = offset.x;
+      g.originY = offset.y;
+      g.moved = false;
+      g.pinched = false;
+    } else if (pointers.current.size === 2) {
+      g.pinched = true;
+      g.pinchDist = pointerDistance();
+      g.pinchZoom = zoom;
+    }
+    setPanning(true);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pointers.current.get(e.pointerId);
+    if (!p) return;
+    p.x = e.clientX;
+    p.y = e.clientY;
+
+    const g = gesture.current;
+
+    if (pointers.current.size >= 2) {
+      if (g.pinchDist > 0) {
+        setZoom(clampZoom((g.pinchZoom * pointerDistance()) / g.pinchDist));
+      }
+      g.moved = true;
+      return;
+    }
+
+    const dx = e.clientX - g.x;
+    const dy = e.clientY - g.y;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) g.moved = true;
+
+    if (zoom > 1) {
+      setOffset(clampOffset(g.originX + dx, g.originY + dy, zoom));
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const wasSingle = pointers.current.size === 1;
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size > 0) return;
+
+    setPanning(false);
+    const g = gesture.current;
+
+    if (wasSingle && !g.pinched && !g.moved) {
+      // Tap. Two taps close together toggle zoom.
+      const now = Date.now();
+      if (now - lastTap.current < DOUBLE_TAP_MS) {
+        lastTap.current = 0;
+        setZoom((z) => (z > 1 ? 1 : TAP_ZOOM));
+      } else {
+        lastTap.current = now;
+      }
+      return;
+    }
+
+    if (wasSingle && !g.pinched && zoom === 1) {
+      const dx = e.clientX - g.x;
+      if (Math.abs(dx) > SWIPE_PX) onStep(dx < 0 ? 1 : -1);
+    }
+  };
+
+  // Keep Tab focus inside the dialog.
   const trapFocus = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !dialogRef.current) return;
     const items = dialogRef.current.querySelectorAll<HTMLElement>(
@@ -271,12 +429,6 @@ function Lightbox({
     } else if (!e.shiftKey && document.activeElement === last) {
       e.preventDefault();
       first.focus();
-    }
-  };
-
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 500) {
-      onStep(info.offset.x > 0 ? -1 : 1);
     }
   };
 
@@ -296,19 +448,40 @@ function Lightbox({
         <span className="tabular-nums">
           {index + 1} / {images.length}
         </span>
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={onClose}
-          aria-label="Close gallery"
-          className="rounded-md p-2 text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white"
-        >
-          <RiCloseLine size={22} aria-hidden="true" />
-        </button>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setZoom((z) => clampZoom(z / 1.25))}
+            disabled={zoom <= MIN_ZOOM}
+            aria-label="Zoom out"
+            className="rounded-md p-2 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <RiZoomOutLine size={20} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => clampZoom(z * 1.25))}
+            disabled={zoom >= MAX_ZOOM}
+            aria-label="Zoom in"
+            className="rounded-md p-2 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <RiZoomInLine size={20} aria-hidden="true" />
+          </button>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close gallery"
+            className="rounded-md p-2 text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <RiCloseLine size={22} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 sm:px-16">
-        {images.length > 1 && (
+        {images.length > 1 && zoom === 1 && (
           <>
             <button
               type="button"
@@ -329,24 +502,44 @@ function Lightbox({
           </>
         )}
 
-        <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.15}
-          onDragEnd={handleDragEnd}
-          className="relative h-full w-full cursor-grab touch-pan-y active:cursor-grabbing"
+        <div
+          ref={stageRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onDoubleClick={(e) => e.preventDefault()}
+          style={{ touchAction: "none" }}
+          className={cn(
+            "relative h-full w-full select-none overflow-hidden",
+            zoom > 1
+              ? panning
+                ? "cursor-grabbing"
+                : "cursor-grab"
+              : "cursor-zoom-in",
+          )}
         >
-          <Image
-            src={src(current.url)}
-            alt={current.alt || `${title} photo ${index + 1}`}
-            fill
-            sizes="100vw"
-            className="object-contain select-none"
-            draggable={false}
-            unoptimized={isUnsplash(current.url)}
-            onError={() => onError(current.url)}
-          />
-        </motion.div>
+          <div
+            className={cn(
+              "absolute inset-0",
+              !panning && "transition-transform duration-150 ease-out",
+            )}
+            style={{
+              transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`,
+            }}
+          >
+            <Image
+              src={src(current.url)}
+              alt={current.alt || `${title} photo ${index + 1}`}
+              fill
+              sizes="100vw"
+              className="object-contain"
+              draggable={false}
+              unoptimized={isUnsplash(current.url)}
+              onError={() => onError(current.url)}
+            />
+          </div>
+        </div>
       </div>
 
       {images.length > 1 && (

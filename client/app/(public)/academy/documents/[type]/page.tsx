@@ -12,10 +12,10 @@ import {
   BreadcrumbSchema,
   type BreadcrumbItem,
 } from "@/components/common/BreadCrumbs";
-import { LuFiles, LuFileText, LuGraduationCap, LuLibrary } from "react-icons/lu";
+import {  LuGraduationCap,  } from "react-icons/lu";
 import DocumentsIcon from "@/components/icons/DocumentsIcon";
 
-const SITE_URL = "https://yourwebsite.com";
+const SITE_URL = `${process.env.NEXT_PUBLIC_CLIENT_URL}`;
 const DOCS_PATH = "/academy/documents";
 
 const RELATED: Partial<Record<PropertyDocumentType, PropertyDocumentType[]>> = {

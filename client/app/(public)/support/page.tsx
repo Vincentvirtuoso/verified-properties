@@ -16,12 +16,12 @@ export const metadata: Metadata = {
     title: "Support Center & Help FAQs | Verified Properties",
     description:
       "Get immediate help, browse answered FAQs, or contact our support team.",
-    url: "https://yourwebsite.com/support",
+    url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/support`,
     siteName: "Verified Properties",
     type: "website",
   },
   alternates: {
-    canonical: "https://yourwebsite.com/support",
+    canonical: `${process.env.NEXT_PUBLIC_CLIENT_URL}/support`,
   },
 };
 
@@ -34,7 +34,7 @@ export default function SupportPage() {
     provider: {
       "@type": "RealEstateAgent",
       name: "Verified Properties",
-      url: "https://yourwebsite.com",
+      url: `${process.env.NEXT_PUBLIC_CLIENT_URL}`,
     },
   };
 

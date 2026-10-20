@@ -12,6 +12,8 @@ import { FeaturedProperties } from "@/components/home/FeaturedProperties";
 import { AICallingSpotlight } from "@/components/home/AICallingSpotlight";
 import { HomeSearchModal } from "@/components/home/HomeSearchModal";
 import { properties } from "@/data/properties";
+import { VerificationStrip } from "@/components/home/VerificationStrip";
+import { PopularAreas } from "@/components/home/PopularAreas";
 
 export default function HomePage() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -82,11 +84,6 @@ export default function HomePage() {
 
       <div className="relative z-20 -mt-6 px-4 sm:px-6 lg:px-8 mb-12">
         <div className="max-w-4xl mx-auto">
-          {/*
-            The form is presentational — the input is a readOnly trigger that
-            opens the search dialog on focus/click. Submitting is a no-op so
-            pressing Enter never accidentally navigates.
-          */}
           <form
             onSubmit={(e) => e.preventDefault()}
             role="search"
@@ -116,12 +113,14 @@ export default function HomePage() {
           </form>
         </div>
       </div>
-
+      <PopularAreas />
       <FeaturedProperties
         properties={featuredProperties}
         propertyError={propertyError}
         isLoading={isLoadingProperties}
       />
+
+      <VerificationStrip />
 
       <QuickActions />
       <AICallingSpotlight />

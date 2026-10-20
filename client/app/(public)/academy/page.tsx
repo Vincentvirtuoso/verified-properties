@@ -25,11 +25,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
-    url: "https://yourwebsite.com/academy",
+    url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/academy`,
     siteName: "Your Brand Academy",
     images: [
       {
-        url: "https://yourwebsite.com/og-academy.jpg",
+        url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/og-academy.jpg`,
         width: 1200,
         height: 630,
         alt: "Academy: courses, AI calling, and property documents",
@@ -42,10 +42,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["https://yourwebsite.com/og-academy.jpg"],
+    images: [`${process.env.NEXT_PUBLIC_CLIENT_URL}/og-academy.jpg`],
   },
   alternates: {
-    canonical: "https://yourwebsite.com/academy",
+    canonical: `${process.env.NEXT_PUBLIC_CLIENT_URL}/academy`,
   },
 };
 

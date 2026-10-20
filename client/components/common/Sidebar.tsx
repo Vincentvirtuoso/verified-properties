@@ -414,7 +414,7 @@ export const Sidebar = ({
   onClose,
   variant = "overlay",
   position = "left",
-  collapsed = false,
+  collapsed = true,
   onCollapsedChange,
 }: SidebarProps) => {
   const pathname = usePathname();

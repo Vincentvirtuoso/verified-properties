@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
@@ -22,12 +22,10 @@ import {
   type VerificationFeedback,
 } from "@affilhomes/shared/supabase";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import Select from "@affilhomes/shared/ui/Select";
 import { LuFileText, LuMessageSquare } from "react-icons/lu";
-import { Textarea } from "@affilhomes/shared/ui";
-import { cn } from "@/utils";
+import { Skeleton, Textarea } from "@affilhomes/shared/ui";
 
 type Tone = "neutral" | "pending" | "success" | "danger";
 type AppealType = "verification" | "identity_document" | "suspension";
@@ -39,7 +37,7 @@ type VerificationStatus =
   | "unverified";
 
 const TONE: Record<Tone, string> = {
-  neutral: "bg-muted text-muted",
+  neutral: "bg-muted/30 text-muted",
   pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   danger: "bg-destructive/10 text-destructive",
@@ -113,7 +111,6 @@ export default function VerificationPage() {
     };
   }, [user, tick]);
 
-  // Auto-dismiss success messages so they don't linger.
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 5000);
@@ -121,7 +118,7 @@ export default function VerificationPage() {
   }, [notice]);
 
   if (isLoading || (user && !docs && !loadError))
-    return <PageSpinner label="Loading verification..." />;
+    return <VerificationSkeleton />;
   if (!user) return null;
 
   const reload = () => setTick((t) => t + 1);
@@ -276,7 +273,7 @@ export default function VerificationPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/30 text-muted">
                           <LuFileText className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
@@ -292,7 +289,7 @@ export default function VerificationPage() {
                     </div>
 
                     {d.reviewNote && d.status !== "approved" && (
-                      <div className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted">
+                      <div className="flex items-start gap-2.5 rounded-lg bg-muted/30/50 px-3 py-2 text-xs text-muted">
                         <LuMessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         <span>{d.reviewNote}</span>
                       </div>
@@ -430,7 +427,7 @@ function Card({
 
 function NoteFromTeam({ note }: { note: string }) {
   return (
-    <div className="rounded-lg bg-muted px-3 py-2 text-sm">
+    <div className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
       <p className="font-medium text-foreground">Note from our team</p>
       <p className="text-muted">{note}</p>
     </div>
@@ -614,5 +611,58 @@ function AppealForm({
         </div>
       </div>
     </form>
+  );
+}
+
+function VerificationSkeleton() {
+  return (
+    <div
+      className="mx-auto max-w-2xl space-y-6 px-4 py-10"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading verification…</span>
+
+      <header className="space-y-2">
+        <Skeleton className="h-8 w-44" />
+        <Skeleton className="h-4 w-full max-w-md" />
+        <Skeleton className="h-4 w-3/4 max-w-sm" />
+      </header>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-6 w-24 rounded-full" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+
+        <ul className="divide-y divide-border rounded-xl border border-border">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <li
+              key={i}
+              className="flex items-center justify-between gap-3 px-4 py-3"
+            >
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </li>
+          ))}
+        </ul>
+
+        <Skeleton className="h-10 w-full rounded-lg" />
+        <Skeleton className="h-28 w-full rounded-xl" />
+
+        <Skeleton className="h-9 w-48 rounded-md" />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
+        <Skeleton className="h-5 w-44" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </section>
+    </div>
   );
 }

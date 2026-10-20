@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     title: "Verified Real Estate Listings | Find Your Next Property",
     description:
       "Browse our curated selection of verified properties for sale and rent.",
-    url: "https://yourwebsite.com/properties",
+    url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/properties`,
     siteName: "Verified Properties",
     type: "website",
     images: [
       {
-        url: "https://yourwebsite.com/og-properties.jpg",
+        url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/og-properties.jpg`,
         width: 1200,
         height: 630,
         alt: "Browse Properties",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     ],
   },
   alternates: {
-    canonical: "https://yourwebsite.com/properties",
+    canonical: `${process.env.NEXT_PUBLIC_CLIENT_URL}/properties`,
   },
 };
 

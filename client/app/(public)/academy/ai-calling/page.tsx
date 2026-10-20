@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "The moment you enquire about a property, an assistant calls you back — see exactly how it works, from first call to inspection day.",
   keywords: ["ai calling", "property enquiry", "instant callback", "academy"],
   alternates: {
-    canonical: "https://yourwebsite.com/academy/ai-calling",
+    canonical: `${process.env.NEXT_PUBLIC_CLIENT_URL}/academy/ai-calling`,
   },
 };
 

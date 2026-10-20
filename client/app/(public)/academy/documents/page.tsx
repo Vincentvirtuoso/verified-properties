@@ -6,7 +6,7 @@ import {
   type DocumentGroup,
 } from "@/components/academy/DocumentLibrary";
 
-const SITE_URL = "https://yourwebsite.com";
+const SITE_URL = `${process.env.NEXT_PUBLIC_CLIENT_URL}`;
 const DOCS_PATH = "/academy/documents";
 
 const CATEGORIES: {

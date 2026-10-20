@@ -23,7 +23,7 @@ import {
 } from "@affilhomes/shared/supabase";
 import { formatPrice } from "@/lib/formatters";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { Skeleton } from "@affilhomes/shared/ui";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -87,7 +87,7 @@ export default function MyListingsPage() {
   }, [user, tick]);
 
   if (isLoading || (user && !listings && !error)) {
-    return <PageSpinner label="Loading your listings..." />;
+    return <MyListingsSkeleton />;
   }
   if (!user) return null;
 
@@ -481,6 +481,55 @@ function VideoSection({
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+function ListingRowSkeleton() {
+  return (
+    <li className="space-y-3 p-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-5 w-3/4 max-w-xs" />
+          <Skeleton className="h-3 w-1/2 max-w-56" />
+        </div>
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-8 w-20 rounded-md" />
+      </div>
+
+      <div className="rounded-xl bg-muted/40 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-24 rounded-md ml-auto" />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function MyListingsSkeleton() {
+  return (
+    <div
+      className="mx-auto max-w-4xl space-y-6 px-4 py-8"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading your listings…</span>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-md" />
+      </div>
+
+      <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <ListingRowSkeleton key={i} />
+        ))}
+      </ul>
     </div>
   );
 }
