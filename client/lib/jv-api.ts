@@ -85,6 +85,7 @@ export interface JvRequestOwn {
   status: JvRequestStatus;
   createdAt: string;
   updatedAt: string | null;
+  nextEditAt: string | null;
   responses: JvResponseOwn[];
 }
 
@@ -119,9 +120,10 @@ export interface JvThreadDetail {
 
 export const THREAD_INACTIVITY_DAYS = 90;
 export const EDIT_COOLDOWN_HOURS = 5;
+const HOUR_MS = 3_600_000;
+const EDIT_COOLDOWN_MS = EDIT_COOLDOWN_HOURS * HOUR_MS;
 const MIN_DESCRIPTION_LENGTH = 30;
 const MAX_MESSAGE_LENGTH = 2000;
-const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 
 /* ============================================================
@@ -192,6 +194,7 @@ function toOwnView(r: JvRequestRecord): JvRequestOwn {
     status: r.status,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt ?? null,
+    nextEditAt: nextEditAtFor(r),
     responses: r.responses.map((res) => {
       const profile = JV_PROFILES[res.subscriberId];
       return {
@@ -397,15 +400,12 @@ export async function updateJvRequest(
   }
   validateRequestInput(payload);
 
-  // The cooldown runs between edits. Posting doesn't start it, so the first edit is always allowed.
-  if (request.updatedAt) {
-    const sinceMs = Date.now() - new Date(request.updatedAt).getTime();
-    if (sinceMs < EDIT_COOLDOWN_HOURS * HOUR_MS) {
-      throw new JvApiError(
-        429,
-        `This request was edited recently. You can edit it again after ${EDIT_COOLDOWN_HOURS} hours.`,
-      );
-    }
+  const nextEditAt = nextEditAtFor(request);
+  if (nextEditAt && Date.now() < new Date(nextEditAt).getTime()) {
+    throw new JvApiError(
+      429,
+      `This request was edited recently. You can edit it again after ${EDIT_COOLDOWN_HOURS} hours.`,
+    );
   }
 
   request.area = payload.area.trim();
@@ -674,4 +674,10 @@ export async function subscribeToJv(
 
   JV_SUBSCRIPTIONS[viewer.id] = { status: "active", expiresAt };
   return { expiresAt };
+}
+
+function nextEditAtFor(r: JvRequestRecord): string | null {
+  return r.updatedAt
+    ? new Date(new Date(r.updatedAt).getTime() + EDIT_COOLDOWN_MS).toISOString()
+    : null;
 }
