@@ -5,9 +5,11 @@
 @source "../";
 @source "../../shared/ui";
 
-* {
-  scrollbar-color: var(--primary) transparent;
-  scrollbar-width: thin;
+@layer base {
+  * {
+    scrollbar-color: var(--primary) transparent;
+    scrollbar-width: thin;
+  }
 }
 
 body {
@@ -53,6 +55,14 @@ body {
   background-color: var(--navbar-bg);
   border-bottom: 1px solid var(--navbar-border);
   color: var(--navbar-foreground);
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .swiper-pagination {

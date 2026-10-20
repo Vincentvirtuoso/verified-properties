@@ -143,7 +143,7 @@ export default function PropertyGallery({
                 onClick={(e) => openAt(i, e.currentTarget)}
                 aria-label={`Open photo ${i + 1} of ${images.length}`}
                 className={cn(
-                  "relative overflow-hidden bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  "relative overflow-hidden bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   i === 0 && layout.main,
                 )}
               >
@@ -182,7 +182,7 @@ export default function PropertyGallery({
         <div
           ref={carouselRef}
           onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto rounded-xl scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory overflow-x-auto rounded-xl hide-scrollbar"
         >
           {images.map((img, i) => (
             <button
@@ -190,14 +190,14 @@ export default function PropertyGallery({
               type="button"
               onClick={(e) => openAt(i, e.currentTarget)}
               aria-label={`Open photo ${i + 1} of ${images.length}`}
-              className="relative h-72 w-full shrink-0 snap-center overflow-hidden bg-muted"
+              className="relative h-72 w-full shrink-0 snap-center overflow-hidden bg-muted/30"
             >
               <Image
                 src={src(img.url)}
                 alt={img.alt || `${title} photo ${i + 1}`}
                 fill
                 priority={i === 0}
-                sizes="100vw"
+                sizes="200vw"
                 className="object-cover"
                 unoptimized={isUnsplash(img.url)}
                 onError={() => markFailed(img.url)}
@@ -280,7 +280,7 @@ function Lightbox({
     setOffset({ x: 0, y: 0 });
   }, []);
 
-  // Keep the image edge from leaving the stage.
+  
   const clampOffset = useCallback((x: number, y: number, z: number) => {
     const rect = stageRef.current?.getBoundingClientRect();
     if (!rect) return { x, y };
@@ -292,12 +292,12 @@ function Lightbox({
     };
   }, []);
 
-  // Re-clamp pan whenever zoom changes, and center at 1×.
+  
   useEffect(() => {
     setOffset((o) => clampOffset(o.x, o.y, zoom));
   }, [zoom, clampOffset]);
 
-  // Reset zoom when the photo changes.
+  
   useEffect(() => {
     reset();
   }, [index, reset]);
@@ -315,7 +315,7 @@ function Lightbox({
     });
   }, [index]);
 
-  // Wheel zoom. Needs a non-passive listener to block page scroll.
+  
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -327,7 +327,7 @@ function Lightbox({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  // Keyboard zoom.
+  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "+" || e.key === "=") setZoom((z) => clampZoom(z * 1.25));
@@ -397,7 +397,7 @@ function Lightbox({
     const g = gesture.current;
 
     if (wasSingle && !g.pinched && !g.moved) {
-      // Tap. Two taps close together toggle zoom.
+      
       const now = Date.now();
       if (now - lastTap.current < DOUBLE_TAP_MS) {
         lastTap.current = 0;
@@ -414,7 +414,7 @@ function Lightbox({
     }
   };
 
-  // Keep Tab focus inside the dialog.
+  
   const trapFocus = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !dialogRef.current) return;
     const items = dialogRef.current.querySelectorAll<HTMLElement>(
@@ -532,7 +532,7 @@ function Lightbox({
               src={src(current.url)}
               alt={current.alt || `${title} photo ${index + 1}`}
               fill
-              sizes="100vw"
+              sizes="200vw"
               className="object-contain"
               draggable={false}
               unoptimized={isUnsplash(current.url)}
@@ -545,7 +545,7 @@ function Lightbox({
       {images.length > 1 && (
         <div
           ref={railRef}
-          className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex gap-2 overflow-x-auto px-4 py-3 hide-scrollbar"
         >
           {images.map((img, i) => (
             <button
