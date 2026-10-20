@@ -1,23 +1,14 @@
 "use client";
 
-import {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { motion, type PanInfo } from "framer-motion";
 import {
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
   RiCloseLine,
-  RiArrowLeftLine,
-  RiArrowRightLine,
-  RiFullscreenLine,
-  RiImageLine,
-  RiDragMoveLine,
 } from "react-icons/ri";
-import { PropertyImage } from "@affilhomes/shared/types/property";
+import type { PropertyImage } from "@affilhomes/shared/types/property";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { cn } from "@/lib/utils";
 
@@ -28,582 +19,368 @@ interface PropertyGalleryProps {
 }
 
 const FALLBACK = "/placeholder-property.png";
+const NO_IMAGES: PropertyImage[] = [];
+const GRID_SLOTS = 5;
 
-function isUnsplash(url?: string) {
-  return !!url?.includes("images.unsplash.com");
-}
+const isUnsplash = (url: string) => url.includes("images.unsplash.com");
 
-/* -------------------------------------------------------------------------- */
-/*  Responsive hook — true when viewport is below the md breakpoint           */
-/* -------------------------------------------------------------------------- */
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Desktop grid layout — adapts to how many images actually exist            */
-/* -------------------------------------------------------------------------- */
-function getGridClasses(count: number) {
-  switch (count) {
-    case 1:
-      return { container: "grid-cols-1", main: "col-span-1", thumb: "hidden" };
-    case 2:
-      return {
-        container: "grid-cols-2",
-        main: "col-span-1",
-        thumb: "col-span-1",
-      };
-    case 3:
-      return {
-        container: "grid-cols-3",
-        main: "col-span-2",
-        thumb: "col-span-1",
-      };
-    case 4:
-      return {
-        container: "grid-cols-2",
-        main: "col-span-1",
-        thumb: "col-span-1",
-      };
-    default:
-      return {
-        container: "grid-cols-4 grid-rows-2",
-        main: "col-span-2 row-span-2",
-        thumb: "col-span-1 row-span-1",
-      };
-  }
+function gridLayout(count: number) {
+  if (count === 1) return { container: "grid-cols-1", main: "" };
+  if (count === 2) return { container: "grid-cols-2", main: "" };
+  if (count === 3)
+    return { container: "grid-cols-2 grid-rows-2", main: "row-span-2" };
+  return {
+    container: "grid-cols-4 grid-rows-2",
+    main: "col-span-2 row-span-2",
+  };
 }
 
 export default function PropertyGallery({
   mainImage,
-  gallery = [],
+  gallery = NO_IMAGES,
   title,
 }: PropertyGalleryProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const { bannerHeight } = useBannerHeightContext();
+
+  const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
-  const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
-  const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
-  const allImages: PropertyImage[] = useMemo(
-    () => [
+  const images = useMemo<PropertyImage[]>(() => {
+    const list = [
       ...(mainImage ? [{ url: mainImage, alt: title }] : []),
       ...gallery,
-    ],
-    [mainImage, gallery, title],
-  );
+    ];
+    return list.length ? list : [{ url: FALLBACK, alt: title }];
+  }, [mainImage, gallery, title]);
 
-  /* Prefer real images; only fall back to Unsplash demo shots if empty */
-  const placeholderImages: PropertyImage[] = useMemo(
-    () =>
-      Array.from({ length: 5 }, (_, i) => ({
-        url: `https://images.unsplash.com/photo-${
-          [
-            "1512917774080-9991f1c4c750",
-            "1600596542815-ffad4c1539a9",
-            "1560448204-e02f11c3d0e2",
-            "1554995207-c18c203602cb",
-            "1600585154340-be6161a56a0c",
-          ][i]
-        }?auto=format&fit=crop&w=1600&q=80`,
-        alt: `Property view ${i + 1}`,
-      })),
-    [],
-  );
+  const src = (url: string) => (failedUrls.has(url) ? FALLBACK : url);
 
-  const images = allImages.length > 0 ? allImages : placeholderImages;
-
-  /* Reset failed URLs when the image set changes */
-  useEffect(() => {
-    setFailedUrls(new Set());
-  }, [mainImage, gallery]);
-
-  const getSrc = (url?: string) =>
-    !url || failedUrls.has(url) ? FALLBACK : url;
-
-  const handleError = (url?: string) => {
-    if (url) setFailedUrls((prev) => new Set(prev).add(url));
-  };
-
-  const openLightbox = useCallback((index: number) => {
-    setActiveIndex(index);
-    setLightboxOpen(true);
+  const markFailed = useCallback((url: string) => {
+    setFailedUrls((prev) => (prev.has(url) ? prev : new Set(prev).add(url)));
   }, []);
 
-  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+  const isOpen = lightboxIndex !== null;
 
-  const prev = useCallback(() => {
-    setActiveIndex((i) => (i - 1 + images.length) % images.length);
-  }, [images.length]);
+  const openAt = (index: number, trigger: HTMLElement) => {
+    triggerRef.current = trigger;
+    setLightboxIndex(index);
+  };
 
-  const next = useCallback(() => {
-    setActiveIndex((i) => (i + 1) % images.length);
-  }, [images.length]);
+  const close = useCallback(() => {
+    setLightboxIndex(null);
+    triggerRef.current?.focus();
+  }, []);
 
-  /* ---------------- Keyboard + scroll lock while lightbox is open -------- */
+  const step = useCallback(
+    (delta: number) => {
+      setLightboxIndex((i) =>
+        i === null ? null : (i + delta + images.length) % images.length,
+      );
+    },
+    [images.length],
+  );
+
   useEffect(() => {
-    if (!lightboxOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
-    };
+    if (!isOpen) return;
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
 
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowLeft") step(-1);
+      else if (e.key === "ArrowRight") step(1);
+    };
+
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", onKey);
     };
-  }, [lightboxOpen, closeLightbox, prev, next]);
+  }, [isOpen, close, step]);
 
-  const { bannerHeight } = useBannerHeightContext();
-
-  /* ---------------- Mobile carousel scroll tracking ---------------------- */
-  const carouselRef = useRef<HTMLDivElement>(null);
-
-  const handleCarouselScroll = useCallback(() => {
+  const handleScroll = () => {
     const el = carouselRef.current;
-    if (!el) return;
-    const index = Math.round(el.scrollLeft / el.clientWidth);
-    setMobileIndex(index);
-  }, []);
-
-  /* ---------------- Lightbox drag gestures ------------------------------- */
-  const dragY = useMotionValue(0);
-  const lightboxOpacity = useTransform(dragY, [0, 280], [1, 0]);
-  const lightboxScale = useTransform(dragY, [0, 280], [1, 0.92]);
-
-  const handleDragEnd = (
-    _: unknown,
-    info: { offset: { x: number; y: number }; velocity: { x: number; y: number } },
-  ) => {
-    const { x, y } = info.offset;
-    const swipeThreshold = 70;
-
-    /* Vertical drag is the dismiss gesture */
-    if (y > 120 || info.velocity.y > 600) {
-      closeLightbox();
-      return;
-    }
-
-    /* Horizontal drag navigates */
-    if (Math.abs(x) > swipeThreshold) {
-      if (x > 0) prev();
-      else next();
-    }
-
-    /* Spring back */
-    dragY.set(0);
+    if (!el || el.clientWidth === 0) return;
+    setMobileIndex(Math.round(el.scrollLeft / el.clientWidth));
   };
 
-  /* ---------------- Layout decision ------------------------------------- */
-  const visibleCount = Math.min(images.length, 5);
-  const grid = getGridClasses(visibleCount);
-  const thumbnails = images.slice(1, 5);
-  const remaining = images.length - 5;
+  const layout = gridLayout(Math.min(images.length, GRID_SLOTS));
+  const visible = images.slice(0, GRID_SLOTS);
+  const hiddenCount = images.length - GRID_SLOTS;
 
-  /* ---------------- Desktop grid --------------------------------------- */
-  if (!isMobile) {
-    return (
-      <>
-        <div
-          className={cn(
-            "grid gap-2 h-[420px] rounded-2xl overflow-hidden relative",
-            grid.container,
-          )}
-        >
-          {/* Main image */}
-          <motion.button
-            className={cn(
-              "relative cursor-pointer group w-full h-full text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-500",
-              grid.main,
-            )}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            onClick={() => openLightbox(0)}
-            aria-label={`View ${title} — photo 1 of ${images.length}`}
-          >
-            <Image
-              src={getSrc(images[0]?.url)}
-              alt={images[0]?.alt || title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-              priority
-              sizes="(max-width: 1200px) 66vw, 50vw"
-              unoptimized={isUnsplash(images[0]?.url)}
-              onError={() => handleError(images[0]?.url)}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-full">
-                <RiFullscreenLine size={14} aria-hidden="true" />
-                View full
-              </span>
-            </div>
-          </motion.button>
-
-          {/* Thumbnails / supporting images */}
-          {thumbnails.map((img, idx) => {
-            const realIndex = idx + 1;
-            const isLast = idx === 3 && remaining > 0;
-            return (
-              <motion.button
-                key={realIndex}
-                className={cn(
-                  "relative cursor-pointer group overflow-hidden w-full h-full focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-500",
-                  grid.thumb,
-                )}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 + idx * 0.07 }}
-                onClick={() => openLightbox(realIndex)}
-                aria-label={`View ${title} — photo ${realIndex + 1} of ${images.length}`}
-              >
-                <Image
-                  src={getSrc(img.url)}
-                  alt={img.alt || `Image ${realIndex + 1}`}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 1200px) 33vw, 25vw"
-                  unoptimized={isUnsplash(img.url)}
-                  onError={() => handleError(img.url)}
-                />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {isLast && remaining > 0 && (
-                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white transition-colors duration-300 hover:bg-black/70">
-                    <RiImageLine size={22} className="mb-1 opacity-80" aria-hidden="true" />
-                    <span className="text-lg font-semibold">+{remaining + 1}</span>
-                    <span className="text-xs opacity-75 mt-0.5">more photos</span>
-                  </div>
-                )}
-              </motion.button>
-            );
-          })}
-
-          {/* "Show all photos" — always visible, not hover-dependent */}
-          {images.length > 1 && (
-            <button
-              type="button"
-              onClick={() => openLightbox(0)}
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-white/95 backdrop-blur-sm text-foreground text-sm font-medium px-4 py-2 rounded-full shadow-lg hover:bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-            >
-              <RiImageLine size={15} aria-hidden="true" />
-              Show all {images.length} photos
-            </button>
-          )}
-        </div>
-
-        <Lightbox
-          open={lightboxOpen}
-          onClose={closeLightbox}
-          images={images}
-          activeIndex={activeIndex}
-          setActiveIndex={setActiveIndex}
-          prev={prev}
-          next={next}
-          dragY={dragY}
-          opacity={lightboxOpacity}
-          scale={lightboxScale}
-          handleDragEnd={handleDragEnd}
-          getSrc={getSrc}
-          handleError={handleError}
-          bannerHeight={bannerHeight}
-        />
-      </>
-    );
-  }
-
-  /* ---------------- Mobile carousel ------------------------------------ */
   return (
     <>
-      <div className="relative rounded-2xl overflow-hidden">
-        {/* Scroll-snap carousel — native swipe, no JS drag needed */}
+      <div className="relative hidden md:block">
+        <div
+          className={cn(
+            "grid h-105 gap-2 overflow-hidden rounded-xl",
+            layout.container,
+          )}
+        >
+          {visible.map((img, i) => {
+            const isLastSlot = i === GRID_SLOTS - 1 && hiddenCount > 0;
+            return (
+              <button
+                key={`${img.url}-${i}`}
+                type="button"
+                onClick={(e) => openAt(i, e.currentTarget)}
+                aria-label={`Open photo ${i + 1} of ${images.length}`}
+                className={cn(
+                  "relative overflow-hidden bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  i === 0 && layout.main,
+                )}
+              >
+                <Image
+                  src={src(img.url)}
+                  alt={img.alt || `${title} photo ${i + 1}`}
+                  fill
+                  priority={i === 0}
+                  sizes="(max-width: 1280px) 60vw, 800px"
+                  className="object-cover"
+                  unoptimized={isUnsplash(img.url)}
+                  onError={() => markFailed(img.url)}
+                />
+                {isLastSlot && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-medium text-white">
+                    +{hiddenCount} more
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={(e) => openAt(0, e.currentTarget)}
+            className="absolute bottom-3 right-3 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            Show all {images.length} photos
+          </button>
+        )}
+      </div>
+
+      <div className="relative md:hidden">
         <div
           ref={carouselRef}
-          onScroll={handleCarouselScroll}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto rounded-xl scrollbar-none [&::-webkit-scrollbar]:hidden"
         >
           {images.map((img, i) => (
             <button
-              key={i}
+              key={`${img.url}-${i}`}
               type="button"
-              className="relative shrink-0 w-full snap-center h-[280px] focus:outline-none"
-              onClick={() => openLightbox(i)}
-              aria-label={`View ${title} — photo ${i + 1} of ${images.length}`}
+              onClick={(e) => openAt(i, e.currentTarget)}
+              aria-label={`Open photo ${i + 1} of ${images.length}`}
+              className="relative h-72 w-full shrink-0 snap-center overflow-hidden bg-muted"
             >
               <Image
-                src={getSrc(img.url)}
-                alt={img.alt || `${title} — photo ${i + 1}`}
+                src={src(img.url)}
+                alt={img.alt || `${title} photo ${i + 1}`}
                 fill
-                className="object-cover"
                 priority={i === 0}
                 sizes="100vw"
+                className="object-cover"
                 unoptimized={isUnsplash(img.url)}
-                onError={() => handleError(img.url)}
+                onError={() => markFailed(img.url)}
               />
             </button>
           ))}
         </div>
-
-        {/* Counter pill */}
-        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full pointer-events-none">
-          {mobileIndex + 1} / {images.length}
-        </div>
-
-        {/* Swipe hint — fades after first interaction */}
-        {images.length > 1 && mobileIndex === 0 && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm text-white/90 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 pointer-events-none animate-pulse">
-            <RiDragMoveLine size={12} aria-hidden="true" />
-            Swipe to browse
-          </div>
+        {images.length > 1 && (
+          <span className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-1 text-xs font-medium tabular-nums text-white">
+            {mobileIndex + 1} / {images.length}
+          </span>
         )}
-
-        {/* Show all photos */}
-        <button
-          type="button"
-          onClick={() => openLightbox(mobileIndex)}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-foreground text-sm font-medium px-3.5 py-2 rounded-full shadow-lg active:scale-95 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-        >
-          <RiImageLine size={15} aria-hidden="true" />
-          {images.length} photos
-        </button>
       </div>
 
-      <Lightbox
-        open={lightboxOpen}
-        onClose={closeLightbox}
-        images={images}
-        activeIndex={activeIndex}
-        setActiveIndex={setActiveIndex}
-        prev={prev}
-        next={next}
-        dragY={dragY}
-        opacity={lightboxOpacity}
-        scale={lightboxScale}
-        handleDragEnd={handleDragEnd}
-        getSrc={getSrc}
-        handleError={handleError}
-        bannerHeight={bannerHeight}
-      />
+      {isOpen && (
+        <Lightbox
+          title={title}
+          images={images}
+          index={lightboxIndex}
+          bannerHeight={bannerHeight}
+          src={src}
+          onError={markFailed}
+          onClose={close}
+          onStep={step}
+          onSelect={(i) => setLightboxIndex(i)}
+        />
+      )}
     </>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Lightbox — gesture-first, focus-trapped, keyboard-navigable              */
-/* -------------------------------------------------------------------------- */
-function Lightbox({
-  open,
-  onClose,
-  images,
-  activeIndex,
-  setActiveIndex,
-  prev,
-  next,
-  dragY,
-  opacity,
-  scale,
-  handleDragEnd,
-  getSrc,
-  handleError,
-  bannerHeight,
-}: {
-  open: boolean;
-  onClose: () => void;
+interface LightboxProps {
+  title: string;
   images: PropertyImage[];
-  activeIndex: number;
-  setActiveIndex: (i: number) => void;
-  prev: () => void;
-  next: () => void;
-  dragY: ReturnType<typeof useMotionValue<number>>;
-  opacity: ReturnType<typeof useTransform<number, number>>;
-  scale: ReturnType<typeof useTransform<number, number>>;
-  handleDragEnd: (
-    e: unknown,
-    info: { offset: { x: number; y: number }; velocity: { x: number; y: number } },
-  ) => void;
-  getSrc: (url?: string) => string;
-  handleError: (url?: string) => void;
+  index: number;
   bannerHeight: number;
-}) {
+  src: (url: string) => string;
+  onError: (url: string) => void;
+  onClose: () => void;
+  onStep: (delta: number) => void;
+  onSelect: (index: number) => void;
+}
+
+function Lightbox({
+  title,
+  images,
+  index,
+  bannerHeight,
+  src,
+  onError,
+  onClose,
+  onStep,
+  onSelect,
+}: LightboxProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const thumbRailRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
 
-  /* Focus trap */
   useEffect(() => {
-    if (!open) return;
-    const container = dialogRef.current;
-    if (!container) return;
+    closeRef.current?.focus();
+  }, []);
 
-    const focusable = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  useEffect(() => {
+    const thumb = railRef.current?.children[index] as HTMLElement | undefined;
+    thumb?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [index]);
+
+  const trapFocus = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab" || !dialogRef.current) return;
+    const items = dialogRef.current.querySelectorAll<HTMLElement>(
+      "button:not([disabled])",
     );
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last?.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first?.focus();
-      }
-    };
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 500) {
+      onStep(info.offset.x > 0 ? -1 : 1);
+    }
+  };
 
-    container.addEventListener("keydown", trap);
-    first?.focus();
-
-    return () => container.removeEventListener("keydown", trap);
-  }, [open]);
-
-  /* Auto-scroll active thumbnail into view */
-  useEffect(() => {
-    if (!open) return;
-    const rail = thumbRailRef.current;
-    const active = rail?.children[activeIndex] as HTMLElement | undefined;
-    active?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [activeIndex, open]);
+  const current = images[index];
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          style={{ top: bannerHeight }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Property photo gallery"
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} photos`}
+      onKeyDown={trapFocus}
+      style={{ top: bannerHeight }}
+      className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-black/95"
+    >
+      <div className="flex items-center justify-between px-4 py-3 text-sm text-white/80">
+        <span className="tabular-nums">
+          {index + 1} / {images.length}
+        </span>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          aria-label="Close gallery"
+          className="rounded-md p-2 text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white"
         >
-          {/* Backdrop — click to close */}
-          <motion.div
-            className="absolute inset-0 bg-black/95"
-            style={{ opacity }}
-            onClick={onClose}
+          <RiCloseLine size={22} aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 sm:px-16">
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => onStep(-1)}
+              aria-label="Previous photo"
+              className="absolute left-2 z-10 hidden rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white sm:block"
+            >
+              <RiArrowLeftSLine size={28} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onStep(1)}
+              aria-label="Next photo"
+              className="absolute right-2 z-10 hidden rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white sm:block"
+            >
+              <RiArrowRightSLine size={28} aria-hidden="true" />
+            </button>
+          </>
+        )}
+
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.15}
+          onDragEnd={handleDragEnd}
+          className="relative h-full w-full cursor-grab touch-pan-y active:cursor-grabbing"
+        >
+          <Image
+            src={src(current.url)}
+            alt={current.alt || `${title} photo ${index + 1}`}
+            fill
+            sizes="100vw"
+            className="object-contain select-none"
+            draggable={false}
+            unoptimized={isUnsplash(current.url)}
+            onError={() => onError(current.url)}
           />
-
-          {/* Draggable image container */}
-          <motion.div
-            ref={dialogRef}
-            drag
-            dragElastic={0.7}
-            dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-            onDragEnd={handleDragEnd}
-            style={{ y: dragY, scale }}
-            className="relative w-full max-w-5xl h-[70vh] mx-4 flex items-center justify-center cursor-grab active:cursor-grabbing"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeIndex}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.2 }}
-                className="relative w-full h-full"
-              >
-                <Image
-                  src={getSrc(images[activeIndex]?.url)}
-                  alt={images[activeIndex]?.alt || `Image ${activeIndex + 1}`}
-                  fill
-                  className="object-contain pointer-events-none select-none"
-                  sizes="(max-width: 1024px) 100vw, 1024px"
-                  unoptimized={getSrc(images[activeIndex]?.url)?.includes("images.unsplash.com")}
-                  onError={() => handleError(images[activeIndex]?.url)}
-                  draggable={false}
-                />
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Close */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-5 right-5 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            aria-label="Close gallery"
-          >
-            <RiCloseLine size={22} aria-hidden="true" />
-          </button>
-
-          {/* Counter */}
-          <div className="absolute top-5 left-5 z-20 text-white/60 text-sm font-medium pointer-events-none">
-            {activeIndex + 1} / {images.length}
-          </div>
-
-          {/* Arrows — hidden on touch via CSS to avoid crowding */}
-          <button
-            type="button"
-            onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white hidden sm:flex"
-            aria-label="Previous image"
-          >
-            <RiArrowLeftLine size={20} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white hidden sm:flex"
-            aria-label="Next image"
-          >
-            <RiArrowRightLine size={20} aria-hidden="true" />
-          </button>
-
-          {/* Thumbnail rail */}
-          <div
-            ref={thumbRailRef}
-            className="absolute bottom-5 left-0 right-0 z-20 flex justify-start sm:justify-center gap-2 px-6 overflow-x-auto py-2 scrollbar-hide"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {images.map((img, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveIndex(i)}
-                aria-label={`Go to image ${i + 1}`}
-                aria-current={i === activeIndex ? "true" : "false"}
-                className={cn(
-                  "relative w-14 h-10 rounded-md overflow-hidden shrink-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white",
-                  i === activeIndex
-                    ? "ring-2 ring-violet-400 opacity-100 scale-110"
-                    : "opacity-50 hover:opacity-100",
-                )}
-              >
-                <Image
-                  src={getSrc(img.url)}
-                  alt={img.alt || `Thumb ${i + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="56px"
-                  unoptimized={isUnsplash(img.url)}
-                  onError={() => handleError(img.url)}
-                />
-              </button>
-            ))}
-          </div>
         </motion.div>
+      </div>
+
+      {images.length > 1 && (
+        <div
+          ref={railRef}
+          className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none [&::-webkit-scrollbar]:hidden"
+        >
+          {images.map((img, i) => (
+            <button
+              key={`${img.url}-${i}`}
+              type="button"
+              onClick={() => onSelect(i)}
+              aria-label={`Go to photo ${i + 1}`}
+              aria-current={i === index}
+              className={cn(
+                "relative h-12 w-16 shrink-0 overflow-hidden rounded transition-opacity",
+                i === index
+                  ? "ring-2 ring-white"
+                  : "opacity-50 hover:opacity-100",
+              )}
+            >
+              <Image
+                src={src(img.url)}
+                alt=""
+                fill
+                sizes="64px"
+                className="object-cover"
+                unoptimized={isUnsplash(img.url)}
+                onError={() => onError(img.url)}
+              />
+            </button>
+          ))}
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 }

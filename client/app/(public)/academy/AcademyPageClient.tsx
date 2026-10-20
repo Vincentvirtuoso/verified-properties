@@ -6,10 +6,11 @@ import CoursesGrid from "./components/CoursesGrid";
 import PodcastSection from "./components/PodcastSection";
 import CategoriesSection from "./components/CategoriesSection";
 import LearningStatsSection from "./components/LearningStatsSection";
-import CtaSection from "./components/CtaSection";
 import { LuFolderOpen, LuFolders, LuGraduationCap } from "react-icons/lu";
 import { BreadcrumbItem } from "@/components/common/BreadCrumbs";
 import { Course, Podcast } from "@affilhomes/shared/types";
+import AiCallingSection from "./components/AiCallingSection";
+import DocumentsSection from "./components/DocumentsSection";
 
 interface AcademyPageClientProps {
   courses: Course[];
@@ -74,8 +75,9 @@ export default function AcademyPageClient({
       <LearningStatsSection />
       <CategoriesSection />
       <CoursesGrid courses={courses} title="Explore All Courses" />
+      <AiCallingSection />
+      <DocumentsSection />
       <PodcastSection podcasts={podcasts} />
-      <CtaSection />
     </div>
   );
 }

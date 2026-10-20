@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { PopulatedProperty } from "@affilhomes/shared/types";
@@ -17,6 +17,7 @@ export function usePropertySearch(properties: PopulatedProperty[]) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const searchParam = searchParams.get("search") || "";
+  const hydratedRef = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -28,12 +29,12 @@ export function usePropertySearch(properties: PopulatedProperty[]) {
   const isSuggestionsLoading =
     isQueryActive && searchQuery !== debouncedSearchQuery;
 
-  // Hydrate the input from the URL on first load (e.g. deep link).
   useEffect(() => {
-    if (searchParam && !searchQuery) setSearchQuery(searchParam);
-  }, [searchParam, searchQuery]);
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    if (searchParam) setSearchQuery(searchParam);
+  }, [searchParam]);
 
-  // Derive suggestions whenever the debounced query or dataset changes.
   useEffect(() => {
     const q = debouncedSearchQuery.trim().toLowerCase();
 

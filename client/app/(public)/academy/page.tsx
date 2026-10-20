@@ -2,21 +2,29 @@ import { Metadata } from "next";
 import { MOCK_COURSES, MOCK_PODCASTS } from "@/data/courses";
 import AcademyPageClient from "./AcademyPageClient";
 
+const TITLE = "Courses, AI Calling & Property Documents | Academy";
+const DESCRIPTION =
+  "Expert-led courses, podcasts, and guides on AI calling for property enquiries and on the documents behind every listing, including C of O, Governor's Consent, and survey plans.";
+
 export const metadata: Metadata = {
-  title: "Online Courses & Professional Certifications | Academy",
-  description:
-    "Browse our comprehensive catalog of expert-led courses, video tutorials, and industry podcasts. Start learning and upgrading your skillset today.",
+  title: TITLE,
+  description: DESCRIPTION,
   keywords: [
     "online courses",
-    "e-learning",
+    "property academy",
+    "AI calling",
+    "AI voice agents for real estate",
+    "C of O Nigeria",
+    "Governor's Consent",
+    "survey plan",
+    "property documents",
+    "land title documents Nigeria",
     "professional training",
-    "academy tutorials",
     "podcasts",
   ],
   openGraph: {
-    title: "Online Courses & Professional Certifications | Academy",
-    description:
-      "Browse our comprehensive catalog of expert-led courses, video tutorials, and industry podcasts.",
+    title: TITLE,
+    description: DESCRIPTION,
     url: "https://yourwebsite.com/academy",
     siteName: "Your Brand Academy",
     images: [
@@ -24,7 +32,7 @@ export const metadata: Metadata = {
         url: "https://yourwebsite.com/og-academy.jpg",
         width: 1200,
         height: 630,
-        alt: "Academy Learning Platform",
+        alt: "Academy: courses, AI calling, and property documents",
       },
     ],
     locale: "en_US",
@@ -32,9 +40,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Online Courses & Professional Certifications | Academy",
-    description:
-      "Browse our comprehensive catalog of expert-led courses, video tutorials, and industry podcasts.",
+    title: TITLE,
+    description: DESCRIPTION,
     images: ["https://yourwebsite.com/og-academy.jpg"],
   },
   alternates: {

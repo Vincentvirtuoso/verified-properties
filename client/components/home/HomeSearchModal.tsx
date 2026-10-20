@@ -165,7 +165,6 @@ export function HomeSearchModal({
             aria-label="Search properties"
             className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border overflow-hidden"
           >
-            {/* Input row */}
             <form
               onSubmit={handleSubmit}
               className="p-3 border-b border-border"
@@ -200,7 +199,6 @@ export function HomeSearchModal({
               </div>
             </form>
 
-            {/* Suggestions body */}
             <div className="max-h-[55vh] overflow-y-auto p-4 space-y-5">
               {recent.length > 0 && (
                 <section>
@@ -268,7 +266,6 @@ export function HomeSearchModal({
               </section>
             </div>
 
-            {/* Footer hints */}
             <div className="px-4 py-2.5 border-t border-border text-xs text-muted flex items-center justify-between">
               <span className="hidden sm:inline">
                 Press{" "}

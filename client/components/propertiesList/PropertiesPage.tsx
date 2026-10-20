@@ -33,73 +33,9 @@ import { PropertiesResultsHeader } from "./PropertiesResultsHeader";
 import { ActiveFilterTags } from "./ActiveFilterTags";
 import { PropertiesResults } from "./PropertiesResults";
 import { PropertiesPagination } from "./PropertiesPagination";
+import { PropertiesPageSkeleton } from "./PropertiesPageSkeleton";
 
 const PAGE_SIZE = 12;
-
-function PropertyCardSkeleton() {
-  return (
-    <div className="rounded-2xl border border-border overflow-hidden bg-card">
-      <Skeleton className="aspect-4/3 w-full rounded-none" />
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <div className="flex gap-3 pt-2">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-12" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FilterSidebarSkeleton() {
-  return (
-    <div
-      className="hidden lg:block w-full lg:w-72 xl:w-80 shrink-0"
-      aria-hidden="true"
-    >
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-6">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="space-y-3">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            {i < 3 && <Skeleton className="h-10 w-full rounded-lg" />}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PropertiesResultsSkeleton() {
-  return (
-    <div aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading properties…</span>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <Skeleton className="h-5 w-48" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 w-28 rounded-full" />
-          <Skeleton className="h-9 w-24 rounded-full lg:hidden" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <PropertyCardSkeleton key={i} />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-center gap-2 mt-8">
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-full" />
-      </div>
-    </div>
-  );
-}
 
 export function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -107,6 +43,7 @@ export function PropertiesPage() {
 
   const { properties, isLoading, error: loadError } = usePropertiesData();
   const search = usePropertySearch(properties);
+  const { clearSearch, searchQuery, debouncedSearchQuery } = search;
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -159,14 +96,14 @@ export function PropertiesPage() {
       filters.maxArea < DEFAULT_FILTERS.maxArea
     )
       count++;
-    if (search.searchQuery) count++;
+    if (searchQuery) count++;
     return count;
-  }, [filters, search.searchQuery, DEFAULT_FILTERS]);
+  }, [filters, searchQuery, DEFAULT_FILTERS]);
 
   const { sortedProperties } = useMemo(() => {
     const filtered = properties.filter((property) => {
-      if (search.debouncedSearchQuery) {
-        const q = search.debouncedSearchQuery.toLowerCase();
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase();
         const searchable = [
           property.title,
           property.description,
@@ -265,7 +202,7 @@ export function PropertiesPage() {
     });
 
     return { sortedProperties: sorted };
-  }, [properties, currentType, sortBy, filters, search.debouncedSearchQuery]);
+  }, [properties, currentType, sortBy, filters, debouncedSearchQuery]);
 
   const handleTypeChange = useCallback(
     (type: FilterType) => {
@@ -309,13 +246,13 @@ export function PropertiesPage() {
 
   const clearAllFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
-    search.clearSearch();
-  }, [DEFAULT_FILTERS, search]);
+    clearSearch();
+  }, [DEFAULT_FILTERS, clearSearch]);
 
   const removeFilter = useCallback(
     (filterKey: keyof PropertyFilterState | "search") => {
       if (filterKey === "search") {
-        search.clearSearch();
+        clearSearch();
       } else {
         setFilters((prev) => ({
           ...prev,
@@ -323,12 +260,12 @@ export function PropertiesPage() {
         }));
       }
     },
-    [DEFAULT_FILTERS, search],
+    [DEFAULT_FILTERS, clearSearch],
   );
 
   useEffect(() => {
     setPage(1);
-  }, [filters, sortBy, currentType, search.debouncedSearchQuery]);
+  }, [filters, sortBy, currentType, debouncedSearchQuery]);
 
   if (isLoading) {
     return (
@@ -339,16 +276,9 @@ export function PropertiesPage() {
             onTypeChange={handleTypeChange}
             isPending={isPending}
           />
-
           <PropertySearch search={search} />
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            <FilterSidebarSkeleton />
-
-            <div className="flex-1 scroll-mt-40" ref={listRef}>
-              <PropertiesResultsSkeleton />
-            </div>
-          </div>
+          <PropertiesPageSkeleton showHeader={false} />
         </div>
       </div>
     );
@@ -382,7 +312,7 @@ export function PropertiesPage() {
           <div className="flex-1 scroll-mt-40" ref={listRef}>
             <PropertiesResultsHeader
               resultCount={sortedProperties.length}
-              debouncedSearchQuery={search.debouncedSearchQuery}
+              debouncedSearchQuery={debouncedSearchQuery}
               sortBy={sortBy}
               onSortChange={setSortBy}
               sortOptions={SORT_OPTIONS}
@@ -393,7 +323,7 @@ export function PropertiesPage() {
                 <ActiveFilterTags
                   filters={filters}
                   defaultFilters={DEFAULT_FILTERS}
-                  searchQuery={search.searchQuery}
+                  searchQuery={searchQuery}
                   onRemove={removeFilter}
                   onClearAll={clearAllFilters}
                 />
@@ -428,10 +358,7 @@ export function PropertiesPage() {
               </motion.div>
 
               {sortedProperties.length === 0 && (
-                <NoResults
-                  search={search.searchQuery}
-                  onClear={clearAllFilters}
-                />
+                <NoResults search={searchQuery} onClear={clearAllFilters} />
               )}
               {totalPages > 1 && (
                 <PropertiesPagination

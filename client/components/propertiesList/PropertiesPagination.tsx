@@ -55,10 +55,7 @@ export function PropertiesPagination({
 
       {items.map((item, i) =>
         item === "ellipsis" ? (
-          <span
-            key={`e-${i}`}
-            className="px-2 text-muted select-none"
-          >
+          <span key={`e-${i}`} className="px-2 text-muted select-none">
             …
           </span>
         ) : (
@@ -70,7 +67,7 @@ export function PropertiesPagination({
             className={`${btnBase} ${
               item === page
                 ? "bg-violet-600 text-white"
-                : "border border-border hover:bg-muted"
+                : "border border-border hover:bg-muted/40"
             }`}
           >
             {item}
@@ -83,7 +80,7 @@ export function PropertiesPagination({
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages}
         aria-label="Next page"
-        className={`${btnBase} inline-flex items-center gap-1 border border-border hover:bg-muted`}
+        className={`${btnBase} inline-flex items-center gap-1 border border-border hover:bg-muted/40`}
       >
         <span className="hidden sm:inline">Next</span>
         <FiChevronRight className="h-4 w-4" />

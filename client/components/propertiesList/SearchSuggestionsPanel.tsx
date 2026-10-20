@@ -1,119 +1,94 @@
 "use client";
 
-import { LuLoaderCircle, LuSearch } from "react-icons/lu";
-
 interface SearchSuggestionsPanelProps {
+  id: string;
   suggestions: string[];
+  activeIndex: number;
   isLoading: boolean;
   query: string;
-  trimmedQuery: string;
   onSelect: (suggestion: string) => void;
+  onHover: (index: number) => void;
 }
+
+const PANEL_BASE =
+  "absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md";
 
 export function SearchSuggestionsPanel({
+  id,
   suggestions,
+  activeIndex,
   isLoading,
   query,
-  trimmedQuery,
   onSelect,
+  onHover,
 }: SearchSuggestionsPanelProps) {
+  if (suggestions.length === 0) {
+    return (
+      <div
+        id={id}
+        role="status"
+        aria-live="polite"
+        className={`${PANEL_BASE} px-3 py-2.5 text-sm text-muted`}
+      >
+        {isLoading ? (
+          "Searching…"
+        ) : (
+          <>
+            No matches for{" "}
+            <span className="font-medium text-foreground">“{query}”</span>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div
-      id="search-suggestions"
+    <ul
+      id={id}
       role="listbox"
-      aria-label="Search suggestions"
-      className="absolute z-50 mt-2 w-full max-w-2xl bg-popover rounded-xl border border-border shadow-lg overflow-hidden animate-in fade-in-0 slide-in-from-top-1 duration-150"
+      aria-label="Suggestions"
+      aria-busy={isLoading}
+      className={`${PANEL_BASE} max-h-72 overflow-y-auto p-1 transition-opacity ${
+        isLoading ? "opacity-60" : "opacity-100"
+      }`}
     >
-      {isLoading ? (
-        <SuggestionLoader />
-      ) : suggestions.length > 0 ? (
-        <>
-          <div className="max-h-80 overflow-y-auto">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={`${suggestion}-${index}`}
-                type="button"
-                role="option"
-                aria-selected={false}
-                onClick={() => onSelect(suggestion)}
-                className="w-full px-4 py-3 text-left hover:bg-secondary focus:bg-secondary focus:outline-none transition-colors border-b border-border last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <LuSearch className="w-4 h-4 text-muted shrink-0" />
-                  <span className="text-popover-foreground truncate">
-                    {highlightMatch(suggestion, query)}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-          <SuggestionFooter />
-        </>
-      ) : (
-        <SuggestionEmpty query={trimmedQuery} />
-      )}
-    </div>
-  );
-}
-
-function SuggestionLoader() {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex items-center justify-center gap-3 px-4 py-6 text-sm text-muted"
-    >
-      <LuLoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" />
-      <span>Searching…</span>
-    </div>
-  );
-}
-
-function SuggestionEmpty({ query }: { query: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1.5 px-6 py-8 text-center">
-      <LuSearch className="w-5 h-5 text-muted" aria-hidden="true" />
-      <p className="text-sm font-medium text-foreground">No matches found</p>
-      <p className="text-xs text-muted max-w-xs">
-        We couldn&apos;t find anything for{" "}
-        <span className="font-medium text-foreground">&quot;{query}&quot;</span>
-        . Try a different city, address, or property type.
-      </p>
-    </div>
-  );
-}
-
-function SuggestionFooter() {
-  return (
-    <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-4 py-2 text-xs text-muted">
-      <span className="flex items-center gap-1.5">
-        Press
-        <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-foreground">
-          Enter
-        </kbd>
-        to see all results
-      </span>
-      <span className="hidden sm:flex items-center gap-1.5">
-        <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-foreground">
-          Esc
-        </kbd>
-        to dismiss
-      </span>
-    </div>
+      {suggestions.map((suggestion, index) => {
+        const isActive = index === activeIndex;
+        return (
+          <li
+            key={`${suggestion}-${index}`}
+            id={`${id}-${index}`}
+            role="option"
+            aria-selected={isActive}
+            onMouseDown={(e) => e.preventDefault()}
+            onMouseEnter={() => onHover(index)}
+            onClick={() => onSelect(suggestion)}
+            className={`cursor-pointer rounded-md px-3 py-2 text-sm ${
+              isActive ? "bg-secondary" : ""
+            }`}
+          >
+            {highlightMatch(suggestion, query)}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
 function highlightMatch(text: string, query: string) {
-  if (!query) return text;
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <span key={i} className="bg-primary/20 text-primary font-medium">
-        {part}
+  const q = query.trim();
+  if (!q) return text;
+
+  const index = text.toLowerCase().indexOf(q.toLowerCase());
+  if (index === -1) return text;
+
+  return (
+    <>
+      {text.slice(0, index)}
+      <span className="font-semibold text-foreground">
+        {text.slice(index, index + q.length)}
       </span>
-    ) : (
-      part
-    ),
+      {text.slice(index + q.length)}
+    </>
   );
 }
