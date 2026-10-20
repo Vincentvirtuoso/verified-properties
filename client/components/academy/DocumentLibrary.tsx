@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { LuFiles, LuFileStack, LuFileText, LuGraduationCap, LuLibrary, LuSearch, LuX } from "react-icons/lu";
+import { LuGraduationCap, LuSearch, LuX } from "react-icons/lu";
 import {
   BreadcrumbItem,
   Breadcrumbs,
   BreadcrumbSchema,
 } from "../common/BreadCrumbs";
-import { DocumentIcon } from "@affilhomes/shared/icons";
+import DocumentsIcon from "../icons/DocumentsIcon";
 
 export interface DocumentGroupItem {
   type: string;
@@ -63,7 +63,7 @@ export function DocumentLibrary({
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Academy", href: "/academy", icon: <LuGraduationCap /> },
-    { label: "Documents", href: "/academy/documents", icon: <DocumentIcon /> },
+    { label: "Documents", href: "/academy/documents", icon: <DocumentsIcon /> },
   ];
 
   return (

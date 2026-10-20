@@ -13,6 +13,7 @@ import {
   type BreadcrumbItem,
 } from "@/components/common/BreadCrumbs";
 import { LuFiles, LuFileText, LuGraduationCap, LuLibrary } from "react-icons/lu";
+import DocumentsIcon from "@/components/icons/DocumentsIcon";
 
 const SITE_URL = "https://yourwebsite.com";
 const DOCS_PATH = "/academy/documents";
@@ -101,7 +102,7 @@ export default async function DocumentGuidePage({ params }: Props) {
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Academy", href: "/academy", icon: <LuGraduationCap /> },
-    { label: "Documents", href: DOCS_PATH, icon: <LuFiles /> },
+    { label: "Documents", href: DOCS_PATH, icon: <DocumentsIcon /> },
     { label: guide.name },
   ];
 
