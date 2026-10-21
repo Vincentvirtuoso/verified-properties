@@ -1,8 +1,7 @@
 "use client";
 
 import { Button } from "@affilhomes/shared/ui/Button";
-import { Skeleton } from "@affilhomes/shared/ui/Skeleton"; // adjust path if needed
-import Link from "next/link";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton"; 
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
@@ -162,7 +161,7 @@ function usePageVariant(): {
       };
     }
 
-    // Guest / Viewer — default
+    
     return {
       variant: "guest" as const,
       content: {
@@ -196,7 +195,6 @@ function PageSkeleton() {
     >
       <span className="sr-only">Loading AI Calling details…</span>
 
-      {/* Hero */}
       <section className="py-16 sm:py-24">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
           <Skeleton className="h-3 w-32" />
@@ -207,7 +205,6 @@ function PageSkeleton() {
         </div>
       </section>
 
-      {/* Steps */}
       <section className="pb-16 sm:pb-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-10 sm:space-y-12">
           {[0, 1, 2, 3].map((i) => (
@@ -226,7 +223,6 @@ function PageSkeleton() {
         </div>
       </section>
 
-      {/* CTA card */}
       <section className="pb-20 sm:pb-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 flex flex-col items-center">
