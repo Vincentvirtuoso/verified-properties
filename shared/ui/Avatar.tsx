@@ -81,7 +81,7 @@ export function Avatar({
           className={cn(
             "inline-flex shrink-0 select-none items-center justify-center",
             radius,
-            "bg-subtle text-muted",
+            "bg-muted/30 text-muted",
             className,
           )}
         >

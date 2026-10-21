@@ -124,6 +124,7 @@ export default function JvOpportunityPage() {
       <SignInPrompt
         title="Sign in to continue"
         description="JV requests are for registered agents and companies."
+        callbackUrl="/jv-opportunity"
       />
     );
   }

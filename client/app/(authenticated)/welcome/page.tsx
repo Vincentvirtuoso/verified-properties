@@ -63,7 +63,7 @@ const roleGuides: Record<ProfileRole, RoleGuide> = {
       {
         icon: <LuCirclePlus />,
         label: "List a Property",
-        href: "/onboarding/list-property",
+        href: "/list-property",
       },
     ],
     extraInfo: {

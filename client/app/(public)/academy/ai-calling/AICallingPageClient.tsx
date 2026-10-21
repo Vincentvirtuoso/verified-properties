@@ -331,6 +331,7 @@ export default function AICallingPageClient() {
                 size="sm"
                 className="rounded-full py-3"
                 href={content.primaryHref}
+                fullWidth
               >
                 {content.primaryLabel}
               </Button>
@@ -339,6 +340,7 @@ export default function AICallingPageClient() {
                 variant="ghost"
                 className="rounded-full py-3 border border-border"
                 href={content.secondaryHref}
+                fullWidth
               >
                 {content.secondaryLabel}
               </Button>

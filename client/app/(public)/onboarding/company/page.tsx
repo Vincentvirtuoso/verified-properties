@@ -1,160 +1,251 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   LuBuilding,
   LuUsers,
   LuShieldCheck,
   LuHouse,
   LuCircleCheck,
+  LuPhone,
+  LuFileText,
+  LuArrowRight,
 } from "react-icons/lu";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@affilhomes/shared/ui/Accordion";
-import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
+import { Button } from "@affilhomes/shared/ui/Button";
+import { Centered } from "@affilhomes/shared/ui/Centered";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConfirm } from "@/contexts/ConfirmDialog";
-import { useRouter } from "next/dist/client/components/navigation";
+import { FeatureTour, TourStep } from "@/components/common/FeatureTour";
+import { Role } from "@/types";
 
-const steps = [
+const REGISTER_PATH = "/register?accountType=company";
+
+const tourSteps: TourStep[] = [
   {
-    icon: <LuBuilding className="w-5 h-5" />,
-    value: "profile",
+    icon: LuBuilding,
     title: "Register your company profile",
-    tips: [
-      "Use your registered business name.",
-      "Upload a high‑resolution logo (square, min 200×200px).",
-      "Provide a valid business email and phone number.",
-      "Set your company type: real estate company or developer.",
-    ],
+    description:
+      "Use your registered business name, a square logo at least 200×200px, a business email and phone number, and choose whether you are a real estate company or a developer.",
   },
   {
-    icon: <LuUsers className="w-5 h-5" />,
-    value: "team",
+    icon: LuUsers,
     title: "Add team members",
-    tips: [
-      "Assign roles (admin / member) and permissions.",
-      "Team members can act on behalf of the company.",
-      "You can manage the team anytime from settings.",
-      "Admins have full control; members can only manage listings.",
-    ],
+    description:
+      "Assign admin or member roles. Admins have full control, members manage listings, and you can change the team anytime from settings.",
   },
   {
-    icon: <LuShieldCheck className="w-5 h-5" />,
-    value: "verify",
+    icon: LuShieldCheck,
     title: "Verify your company",
-    tips: [
-      "Submit your CAC registration certificate.",
-      "Provide a memorandum and articles of association.",
-      "Tax clearance certificate may be required.",
-      "Verification review takes 2–5 business days.",
-    ],
-    documents: [
-      "CAC Certificate of Incorporation",
-      "Memorandum & Articles of Association",
-      "Company Tax ID (TIN)",
-      "Tax Clearance Certificate",
-      "Utility Bill of business address",
-    ],
+    description:
+      "Verification takes 2–5 business days. Have your documents ready before you submit. You can set up your dashboard while you wait.",
   },
   {
-    icon: <LuHouse className="w-5 h-5" />,
-    value: "list",
+    icon: LuHouse,
     title: "Start listing properties",
-    tips: [
-      "All listings will show your company name and logo.",
-      "Boost featured listings for maximum exposure.",
-      "Monitor inquiries and deals from the company dashboard.",
-      "Set up remittance details for seamless payouts.",
-    ],
+    description:
+      "Listings show your company name and logo. Boost featured listings, track inquiries from the dashboard, and add remittance details for payouts.",
   },
 ];
 
+const requiredDocuments = [
+  "CAC Certificate of Incorporation",
+  "Memorandum & Articles of Association",
+  "Company Tax ID (TIN)",
+  "Tax Clearance Certificate",
+  "Utility bill for the business address",
+];
+
+function AiCallingTease() {
+  return (
+    <section className="rounded-2xl border border-primary/30 bg-linear-to-br from-primary/5 to-transparent p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <LuPhone className="h-5 w-5" aria-hidden />
+        </div>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold text-foreground">
+              Never miss an enquiry
+            </h2>
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+              Pro
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-muted">
+            On the Pro plan, an AI assistant calls seekers the moment they send
+            an enquiry, introduces itself as an assistant, and gives your team a
+            summary. Set it up and train it while your verification is pending
+            &mdash; it activates once your company is verified.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SignOutWarning({ role }: { role: Role | undefined }) {
+  const roleLabel = role === Role.Viewer ? "viewer" : "agent";
+  return (
+    <div className="rounded-lg border border-warning/25 bg-warning/11 p-4">
+      <p className="text-sm font-medium text-foreground">
+        Heads up &mdash; this signs you out
+      </p>
+      <p className="mt-1 text-sm text-muted">
+        Your current {roleLabel} account stays exactly as it is. The company
+        account is registered separately.
+      </p>
+    </div>
+  );
+}
+
 export default function CompanyOnboarding() {
-  const { logout } = useAuth();
+  const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { confirm } = useConfirm();
 
-  const router = useRouter();
-  if (
-    typeof localStorage !== "undefined" &&
-    localStorage.getItem("hide_company_onboarding")
-  ) {
-    router.push("/list-property");
-    return null;
-  }
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = async () => {
+  const isCompany = isAuthenticated && user?.activeRole === Role.Company;
+  const isViewerOrAgent =
+    isAuthenticated &&
+    (user?.activeRole === Role.Viewer || user?.activeRole === Role.Agent);
+
+  useEffect(() => {
+    if (isCompany) router.replace("/company/dashboard");
+  }, [isCompany, router]);
+
+  const handleStart = async () => {
+    if (loggingOut) return;
+    setError(null);
+
+    if (!isAuthenticated) {
+      window.location.href = REGISTER_PATH;
+      return;
+    }
+    if (!isViewerOrAgent) return;
+
     const confirmed = await confirm({
-      title: "You'll be logged out",
+      title: "Create a separate company account",
       message:
-        "To register a company, you'll be logged out of your current session. All unsaved changes on this page will be lost. Continue?",
+        "You'll be logged out of your current account. It stays a Viewer or Agent account. You'll register your company as a new account. Continue?",
       confirmLabel: "Log out & continue",
       cancelLabel: "Stay here",
       variant: "warning",
-      rememberKey: "hide_logout_warning_company",
-      rememberLabel: "Don't ask me again",
     });
 
-    if (confirmed) {
+    if (!confirmed) return;
+
+    setLoggingOut(true);
+    try {
       await logout();
-      window.location.href = "/register/?accountType=company";
+      window.location.href = REGISTER_PATH;
+    } catch {
+      setLoggingOut(false);
+      setError("We couldn't sign you out. Please try again.");
     }
   };
+
+  if (authLoading) return <PageLoading />;
+
+  if (isCompany) {
+    return (
+      <Centered>
+        <p className="text-sm text-muted" role="status" aria-live="polite">
+          Taking you to your company dashboard&hellip;
+        </p>
+      </Centered>
+    );
+  }
+
   return (
-    <OnboardingLayout
-      title="Register your company 🏢"
-      subtitle="Build your brand on our platform, manage a team, and list properties at scale. Here’s how to get started."
-      steps={steps.map((s) => ({ icon: s.icon, title: s.title }))}
-      storageKey="hide_company_onboarding"
-      onContinue={handleContinue}
+    <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+      <header className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <LuBuilding className="h-5 w-5" aria-hidden />
+          </div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Register your company
+          </h1>
+        </div>
+        <p className="text-sm leading-relaxed text-muted">
+          Build your brand on the platform, manage a team, and list properties
+          at scale. Have the documents below ready before you start.
+        </p>
+      </header>
+
+      <section className="rounded-2xl border border-border bg-card p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <LuFileText className="h-4 w-4 text-muted" aria-hidden />
+          <h2 className="text-sm font-semibold text-foreground">
+            Documents you&apos;ll need
+          </h2>
+        </div>
+        <ul className="grid gap-2.5 sm:grid-cols-2">
+          {requiredDocuments.map((doc) => (
+            <li key={doc} className="flex items-start gap-2 text-sm text-muted">
+              <LuCircleCheck
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                aria-hidden
+              />
+              <span>{doc}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <AiCallingTease />
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        {isViewerOrAgent && <SignOutWarning role={user?.activeRole} />}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted">
+            {isViewerOrAgent
+              ? "Ready when you are. We'll sign you out first."
+              : "About 10 minutes with your documents ready."}
+          </p>
+          <Button
+            onClick={handleStart}
+            isLoading={loggingOut}
+            loadingText="Signing out…"
+            size="lg"
+            rightIcon={!loggingOut ? <LuArrowRight /> : undefined}
+          >
+            {isViewerOrAgent
+              ? "Log out & register company"
+              : "Register your company"}
+          </Button>
+        </div>
+
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </section>
+
+      <FeatureTour tourId="company-onboarding" steps={tourSteps} />
+    </main>
+  );
+}
+
+function PageLoading() {
+  return (
+    <main
+      className="mx-auto max-w-3xl space-y-6 px-4 py-10"
+      role="status"
+      aria-live="polite"
     >
-      <Accordion>
-        {steps.map((step) => (
-          <AccordionItem key={step.value} value={step.value}>
-            <AccordionTrigger icon={step.icon}>{step.title}</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2">
-                    Tips
-                  </h4>
-                  <ul className="space-y-1.5">
-                    {step.tips.map((tip, i) => (
-                      <li
-                        key={i}
-                        className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
-                      >
-                        <LuCircleCheck className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {step.documents && (
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2">
-                      Required Documents
-                    </h4>
-                    <div className="grid grid-cols-2 gap-1">
-                      {step.documents.map((doc, i) => (
-                        <div
-                          key={i}
-                          className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-1.5"
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                          {doc}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </OnboardingLayout>
+      <span className="sr-only">Loading…</span>
+      <div className="flex items-center gap-3">
+        <div className="h-11 w-11 animate-pulse rounded-xl bg-muted/30" />
+        <div className="h-6 w-56 animate-pulse rounded bg-muted/30" />
+      </div>
+      <div className="h-4 w-full max-w-xl animate-pulse rounded bg-muted/30" />
+      <div className="h-40 animate-pulse rounded-2xl bg-muted/30" />
+    </main>
   );
 }

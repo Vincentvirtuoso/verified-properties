@@ -15,7 +15,6 @@ import {
   LuUserCheck,
   LuUserRound,
 } from "react-icons/lu";
-import { BsBuildingAdd } from "react-icons/bs";
 import { Avatar } from "@affilhomes/shared/ui/Avatar";
 import { Badge } from "@affilhomes/shared/ui/Badge";
 import { Button } from "@affilhomes/shared/ui/Button";
@@ -31,6 +30,7 @@ import { PopulatedUser, Role } from "@affilhomes/shared/types";
 import RoleIcon from "@/components/ui/RoleIcon";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { UpgradeToProCTA } from "./UpgradeToProCTA";
+import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -86,7 +86,7 @@ function getContextActions(user: PopulatedUser): MenuLink[] {
       },
       {
         label: "List your Property",
-        href: "/onboarding/list-property",
+        href: "/list-property",
         icon: LuCirclePlus,
       },
     );
@@ -104,7 +104,7 @@ function getContextActions(user: PopulatedUser): MenuLink[] {
     actions.push({
       label: "List a New Property",
       href: "/list-property",
-      icon: BsBuildingAdd,
+      icon: ListNewPropertyIcon,
     });
   }
 
@@ -210,7 +210,7 @@ const ProfileMenu = ({
                 {contextActions.map(({ href, icon: Icon, label }) => (
                   <Link key={href} href={href}>
                     <DropdownItem
-                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-muted rounded-md transition-colors"
+                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-foreground rounded-md transition-colors"
                       icon={<Icon className="w-4 h-4 text-primary/80" />}
                     >
                       <span className="font-medium text-xs">{label}</span>

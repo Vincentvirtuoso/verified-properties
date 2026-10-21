@@ -107,16 +107,16 @@ const variantMap: Record<
   { bg: string; icon: React.ReactNode }
 > = {
   danger: {
-    bg: "bg-rose-50 border-rose-200",
-    icon: <LuTriangleAlert className="w-6 h-6 text-rose-500" />,
+    bg: "bg-destructive/10 border-destructive/20",
+    icon: <LuTriangleAlert className="w-6 h-6 text-destructive" />,
   },
   warning: {
-    bg: "bg-amber-50 border-amber-200",
-    icon: <LuTriangleAlert className="w-6 h-6 text-amber-500" />,
+    bg: "bg-warning/10 border-warning/20",
+    icon: <LuTriangleAlert className="w-6 h-6 text-warning" />,
   },
   info: {
-    bg: "bg-blue-50 border-blue-200",
-    icon: <LuInfo className="w-6 h-6 text-blue-500" />,
+    bg: "bg-info/10 border-info/20",
+    icon: <LuInfo className="w-6 h-6 text-info" />,
   },
 };
 

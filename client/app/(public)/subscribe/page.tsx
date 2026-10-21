@@ -97,6 +97,7 @@ function SubscribeContent() {
       <SignInPrompt
         title="Sign in to subscribe"
         description="JV subscriptions are for registered agents and companies."
+        callbackUrl="/subscribe"
       />
     );
   }
@@ -110,9 +111,7 @@ function SubscribeContent() {
         <p className="mb-6 text-subtle">
           You can still post a partnership request and follow its responses.
         </p>
-        <Button href="/jv-opportunity/new">
-          Post a request
-        </Button>
+        <Button href="/jv-opportunity/new">Post a request</Button>
       </Centered>
     );
   }

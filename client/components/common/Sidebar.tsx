@@ -86,18 +86,18 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     },
   ];
 
-  const commonAccount: SidebarLink[] = [
+  const commonTrailing: SidebarLink[] = [
     {
       href: "/subscribe",
-      label: "Subscription",
+      label: "Get JV Access",
       icon: <LuCreditCard />,
-      category: "Account",
+      category: "More",
     },
     {
       href: "/support",
       label: "Support",
       icon: <LuCircleHelp />,
-      category: "Account",
+      category: "More",
     },
   ];
 
@@ -120,7 +120,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           category: "Management",
           slot: { kind: "count", value: 7, max: 99 },
         },
-        ...commonAccount,
+        ...commonTrailing,
       ];
 
     case Role.Agent:
@@ -166,7 +166,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           category: "Management",
           slot: { kind: "label", value: "New", tone: "info" },
         },
-        ...commonAccount,
+        ...commonTrailing,
       ];
 
     case Role.Company:
@@ -212,11 +212,11 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           category: "Management",
           slot: { kind: "label", value: "3", tone: "warning" },
         },
-        ...commonAccount,
+        ...commonTrailing,
       ];
 
     default:
-      return [...commonExplore, ...commonJv, ...commonAccount];
+      return [...commonExplore, ...commonJv, ...commonTrailing];
   }
 }
 

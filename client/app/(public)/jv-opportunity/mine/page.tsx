@@ -29,6 +29,7 @@ import {
 import { Skeleton } from "@affilhomes/shared/ui";
 import { SignInPrompt } from "../../../../components/common/SignInPrompt";
 import { LuPen } from "react-icons/lu";
+import { useConfirm } from "@/contexts/ConfirmDialog";
 
 const STATUS_STYLES: Record<JvRequestStatus, string> = {
   open: "bg-primary/10 text-primary",
@@ -60,11 +61,6 @@ const RESPONSE_STATUS_STYLES: Record<ResponseStatus, string> = {
   withdrawn: "bg-muted/30 text-muted",
 };
 
-function confirmAction(message: string): boolean {
-  if (typeof window === "undefined") return false;
-  return window.confirm(message);
-}
-
 export default function MyJvRequestsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const viewer = useMemo(() => (user ? toJvViewer(user) : null), [user]);
@@ -75,6 +71,8 @@ export default function MyJvRequestsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+
+  const { confirm } = useConfirm();
 
   const load = useCallback(async () => {
     if (!viewer) return;
@@ -109,7 +107,11 @@ export default function MyJvRequestsPage() {
     ) =>
     async () => {
       if (!viewer || pendingAction) return;
-      if (confirmMessage && !confirmAction(confirmMessage)) return;
+      if (
+        confirmMessage &&
+        !confirm({ message: confirmMessage, title: "Proceed with action?" })
+      )
+        return;
       setActionError(null);
       setPendingAction(key);
       try {
@@ -135,6 +137,7 @@ export default function MyJvRequestsPage() {
       <SignInPrompt
         title="Sign in to see your JV requests"
         description="Track the requests you post and the responses you receive."
+        callbackUrl="/jv-opportunity/mine"
       />
     );
   }
@@ -195,9 +198,14 @@ export default function MyJvRequestsPage() {
                     <FiClock className="h-3 w-3" aria-hidden />
                     Posted {formatJvDate(r.createdAt)}
                   </span>
-                  <Button aria-label="Edit Jv Request" href={`/jv-opportunity/edit/${r.id}`} size="xs" variant="ghost" className="p-2">
-
-                  <LuPen />
+                  <Button
+                    aria-label="Edit Jv Request"
+                    href={`/jv-opportunity/edit/${r.id}`}
+                    size="xs"
+                    variant="ghost"
+                    className="p-2"
+                  >
+                    <LuPen />
                   </Button>
                 </div>
 
@@ -323,7 +331,6 @@ export default function MyJvRequestsPage() {
                             </div>
                           )}
 
-                          {/* INTEGRATED SNIPPET PART 1: Individual Response Actions */}
                           {res.status === "pending" && (
                             <div className="mt-3 flex justify-end gap-3 flex-wrap">
                               <Button
@@ -370,7 +377,6 @@ export default function MyJvRequestsPage() {
                     })}
                   </div>
 
-                  {/* INTEGRATED SNIPPET PART 2: Bulk Decline */}
                   {r.status === "matched" &&
                     r.responses.some((res) => res.status === "pending") && (
                       <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg bg-primary/5 p-4">

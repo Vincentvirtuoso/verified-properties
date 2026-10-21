@@ -24,6 +24,7 @@ import {
 import { formatPrice } from "@/lib/formatters";
 import { Button } from "@affilhomes/shared/ui/Button";
 import { Skeleton } from "@affilhomes/shared/ui";
+import { useConfirm } from "@/contexts/ConfirmDialog";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -372,6 +373,7 @@ function VideoSection({
   const input = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm } = useConfirm();
   const hasActive = videos.some(
     (v) => v.status === "pending" || v.status === "approved",
   );
@@ -392,7 +394,14 @@ function VideoSection({
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("Remove this video?")) return;
+    const confirmed = await confirm({
+      title: "Remove this video?",
+      message: "It will be removed from this listing. This can't be undone.",
+      confirmLabel: "Remove video",
+      cancelLabel: "Keep video",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     try {
       await deleteMyVideo(id);
       onChange();
