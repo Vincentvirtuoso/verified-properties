@@ -83,43 +83,55 @@ export const DOCUMENT_TYPE_LABELS: Record<PropertyDocumentType, string> = {
     "Certificate of Statutory Right of Occupancy",
 };
 
-export const DOCUMENT_TYPES: { value: PropertyDocumentType; label: string }[] = [
-  {
-    value: "certificateOfOccupancy",
-    label: "Certificate of Occupancy (C of O)",
-  },
-  { value: "governorsConsent", label: "Governor's Consent" },
-  { value: "deedOfAssignment", label: "Deed of Assignment" },
-  { value: "surveyPlan", label: "Survey Plan" },
-  { value: "approvedBuildingPlan", label: "Approved Building Plan" },
-  { value: "contractOfSale", label: "Contract of Sale" },
-  { value: "powerOfAttorney", label: "Power of Attorney" },
-  { value: "landPurchaseAgreement", label: "Land Purchase Agreement" },
-  { value: "taxClearanceCertificate", label: "Tax Clearance Certificate" },
-  { value: "gazette", label: "Gazette" },
-  { value: "letterOfAllocation", label: "Letter of Allocation" },
-  { value: "receiptOfPaymentForLand", label: "Receipt of Payment for Land" },
-  { value: "excisionDocument", label: "Excision Document" },
-  { value: "deedOfSublease", label: "Deed of Sublease" },
-  { value: "deedOfMortgage", label: "Deed of Mortgage" },
-  { value: "registeredSurveyPlan", label: "Registered Survey Plan" },
-  {
-    value: "certificateOfStatutoryRightOfOccupancy",
-    label: "Statutory Right of Occupancy",
-  },
-  { value: "affidavitOfLoss", label: "Affidavit of Loss" },
-  {
-    value: "probateLetterOfAdministration",
-    label: "Probate / Letter of Administration",
-  },
-  {
-    value: "irrevocablePowerOfAttorney",
-    label: "Irrevocable Power of Attorney",
-  },
-  { value: "deedOfLease", label: "Deed of Lease" },
-  { value: "deedOfSurrender", label: "Deed of Surrender" },
-  { value: "deedOfGift", label: "Deed of Gift" },
-  { value: "deedOfConveyance", label: "Deed of Conveyance" },
+export const DOCUMENT_TYPES: { value: PropertyDocumentType; label: string }[] =
+  [
+    {
+      value: "certificateOfOccupancy",
+      label: "Certificate of Occupancy (C of O)",
+    },
+    { value: "governorsConsent", label: "Governor's Consent" },
+    { value: "deedOfAssignment", label: "Deed of Assignment" },
+    { value: "surveyPlan", label: "Survey Plan" },
+    { value: "approvedBuildingPlan", label: "Approved Building Plan" },
+    { value: "contractOfSale", label: "Contract of Sale" },
+    { value: "powerOfAttorney", label: "Power of Attorney" },
+    { value: "landPurchaseAgreement", label: "Land Purchase Agreement" },
+    { value: "taxClearanceCertificate", label: "Tax Clearance Certificate" },
+    { value: "gazette", label: "Gazette" },
+    { value: "letterOfAllocation", label: "Letter of Allocation" },
+    { value: "receiptOfPaymentForLand", label: "Receipt of Payment for Land" },
+    { value: "excisionDocument", label: "Excision Document" },
+    { value: "deedOfSublease", label: "Deed of Sublease" },
+    { value: "deedOfMortgage", label: "Deed of Mortgage" },
+    { value: "registeredSurveyPlan", label: "Registered Survey Plan" },
+    {
+      value: "certificateOfStatutoryRightOfOccupancy",
+      label: "Statutory Right of Occupancy",
+    },
+    { value: "affidavitOfLoss", label: "Affidavit of Loss" },
+    {
+      value: "probateLetterOfAdministration",
+      label: "Probate / Letter of Administration",
+    },
+    {
+      value: "irrevocablePowerOfAttorney",
+      label: "Irrevocable Power of Attorney",
+    },
+    { value: "deedOfLease", label: "Deed of Lease" },
+    { value: "deedOfSurrender", label: "Deed of Surrender" },
+    { value: "deedOfGift", label: "Deed of Gift" },
+    { value: "deedOfConveyance", label: "Deed of Conveyance" },
+  ];
+
+export const PROPERTY_CATEGORIES: PropertyCategory[] = [
+  "residential",
+  "commercial",
+  "industrial",
+  "agricultural",
+  "land",
+  "mixedUse",
+  "hospitality",
+  "institutional",
 ];
 
 export const PROPERTY_CATEGORY_LABELS: Record<PropertyCategory, string> = {
@@ -435,7 +447,53 @@ export const PROPERTY_FEATURES = Object.entries(PROPERTY_FEATURE_LABELS).map(
   }),
 );
 
-export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
+export const PROPERTY_TYPES: PropertyType[] = [
+  "singleFamilyHouse",
+  "detachedHouse",
+  "semiDetachedHouse",
+  "terraceHouse",
+  "bungalow",
+  "mansion",
+  "apartment",
+  "selfContainedApartment",
+  "servicedApartment",
+  "guestRoom",
+  "guestHouse",
+  "studentHostel",
+  "duplex",
+  "detachedDuplex",
+  "semiDetachedDuplex",
+  "terraceDuplex",
+  "duplexWithBQ",
+  "duplexWithPenthouse",
+  "duplexVilla",
+  "duplexMaisonette",
+  "gardenDuplex",
+  "smartDuplex",
+  "maisonette",
+  "penthouse",
+  "officeSpace",
+  "retailShop",
+  "warehouse",
+  "hotel",
+  "factory",
+  "industrialPark",
+  "coldStorage",
+  "residentialLand",
+  "commercialLand",
+  "agriculturalLand",
+  "mixedUseLand",
+  "farm",
+  "farmhouse",
+  "mixedUseDevelopment",
+  "resortAndEventCenter",
+  "schoolOrHospital",
+];
+
+export const PROPERTY_TYPES_BY_CATEGORY: Record<
+  PropertyCategory,
+  PropertyType[]
+> = {
   residential: [
     "singleFamilyHouse",
     "detachedHouse",
@@ -643,7 +701,6 @@ export const agentSubRoleLabels: Record<AgentSubRole, string> = {
   landlord: "Landlord",
   other: "Other",
 };
-
 
 export type ProfileRole = (typeof PROFILE_ROLES)[number];
 

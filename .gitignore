@@ -32,3 +32,4 @@ desktop.ini
 
 # Test and coverage
 coverage/
+.tests/

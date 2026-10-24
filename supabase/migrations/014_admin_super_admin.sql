@@ -1,39 +1,5 @@
--- ============================================================
--- 014 ADMIN SUPER_ADMIN
--- Run after 013.
---
--- Adds a `super_admin` tier above the existing `admin` role and
--- a self-service admin application lifecycle.
---
--- Design:
---   * admin / super_admin continue to live in `user_roles`, never
---     in `profiles.roles`, so they cannot be self-granted.
---   * `profiles.admin_status` tracks the application lifecycle:
---       null      -> never applied
---       pending   -> waiting for review
---       active    -> approved and in good standing
---       rejected  -> denied
---       suspended -> approved, temporarily blocked
---   * has_role() now gates admin / super_admin on admin_status,
---     so every existing policy that calls has_role(uid, 'admin')
---     picks up the change automatically.
---   * Admin lifecycle RPCs are super-admin only and refuse to
---     operate on the caller.
--- ============================================================
 
--- ---------- 1. Extend app_role with super_admin ----------
-do $$
-begin
-  if not exists (
-    select 1 from pg_enum
-    where enumtypid = 'public.app_role'::regtype
-      and enumlabel = 'super_admin'
-  ) then
-    alter type public.app_role add value 'super_admin';
-  end if;
-end $$;
 
--- ---------- 2. Backfill: existing admins are active ----------
 update public.profiles p
 set admin_status = 'active'
 where p.admin_status is null
@@ -43,7 +9,6 @@ where p.admin_status is null
       and ur.role in ('admin', 'super_admin')
   );
 
--- ---------- 3. has_role() now gates admin status ----------
 create or replace function public.has_role(_user_id uuid, _role public.app_role)
 returns boolean
 language sql
@@ -65,7 +30,6 @@ as $$
   );
 $$;
 
--- ---------- 4. Role helpers ----------
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -101,9 +65,7 @@ begin
 end;
 $$;
 
--- ---------- 5. Lifecycle RPCs ----------
 
--- pending -> admin
 create or replace function public.approve_admin(_target_id uuid)
 returns void
 language plpgsql
@@ -134,7 +96,6 @@ begin
 end;
 $$;
 
--- pending -> rejected
 create or replace function public.reject_admin(_target_id uuid, _reason text)
 returns void
 language plpgsql
@@ -171,7 +132,6 @@ begin
 end;
 $$;
 
--- active -> suspended
 create or replace function public.suspend_admin(_target_id uuid, _reason text)
 returns void
 language plpgsql
@@ -201,7 +161,6 @@ begin
 end;
 $$;
 
--- suspended -> active
 create or replace function public.reinstate_admin(_target_id uuid)
 returns void
 language plpgsql
@@ -228,7 +187,6 @@ begin
 end;
 $$;
 
--- remove admin entirely
 create or replace function public.demote_admin(_target_id uuid, _reason text)
 returns void
 language plpgsql
@@ -258,7 +216,6 @@ begin
 end;
 $$;
 
--- admin -> super_admin
 create or replace function public.promote_super_admin(_target_id uuid)
 returns void
 language plpgsql
@@ -283,7 +240,6 @@ begin
 end;
 $$;
 
--- super_admin -> admin
 create or replace function public.demote_super_admin(_target_id uuid, _reason text)
 returns void
 language plpgsql
@@ -311,7 +267,6 @@ begin
 end;
 $$;
 
--- ---------- 6. Listing for /admins page ----------
 create or replace function public.admin_list_admins(_status text default null)
 returns table (
   user_id uuid,
@@ -359,7 +314,6 @@ begin
 end;
 $$;
 
--- ---------- 7. Grants ----------
 do $$
 declare f text;
 begin

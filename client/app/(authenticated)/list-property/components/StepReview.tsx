@@ -288,8 +288,9 @@ export function StepReview({
                   showText={false}
                 />
                 <p className="text-xs text-muted">
-                  Documents declared, pending verification. Our team will
-                  contact you to collect copies.
+                  Documents declared, pending verification. Our team will be in
+                  touch to collect and review them. The Ownership documents row
+                  on your listing will update as the review progresses.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -303,8 +304,9 @@ export function StepReview({
             </div>
           ) : (
             <p className="border-t border-border pt-1 text-xs text-muted">
-              No ownership documents declared yet. Your listing stays live
-              without a verified badge until you declare them.
+              Add ownership documents to show buyers this property has been
+              checked. Our team will contact you to collect them. Your listing
+              stays live in the meantime.
             </p>
           )}
         </div>

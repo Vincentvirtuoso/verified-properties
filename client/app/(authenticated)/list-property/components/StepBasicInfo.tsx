@@ -17,7 +17,11 @@ import {
   type ListingPurpose,
 } from "@affilhomes/shared/types";
 import Select from "@affilhomes/shared/ui/Select";
-import { PROPERTY_CATEGORY_LABELS, PROPERTY_TYPE_LABELS, PROPERTY_TYPES_BY_CATEGORY } from "@/utils";
+import {
+  PROPERTY_CATEGORY_LABELS,
+  PROPERTY_TYPE_LABELS,
+  PROPERTY_TYPES_BY_CATEGORY,
+} from "@/utils";
 
 const PURPOSE_OPTIONS = [
   {
@@ -45,8 +49,6 @@ export const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = (
   value,
   label: PROPERTY_CATEGORY_LABELS[value],
 }));
-
-
 
 export const TYPES_BY_CATEGORY: Record<
   PropertyCategory,
@@ -85,7 +87,6 @@ export function StepBasicInfo({
     updateField("category", value as PropertyCategory);
   };
 
-  console.log(formData);
 
   return (
     <div className="space-y-8">
@@ -171,15 +172,17 @@ export function StepBasicInfo({
           </div>
 
           {formData.category && availableTypes.length > 0 && (
-            <Select
-              options={availableTypes}
-              key={`${formData.category}-${formData.type ? "has-type" : "empty"}`}
-              label="Property Type"
-              error={errors.type}
-              value={formData.type}
-              onChange={(value) => updateField("type", value as PropertyType)}
-              required
-            />
+            <>
+              <Select
+                options={availableTypes}
+                key={`${formData.category}-${formData.type ? "has-type" : "empty"}`}
+                label="Property Type"
+                error={errors.type}
+                value={formData.type}
+                onChange={(value) => updateField("type", value as PropertyType)}
+                required
+              />
+            </>
           )}
         </div>
       </section>

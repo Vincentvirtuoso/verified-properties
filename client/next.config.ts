@@ -8,10 +8,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "www.facebook.com" },
       { protocol: "https", hostname: "www.google.com" },
+      { protocol: "https", hostname: "fastly.picsum.photos" },
     ],
     minimumCacheTTL: 60 * 60 * 24,
   },
-  transpilePackages: ["@affilhomes/shared"], 
+  transpilePackages: ["@affilhomes/shared"],
   // experimental: {},
 };
 

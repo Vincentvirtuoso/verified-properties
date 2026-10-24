@@ -24,6 +24,33 @@ export type PropertyDocumentType =
   | "certificateOfStatutoryRightOfOccupancy"
   | "registeredSurveyPlan";
 
+export const PROPERTY_DOCUMENT_TYPES: PropertyDocumentType[] = [
+  "certificateOfOccupancy",
+  "governorsConsent",
+  "deedOfAssignment",
+  "surveyPlan",
+  "approvedBuildingPlan",
+  "contractOfSale",
+  "powerOfAttorney",
+  "landPurchaseAgreement",
+  "taxClearanceCertificate",
+  "gazette",
+  "letterOfAllocation",
+  "receiptOfPaymentForLand",
+  "excisionDocument",
+  "deedOfSublease",
+  "deedOfMortgage",
+  "registeredSurveyPlan",
+  "certificateOfStatutoryRightOfOccupancy",
+  "affidavitOfLoss",
+  "probateLetterOfAdministration",
+  "irrevocablePowerOfAttorney",
+  "deedOfLease",
+  "deedOfSurrender",
+  "deedOfGift",
+  "deedOfConveyance",
+];
+
 export type PropertyCategory =
   | "residential"
   | "commercial"
@@ -650,12 +677,31 @@ export const featureLabels: Record<PropertyFeature, string> = {
   serviced: "Serviced",
 };
 
-export const MEDIA_SECTIONS = [
-  { value: "general", label: "General" },
+export const MEDIA_SECTIONS: { value: MediaSection; label: string }[] = [
+  { value: "general", label: "Overview" },
   { value: "bedrooms", label: "Bedrooms" },
   { value: "bathrooms", label: "Bathrooms" },
-  { value: "total_area", label: "Total Area" },
+  { value: "total_area", label: "Floor Plan & Area" },
   { value: "features", label: "Features & Amenities" },
+  { value: "exterior", label: "Exterior Views" },
+  { value: "living_room", label: "Living Room" },
 ];
 
-export type MediaSection = (typeof MEDIA_SECTIONS)[number]["value"];
+export type MediaSection =
+  | "general"
+  | "bedrooms"
+  | "bathrooms"
+  | "total_area"
+  | "features"
+  | "exterior"
+  | "living_room";
+
+export const PROPERTY_MEDIA_SECTIONS: MediaSection[] = [
+  "general",
+  "bedrooms",
+  "bathrooms",
+  "total_area",
+  "features",
+  "exterior",
+  "living_room",
+];

@@ -1,4 +1,5 @@
 import {
+  MediaSection,
   PropertyCategory,
   PropertyDocumentType,
   PropertyFeature,
@@ -10,6 +11,8 @@ export type ListingTier = "featured" | "standard";
 
 export type ListingPurpose = "rent" | "sale";
 
+export type PinVisibility = "private" | "public";
+
 export type PropertyLocation = {
   address: string;
   city: string;
@@ -18,6 +21,7 @@ export type PropertyLocation = {
   coordinates?: {
     lat: number;
     lng: number;
+    pin_visibility?: PinVisibility;
   };
 };
 
@@ -31,8 +35,9 @@ export type PropertyStatus =
 export type PropertyImage = {
   url: string;
   alt?: string;
+  section: MediaSection;
+  order?: number;
 };
-
 export type PropertyDocument = {
   id?: string;
   type: PropertyDocumentType;
@@ -84,7 +89,6 @@ export type Property<Populated extends boolean = false> = {
   image?: string;
   gallery?: PropertyImage[];
   videoLinks?: string[];
-  /** Admin review state (013). */
   reviewStatus?:
     | "none"
     | "pending"

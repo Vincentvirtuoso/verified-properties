@@ -27,6 +27,16 @@ import {
   LuTrash2,
 } from "react-icons/lu";
 import { useFormScrollOnError } from "@/hooks/useFormScrollOnError";
+import ListingJsonImport, {
+  type ListingFormPatch,
+} from "@affilhomes/shared/ui/ListingJsonImport";
+import {
+  ListingPurpose,
+  PROPERTY_DOCUMENT_TYPES,
+  PROPERTY_MEDIA_SECTIONS,
+} from "@/types";
+import { Button } from "@affilhomes/shared/ui";
+import { Modal } from "@/components/ui";
 
 const LIST_PROPERTY_TOUR_STEPS = [
   {
@@ -72,6 +82,25 @@ const LIST_PROPERTY_TOUR_STEPS = [
       "When you submit, your listing is saved to your account. Declared documents are reviewed separately, and a verified badge is added once they've been checked.",
   },
 ];
+
+const CONTENT_KEYS = [
+  "title",
+  "listingPurpose",
+  "category",
+  "type",
+  "description",
+  "price",
+  "bedrooms",
+  "bathrooms",
+  "area",
+  "features",
+  "address",
+  "city",
+  "state",
+  "coordinates",
+  "imageFiles",
+  "documentTypes",
+] as const satisfies readonly (keyof ListPropertyFormData)[];
 
 function DraftResolutionView({
   formData,
@@ -182,6 +211,7 @@ export default function ListPropertyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { bannerHeight } = useBannerHeightContext();
   const isFirstRender = useRef(true);
@@ -207,6 +237,58 @@ export default function ListPropertyPage() {
     missingPhotoCount,
     photoSaveFailed,
   } = useListPropertyForm();
+
+  const applyImportedPatch = (patch: ListingFormPatch) => {
+    const b = patch.basic;
+    updateField("title", b.title);
+    if (b.listingPurpose) updateField("listingPurpose", b.listingPurpose);
+    if (b.category) updateField("category", b.category);
+    if (b.type) updateField("type", b.type);
+    if (b.price != null) updateField("price", String(b.price));
+    if (b.currency) updateField("currency", b.currency);
+    if (b.negotiable != null) updateField("negotiable", b.negotiable);
+    if (b.description) updateField("description", b.description);
+
+    const d = patch.details;
+    if (d.bedrooms != null) updateField("bedrooms", String(d.bedrooms));
+    if (d.bathrooms != null) updateField("bathrooms", String(d.bathrooms));
+    if (d.area != null) updateField("area", String(d.area));
+    updateField("features", d.features);
+
+    const l = patch.location;
+    if (l.address) updateField("address", l.address);
+    if (l.city) updateField("city", l.city);
+    if (l.state) updateField("state", l.state);
+    if (l.country) updateField("country", l.country);
+    if (l.lat != null && l.lng != null) {
+      updateField("coordinates", { lat: l.lat, lng: l.lng });
+    }
+    if (l.pinVisibility) updateField("locationVisibility", l.pinVisibility);
+
+    updateField("documentTypes", patch.documents);
+    updateField(
+      "imageFiles",
+      patch.photos.map((p) => p.file),
+    );
+    updateField(
+      "imageSections",
+      patch.photos.map((p) => p.section ?? "general"),
+    );
+  };
+
+  function hasListingContent(d: ListPropertyFormData): boolean {
+    return CONTENT_KEYS.some((key) => {
+      const v = d[key];
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === "string") return v.trim() !== "";
+      return v != null;
+    });
+  }
+
+  const handleImportApplied = (patch: ListingFormPatch) => {
+    applyImportedPatch(patch);
+    setImportOpen(false);
+  };
 
   const scrollToFirstError = useFormScrollOnError();
 
@@ -334,16 +416,16 @@ export default function ListPropertyPage() {
       <div className="min-h-screen bg-background">
         <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
-            <div className="h-6 w-40 rounded bg-muted animate-pulse" />
-            <div className="mt-2 h-4 w-56 rounded bg-muted animate-pulse" />
+            <div className="h-6 w-40 rounded bg-muted/30 animate-pulse" />
+            <div className="mt-2 h-4 w-56 rounded bg-muted/30 animate-pulse" />
           </div>
         </div>
         <div className="px-4 sm:px-6 py-8">
           <div className="max-w-3xl mx-auto bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
             <div className="space-y-4">
-              <div className="h-8 w-2/3 rounded bg-muted animate-pulse" />
-              <div className="h-24 w-full rounded bg-muted animate-pulse" />
-              <div className="h-24 w-full rounded bg-muted animate-pulse" />
+              <div className="h-8 w-2/3 rounded bg-muted/30 animate-pulse" />
+              <div className="h-24 w-full rounded bg-muted/30 animate-pulse" />
+              <div className="h-24 w-full rounded bg-muted/30 animate-pulse" />
             </div>
           </div>
         </div>
@@ -366,7 +448,7 @@ export default function ListPropertyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div
         className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20"
         style={{ top: bannerHeight + 64 }}
@@ -385,6 +467,21 @@ export default function ListPropertyPage() {
           completedSteps={completedSteps}
           onStepClick={handleEditStep}
         />
+        {currentStep === "basic" && (
+          <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Already have your listing details?
+              </p>
+              <p className="text-sm text-muted">
+                Import them from a JSON file to fill the form in one step.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              Import from JSON
+            </Button>
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
           <div ref={stepContentRef}>
@@ -416,15 +513,15 @@ export default function ListPropertyPage() {
                 errors={errors}
                 photoSaveFailed={photoSaveFailed}
                 missingPhotoCount={missingPhotoCount}
-                />
-              )}
+              />
+            )}
             {currentStep === "review" && (
               <StepReview
-              formData={formData}
-              onEdit={handleEditStep}
-              isSubmitting={isSubmitting}
-              photoSaveFailed={photoSaveFailed}
-              missingPhotoCount={missingPhotoCount}
+                formData={formData}
+                onEdit={handleEditStep}
+                isSubmitting={isSubmitting}
+                photoSaveFailed={photoSaveFailed}
+                missingPhotoCount={missingPhotoCount}
               />
             )}
           </div>
@@ -439,6 +536,17 @@ export default function ListPropertyPage() {
       </div>
 
       <FeatureTour tourId="list-property" steps={LIST_PROPERTY_TOUR_STEPS} />
+      {importOpen && (
+        <Modal open={importOpen} onClose={() => setImportOpen(false)}>
+          <ListingJsonImport
+            documentTypes={PROPERTY_DOCUMENT_TYPES}
+            sectionOptions={PROPERTY_MEDIA_SECTIONS}
+            hasExistingInput={hasListingContent(formData)}
+            onApply={handleImportApplied}
+            onClose={() => setImportOpen(false)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

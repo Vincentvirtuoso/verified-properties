@@ -1,19 +1,3 @@
--- ============================================================
--- 015 ADMIN SIGNUP BOOTSTRAP
--- Run after 014.
---
--- When a user signs up with `raw_user_meta_data.requested_role = 'admin'`:
---   * If no super_admin exists yet  -> grant super_admin immediately.
---   * Otherwise                     -> mark admin_status = 'pending'
---                                       for super-admin review.
---
--- Uses an advisory lock so two concurrent first-signups can't both
--- become super_admin.
---
--- Security note: this is a bootstrap mechanism. Whoever signs up
--- first through /admin/register becomes super_admin. Once you have
--- claimed the role, the branch is dead code.
--- ============================================================
 
 create or replace function public.promote_admin_on_signup()
 returns trigger
