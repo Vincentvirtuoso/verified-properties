@@ -73,7 +73,7 @@ export default function PropertyGallery({
 
   const images = useMemo<PropertyImage[]>(() => {
   const list: PropertyImage[] = [
-    ...(mainImage ? [{ url: mainImage, alt: title, section: "exterior" as const }] : []),
+    ...(mainImage ? [{ url: mainImage, alt: title, section: "general" as const }] : []),
     ...gallery,
   ];
 
@@ -82,7 +82,7 @@ export default function PropertyGallery({
   );
   return uniqueList.length
     ? uniqueList
-    : [{ url: FALLBACK, alt: title, section: "exterior" as const }];
+    : [{ url: FALLBACK, alt: title, section: "general" as const }];
 }, [mainImage, gallery, title]);
 
   const src = (url: string) => (failedUrls.has(url) ? FALLBACK : url);
