@@ -46,6 +46,14 @@ export interface IdentityDocumentItem {
   createdAt: string;
 }
 
+export interface ListingImage {
+  id: string;
+  url: string;
+  alt: string;
+  sortOrder: number;
+}
+
+
 export interface AdminListing {
   id: string;
   slug: string;
@@ -56,6 +64,8 @@ export interface AdminListing {
   submittedAt: string | null;
   city: string;
   state: string;
+  coverImage: { url: string; alt: string } | null;
+  imageCount: number;
   price: number;
   ownerId: string;
   ownerName: string;
@@ -289,6 +299,10 @@ export async function fetchAdminListings(
     price: Number(r.price),
     ownerId: r.owner_id,
     ownerName: r.owner_name,
+    coverImage: r.cover_image_url
+      ? { url: r.cover_image_url, alt: r.cover_image_alt ?? "" }
+      : null,
+    imageCount: r.image_count,
     ownerVerified: !!r.owner_verified,
     ownerSuspended: !!r.owner_suspended,
     documentsTotal: r.documents_total ?? 0,

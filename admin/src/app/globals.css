@@ -2,7 +2,6 @@
 @import "@affilhomes/shared/styles/tokens.css";
 @import "@affilhomes/shared/styles/components.css";
 
-@source "../../";
 @source "../../../shared/ui";
 
 * {

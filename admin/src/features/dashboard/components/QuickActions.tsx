@@ -19,11 +19,9 @@ export function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
       {ACTIONS.map(({ label, href, icon: Icon }) => (
-        <Button key={href} asChild size="sm" variant="outline">
-          <a href={href}>
-            <Icon size={14} />
-            <span className="ml-1.5">{label}</span>
-          </a>
+        <Button key={href} size="sm" variant="outline" href={href}>
+          <Icon size={14} />
+          <span className="ml-1.5">{label}</span>
         </Button>
       ))}
     </div>

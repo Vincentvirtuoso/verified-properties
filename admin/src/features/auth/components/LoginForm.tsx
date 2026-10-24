@@ -42,9 +42,7 @@ export function LoginForm() {
     clearError();
     try {
       await login(data);
-      // Redirect happens in the useEffect above.
     } catch {
-      // authError is set on the context.
     }
   });
 
@@ -129,8 +127,14 @@ export function LoginForm() {
         </div>
       )}
 
-      <Button type="submit" disabled={disabled} className="h-11 w-full">
-        {authLoading ? "Signing in…" : "Sign in"}
+      <Button
+        type="submit"
+        disabled={disabled}
+        className="h-11 w-full"
+        isLoading={authLoading}
+        loadingText="Signing in…"
+      >
+        Sign in
       </Button>
     </form>
   );

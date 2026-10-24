@@ -5,7 +5,7 @@ import { LuArrowRight } from "react-icons/lu";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "icon";
   isLoading?: boolean;
   loadingText?: string;
   leftIcon?: ReactNode;
@@ -39,7 +39,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles = cn(
-      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 group",
+      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 group cursor-pointer",
       !disableFocus &&
         "focus:outline-none focus:ring-offset-0 focus:ring-2 focus:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
@@ -61,6 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "px-6 py-2.5 text-base gap-2": size === "md",
         "px-8 py-3 text-lg gap-2.5": size === "lg",
         "px-10 py-4 text-xl gap-3": size === "xl",
+        "p-2.5 aspect-square": size === "icon",
       },
       className,
     );
@@ -194,7 +195,7 @@ Button.displayName = "Button";
 export const IconButton = forwardRef<
   HTMLButtonElement,
   Omit<ButtonProps, "children"> & { icon: ReactNode; label: string }
->(({ icon, label, variant = "ghost", size = "md", ...props }, ref) => {
+>(({ icon, label, variant = "ghost", size = "icon", ...props }, ref) => {
   return (
     <Button
       ref={ref}

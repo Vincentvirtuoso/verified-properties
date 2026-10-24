@@ -1,5 +1,12 @@
+import { type ReactNode } from "react";
 
-const SectionLabel = ({ text }: { text: string }) => {
+const SectionLabel = ({
+  text,
+  children,
+}: {
+  text: string;
+  children?: ReactNode;
+}) => {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
@@ -8,6 +15,7 @@ const SectionLabel = ({ text }: { text: string }) => {
       <div className="relative flex justify-center">
         <span className="bg-background px-4 py-1 text-xs text-foreground uppercase tracking-widest">
           {text}
+          {children}
         </span>
       </div>
     </div>
@@ -15,3 +23,5 @@ const SectionLabel = ({ text }: { text: string }) => {
 };
 
 export default SectionLabel;
+
+// (alias) type ReviewStatus = "none" | "pending" | "approved" | "rejected" | "changes_requested"

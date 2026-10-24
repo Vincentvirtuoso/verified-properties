@@ -34,3 +34,36 @@ export function isAuthServiceError(
     error.status >= 500
   );
 }
+
+export function getErrorMessage(
+  err: unknown,
+  fallback = "Something went wrong. Please try again.",
+): string {
+  if (err instanceof Error) {
+    const msg = err.message?.trim();
+    if (msg) return msg;
+  }
+
+  if (typeof err === "string") {
+    const msg = err.trim();
+    if (msg) return msg;
+  }
+
+  if (typeof err === "object" && err !== null) {
+    const candidate =
+      readString((err as { error?: unknown }).error, "message") ??
+      readString(err, "message");
+
+    if (candidate) return candidate;
+  }
+
+  return fallback;
+}
+
+function readString(value: unknown, key: string): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const prop = (value as Record<string, unknown>)[key];
+  if (typeof prop !== "string") return undefined;
+  const trimmed = prop.trim();
+  return trimmed || undefined;
+}

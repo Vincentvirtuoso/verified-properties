@@ -9,54 +9,54 @@ export type UseAdminListResult<T> = {
   reload: () => Promise<void>;
 };
 
-/**
- * Small fetch helper for admin tab lists.
- *
- * `deps` drives the initial fetch — pass the same values the fetcher
- * closes over (filters, status, etc.). The fetcher itself is stored in
- * a ref, so you don’t need to memoize it.
- */
 export function useAdminList<T>(
   fetcher: () => Promise<T[]>,
   deps: unknown[] = [],
 ): UseAdminListResult<T> {
-  const [rows, setRows] = useState<T[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<{
+    rows: T[] | null;
+    error: string | null;
+    loading: boolean;
+  }>({ rows: null, error: null, loading: true });
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
 
-  const mountedRef = useRef(true);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const requestIdRef = useRef(0);
 
-  const reload = useCallback(async () => {
-    if (mountedRef.current) {
-      setLoading(true);
-      setError(null);
-    }
+  const load = useCallback(async (resetRows: boolean) => {
+    const id = ++requestIdRef.current;
+    setState((s) => ({
+      rows: resetRows ? null : s.rows,
+      error: null,
+      loading: true,
+    }));
+
     try {
       const data = await fetcherRef.current();
-      if (!mountedRef.current) return;
-      setRows(data);
+      if (id !== requestIdRef.current) return;
+      setState({ rows: data, error: null, loading: false });
     } catch (err) {
-      if (!mountedRef.current) return;
-      setRows([]);
-      setError(err instanceof Error ? err.message : "Couldn’t load this list.");
-    } finally {
-      if (mountedRef.current) setLoading(false);
+      if (id !== requestIdRef.current) return;
+      setState((s) => ({
+        rows: s.rows,
+        error:
+          err instanceof Error && err.message
+            ? err.message
+            : "Couldn't load this list. Try again.",
+        loading: false,
+      }));
     }
   }, []);
 
   useEffect(() => {
-    void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void load(true);
+    return () => {
+      requestIdRef.current++;
+    };
   }, deps);
 
-  return { rows, error, loading, reload };
+  const reload = useCallback(() => load(false), [load]);
+
+  return { ...state, reload };
 }

@@ -24,12 +24,12 @@ import {
 import { Button } from "@affilhomes/shared/ui/Button";
 import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import Select from "@affilhomes/shared/ui/Select";
-import { LuFileText, LuMessageSquare } from "react-icons/lu";
+import { LuFileText, LuMessageSquare, LuShieldAlert } from "react-icons/lu";
 import { Skeleton, Textarea } from "@affilhomes/shared/ui";
 
 type Tone = "neutral" | "pending" | "success" | "danger";
 type AppealType = "verification" | "identity_document" | "suspension";
-type VerificationStatus =
+type IdentityStatus =
   | "verified"
   | "pending"
   | "rejected"
@@ -58,6 +58,17 @@ const AGENT_STATUS: Record<string, { label: string; tone: Tone }> = {
   more_info: { label: "More info needed", tone: "pending" },
 };
 
+const IDENTITY_STATUS_LABEL: Record<
+  IdentityStatus,
+  { label: string; tone: Tone }
+> = {
+  verified: { label: "Verified", tone: "success" },
+  pending: { label: "Under review", tone: "pending" },
+  rejected: { label: "Rejected", tone: "danger" },
+  more_info: { label: "More info needed", tone: "pending" },
+  unverified: { label: "Not verified", tone: "neutral" },
+};
+
 function Badge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
     <span
@@ -66,6 +77,14 @@ function Badge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
       {children}
     </span>
   );
+}
+
+function deriveIdentityStatus(docs: MyIdentityDocument[]): IdentityStatus {
+  if (docs.some((d) => d.status === "approved")) return "verified";
+  if (docs.some((d) => d.status === "pending")) return "pending";
+  if (docs.some((d) => d.status === "more_info")) return "more_info";
+  if (docs.some((d) => d.status === "rejected")) return "rejected";
+  return "unverified";
 }
 
 export default function VerificationPage() {
@@ -133,9 +152,17 @@ export default function VerificationPage() {
   const agentFeedback = feedback.find((f) => f.subjectType === "agent");
   const companyFeedback = feedback.find((f) => f.subjectType === "company");
   const docList = docs ?? [];
+
+  // Identity verification state
+  const identityStatus = deriveIdentityStatus(docList);
+  const identityStatusInfo = IDENTITY_STATUS_LABEL[identityStatus];
+  const hasApprovedId = docList.some((d) => d.status === "approved");
+  // "usable" = shows in the list, and suppresses the upload form. Pending IDs
+  // are usable for display, but NOT sufficient to request agent verification.
   const hasUsableId = docList.some(
     (d) => d.status === "pending" || d.status === "approved",
   );
+
   const hasOpenAppeal = (type: string, id: string) =>
     appeals.some(
       (a) =>
@@ -187,13 +214,22 @@ export default function VerificationPage() {
     }
   };
 
+  const showPrereq =
+    agentStatus !== "pending" && agentStatus !== "verified" && !hasApprovedId;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-foreground">Verification</h1>
         <p className="text-sm text-muted">
-          Verified accounts can submit listings for review. We check your
-          government ID and, for companies, your CAC documents.
+          Verified accounts can submit listings for review. Verification happens
+          in two stages: first we confirm{" "}
+          <span className="font-medium text-foreground">who you are</span>{" "}
+          (government ID), then we confirm{" "}
+          <span className="font-medium text-foreground">
+            you can list properties
+          </span>{" "}
+          (agent verification).
         </p>
       </header>
 
@@ -238,115 +274,102 @@ export default function VerificationPage() {
       )}
 
       {isAgent && (
-        <Card
-          title="Agent verification"
-          badge={
-            <Badge tone={agentStatusInfo.tone}>{agentStatusInfo.label}</Badge>
-          }
-        >
-          {agentFeedback?.note && agentStatus !== "verified" && (
-            <NoteFromTeam note={agentFeedback.note} />
-          )}
+        <>
+          {/* Step 1 — identity */}
+          <Card
+            title="Identity verification"
+            badge={
+              <Badge tone={identityStatusInfo.tone}>
+                {identityStatusInfo.label}
+              </Badge>
+            }
+          >
+            <p className="text-sm text-muted">
+              Confirms who you are. Upload a government-issued ID such as a NIN,
+              passport, or driver&apos;s license. Only our team can see it.
+            </p>
 
-          {agentStatus === "pending" && (
-            <>
+            {identityStatus === "verified" && (
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                Your government ID is approved. You can proceed to agent
+                verification.
+              </p>
+            )}
+
+            <IdSection
+              docs={docList}
+              hasUsableId={hasUsableId}
+              docType={docType}
+              onDocTypeChange={setDocType}
+              onUpload={upload}
+              busy={busy}
+            />
+          </Card>
+
+          {/* Step 2 — agent */}
+          <Card
+            title="Agent verification"
+            badge={
+              <Badge tone={agentStatusInfo.tone}>{agentStatusInfo.label}</Badge>
+            }
+          >
+            <p className="text-sm text-muted">
+              Confirms you&apos;re approved to act as an agent on AffilHomes and
+              submit property listings. Requires an approved government ID from
+              step 1.
+            </p>
+
+            {agentFeedback?.note && agentStatus !== "verified" && (
+              <NoteFromTeam note={agentFeedback.note} />
+            )}
+
+            {agentStatus === "pending" && (
               <p className="text-sm text-muted">
                 Thanks for submitting. Review usually takes a few business days.
               </p>
-              {(docs ?? []).length > 0 && (
-                <span className="text-xs text-muted">
-                  {(docs ?? []).length} uploaded
-                </span>
-              )}
-              {(docs ?? []).map((d) => {
-                const statusMap: Record<string, VerificationStatus> = {
-                  pending: "pending",
-                  approved: "verified",
-                  rejected: "rejected",
-                  more_info: "more_info",
-                };
-                const docStatus = statusMap[d.status] ?? "unverified";
-                return (
-                  <div
-                    key={d.id}
-                    className="space-y-3 rounded-xl border border-border bg-background/50 p-3.5"
+            )}
+
+            {agentStatus === "verified" && (
+              <p className="text-sm text-muted">
+                You&apos;re verified as an agent. You can now submit listings.
+              </p>
+            )}
+
+            {showPrereq && <PrereqNotice identityStatus={identityStatus} />}
+
+            {!suspension &&
+              (agentStatus === "unverified" || agentStatus === "rejected") && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    size="sm"
+                    disabled={!hasApprovedId || busy}
+                    isLoading={busy}
+                    onClick={requestReview}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/30 text-muted">
-                          <LuFileText className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">
-                            {ID_DOC_LABEL[d.docType]}
-                          </p>
-                          <p className="text-xs text-muted">
-                            {ID_STATUS[d.status].label}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge tone={docStatus as Tone}>{docStatus}</Badge>
-                    </div>
+                    Request agent verification
+                  </Button>
+                  {!hasApprovedId && (
+                    <span className="text-xs text-muted">
+                      {identityStatus === "pending"
+                        ? "Your ID is under review — you can request once it's approved."
+                        : identityStatus === "rejected"
+                          ? "Re-upload a valid ID to continue."
+                          : "Get your government ID approved first."}
+                    </span>
+                  )}
+                </div>
+              )}
 
-                    {d.reviewNote && d.status !== "approved" && (
-                      <div className="flex items-start gap-2.5 rounded-lg bg-muted/30/50 px-3 py-2 text-xs text-muted">
-                        <LuMessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>{d.reviewNote}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
-
-          {agentStatus === "verified" && (
-            <p className="text-sm text-muted">
-              Your account is verified. You can now submit listings.
-            </p>
-          )}
-
-          {!suspension &&
-            agentStatus !== "pending" &&
-            agentStatus !== "verified" && (
-              <IdSection
-                docs={docList}
-                hasUsableId={hasUsableId}
-                docType={docType}
-                onDocTypeChange={setDocType}
-                onUpload={upload}
+            {agentStatus === "rejected" && (
+              <AppealSection
+                open={hasOpenAppeal("verification", user._id)}
                 busy={busy}
+                label="Agent verification decision"
+                onSubmit={(msg) => appeal("verification", user._id, msg)}
               />
             )}
-
-          {!suspension &&
-            (agentStatus === "unverified" || agentStatus === "rejected") && (
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  size="sm"
-                  disabled={!hasUsableId || busy}
-                  isLoading={busy}
-                  onClick={requestReview}
-                >
-                  Request verification
-                </Button>
-                {!hasUsableId && (
-                  <span className="text-xs text-muted">
-                    Upload an ID first to request verification.
-                  </span>
-                )}
-              </div>
-            )}
-
-          {agentStatus === "rejected" && (
-            <AppealSection
-              open={hasOpenAppeal("verification", user._id)}
-              busy={busy}
-              label="Verification decision"
-              onSubmit={(msg) => appeal("verification", user._id, msg)}
-            />
-          )}
-        </Card>
+          </Card>
+        </>
       )}
 
       {companyId && (
@@ -434,6 +457,29 @@ function NoteFromTeam({ note }: { note: string }) {
   );
 }
 
+function PrereqNotice({ identityStatus }: { identityStatus: IdentityStatus }) {
+  const message =
+    identityStatus === "pending"
+      ? "Your government ID is under review. Once it's approved you can request agent verification."
+      : identityStatus === "rejected"
+        ? "Your government ID was rejected. Re-upload a valid ID in the Identity verification card above to continue."
+        : identityStatus === "more_info"
+          ? "We need a bit more info about your government ID. Check the Identity verification card above."
+          : "Upload and get your government ID approved in the Identity verification card above before requesting agent verification.";
+
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3.5 py-3 text-sm">
+      <LuShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+      <div className="space-y-0.5">
+        <p className="font-medium text-foreground">
+          Approved government ID required
+        </p>
+        <p className="text-muted">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function IdSection({
   docs,
   hasUsableId,
@@ -459,14 +505,20 @@ function IdSection({
               tone: "neutral" as Tone,
             };
             return (
-              <li
-                key={d.id}
-                className="flex items-center justify-between gap-3 px-4 py-3"
-              >
-                <span className="text-foreground">
-                  {ID_DOC_LABEL[d.docType as IdDocType] ?? "ID document"}
-                </span>
-                <Badge tone={info.tone}>{info.label}</Badge>
+              <li key={d.id} className="space-y-2 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-foreground">
+                    <LuFileText className="h-3.5 w-3.5 text-muted" />
+                    {ID_DOC_LABEL[d.docType as IdDocType] ?? "ID document"}
+                  </span>
+                  <Badge tone={info.tone}>{info.label}</Badge>
+                </div>
+                {d.reviewNote && d.status !== "approved" && (
+                  <div className="flex items-start gap-2 rounded-lg bg-muted/30 px-3 py-2 text-xs text-muted">
+                    <LuMessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{d.reviewNote}</span>
+                  </div>
+                )}
               </li>
             );
           })}
@@ -490,7 +542,7 @@ function IdSection({
             maxSizeInMB={10}
             accept="image/*,application/pdf"
             allowedTypes={["image/*", "application/pdf"]}
-            label={busy ? "Uploading..." : "Upload your ID"}
+            label={busy ? "Uploading..." : "Upload your government ID"}
             description="Photo or PDF, up to 10 MB. Only our team can see it."
             onUploadComplete={(files) => {
               void onUpload(files[0]);
