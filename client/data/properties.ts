@@ -32,15 +32,17 @@ export const properties: PopulatedProperty[] = [
     area: 450,
     image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
     gallery: [
-      {
-        url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
-        alt: "Facade",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9",
-        alt: "Living Room",
-      },
-    ],
+  {
+    url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
+    alt: "Facade",
+    section: "exterior",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9",
+    alt: "Living Room",
+    section: "interior",
+  },
+],
     documents: [
       {
         id: "doc_001_1",
@@ -91,11 +93,12 @@ export const properties: PopulatedProperty[] = [
     area: 180,
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00",
     gallery: [
-      {
-        url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00",
-        alt: "Apartment Building",
-      },
-    ],
+  {
+    url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00",
+    alt: "Apartment Building",
+    section: "exterior",
+  },
+],
     documents: [
       {
         id: "doc_002_1",
