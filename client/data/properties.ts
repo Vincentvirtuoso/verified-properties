@@ -40,7 +40,7 @@ export const properties: PopulatedProperty[] = [
   {
     url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9",
     alt: "Living Room",
-    section: "interior",
+    section: "general",
   },
 ],
     documents: [
