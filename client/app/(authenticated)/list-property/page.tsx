@@ -375,8 +375,8 @@ export default function ListPropertyPage() {
         throw new Error(data?.error ?? "Failed to submit listing");
       }
 
+      router.push("/my-listings");
       resetForm();
-      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       window.alert(
