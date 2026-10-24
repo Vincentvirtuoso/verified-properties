@@ -3,7 +3,7 @@ import { createClient } from "./client";
 import type { PopulatedProperty, PopulatedUser } from "../types";
 
 export const PROPERTY_SELECT =
-  "*, property_images(url, alt, sort_order), property_documents(id, document_type, title, file_url, uploaded_at, review_status, review_note)";
+  "*, property_images(url, alt, sort_order, section), property_documents(id, document_type, title, file_url, uploaded_at, review_status, review_note)"; 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function mapPropertyRow(
@@ -11,8 +11,12 @@ export function mapPropertyRow(
   owner: PopulatedUser,
 ): PopulatedProperty {
   const gallery = [...(row.property_images ?? [])]
-    .sort((a: any, b: any) => a.sort_order - b.sort_order)
-    .map((img: any) => ({ url: img.url, alt: img.alt ?? undefined }));
+  .sort((a: any, b: any) => a.sort_order - b.sort_order)
+  .map((img: any) => ({
+    url: img.url,
+    alt: img.alt ?? undefined,
+    section: img.section ?? "exterior",
+  }));
 
   return {
     _id: row.id,
