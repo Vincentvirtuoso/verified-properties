@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   LuArrowLeft,
   LuChevronDown,
@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@affilhomes/shared/supabase/client";
 import {
   fetchEnquiryMessages,
+  fetchTeamEnquiryMessages,
   sendEnquiryMessage,
   updateEnquiryStage,
   type EnquiryStage,
@@ -32,6 +33,7 @@ interface EnquiryThreadProps {
   onChanged?: () => void;
   /** Teammates watching a colleague's conversation can read but not reply. */
   readOnly?: boolean;
+  isTeammate?: boolean;
 }
 
 type EventGroup = {
@@ -86,6 +88,7 @@ function groupEvents(events: ThreadEvent[]): EventGroup[] {
 export function EnquiryThread({
   enquiry,
   isAgentSide,
+  isTeammate = false,
   onBack,
   onChanged,
   readOnly = false,
@@ -104,12 +107,33 @@ export function EnquiryThread({
     setStage(enquiry.stage);
   }, [enquiry.stage]);
 
+  const loadThread = useCallback(
+    () =>
+      isTeammate
+        ? fetchTeamEnquiryMessages(enquiry.id)
+        : fetchEnquiryMessages(enquiry.id),
+    [enquiry.id, isTeammate],
+  );
+
   useEffect(() => {
     let cancelled = false;
-    fetchEnquiryMessages(enquiry.id)
+
+    loadThread()
       .then((rows) => !cancelled && setEvents(rows))
       .catch(() => !cancelled && setError("Couldn't load this conversation."))
       .finally(() => !cancelled && setLoading(false));
+
+    if (isTeammate) {
+      const timer = setInterval(() => {
+        loadThread()
+          .then((rows) => !cancelled && setEvents(rows))
+          .catch(() => {});
+      }, 10000);
+      return () => {
+        cancelled = true;
+        clearInterval(timer);
+      };
+    }
 
     const supabase = createClient();
     const channel = supabase
@@ -123,7 +147,7 @@ export function EnquiryThread({
           filter: `inquiry_id=eq.${enquiry.id}`,
         },
         () => {
-          fetchEnquiryMessages(enquiry.id)
+          loadThread()
             .then((rows) => !cancelled && setEvents(rows))
             .catch(() => {});
         },
@@ -134,7 +158,7 @@ export function EnquiryThread({
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [enquiry.id]);
+  }, [loadThread, isTeammate]);
 
   const groupedEvents = useMemo(() => groupEvents(events), [events]);
 
@@ -449,7 +473,7 @@ function ChatComposer({
     if (!text || disabled) return;
 
     const ok = await onSend(text);
-    if (ok === false) return; // keep the draft so the user can retry
+    if (ok === false) return;
 
     setDraft("");
     resetHeight();

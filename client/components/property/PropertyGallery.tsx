@@ -72,18 +72,20 @@ export default function PropertyGallery({
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const images = useMemo<PropertyImage[]>(() => {
-  const list: PropertyImage[] = [
-    ...(mainImage ? [{ url: mainImage, alt: title, section: "general" as const }] : []),
-    ...gallery,
-  ];
+    const list: PropertyImage[] = [
+      ...(mainImage
+        ? [{ url: mainImage, alt: title, section: "general" as const }]
+        : []),
+      ...gallery,
+    ];
 
-  const uniqueList = list.filter(
-    (img, index, self) => index === self.findIndex((t) => t.url === img.url),
-  );
-  return uniqueList.length
-    ? uniqueList
-    : [{ url: FALLBACK, alt: title, section: "general" as const }];
-}, [mainImage, gallery, title]);
+    const uniqueList = list.filter(
+      (img, index, self) => index === self.findIndex((t) => t.url === img.url),
+    );
+    return uniqueList.length
+      ? uniqueList
+      : [{ url: FALLBACK, alt: title, section: "general" as const }];
+  }, [mainImage, gallery, title]);
 
   const src = (url: string) => (failedUrls.has(url) ? FALLBACK : url);
 

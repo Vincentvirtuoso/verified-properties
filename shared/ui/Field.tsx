@@ -79,7 +79,6 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 
   const isControlled = inputProps.value !== undefined;
 
-
   const togglePasswordVisibility = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setShowPassword((prev) => !prev);
@@ -137,8 +136,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted",
-            "transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring",
+            "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted hover:border-border/60",
+            "transition-all duration-300 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring",
             "disabled:cursor-not-allowed disabled:opacity-60",
             (Icon || iconElement) && "pl-10",
             isPassword && "pr-10",

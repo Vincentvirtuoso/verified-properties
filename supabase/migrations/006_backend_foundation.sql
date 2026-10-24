@@ -194,7 +194,7 @@ begin
   new.company_id := old.company_id;
   new.company_role := old.company_role;
   new.created_at := old.created_at;
-
+  new.admin_status := old.admin_status;
   new.roles := coalesce(new.roles, old.roles);
 
   -- Roles can never be removed by the client.
@@ -244,6 +244,22 @@ create trigger profiles_guard_update
 before update on public.profiles
 for each row
 execute function public.guard_profile_update();
+
+create or replace function public.guard_privileged_profile_fields()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if new.roles is distinct from old.roles
+     or (new.agent_profile ->> 'verificationStatus')
+        is distinct from (old.agent_profile ->> 'verificationStatus') then
+    raise exception 'Not allowed to change roles or verification'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
 
 -- ------------------------------------------------------------
 -- 5. COMPANY FIELD GUARD

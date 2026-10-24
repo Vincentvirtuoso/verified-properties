@@ -1,29 +1,27 @@
--- ============================================================
--- 013 ADMIN MODERATION
--- Run after 012.
---
---  1. Audit log: every admin action is written here; rows can never
---     be edited or deleted. Past verification decisions are copied in.
---  2. Every review decision (approve / reject / more_info) needs a
---     reason, and the reason is logged.
---  3. Listings: Publish = "submit for review". A listing goes live only
---     after an admin approves it. Changing price, location or documents
---     on an approved listing sends it back to review.
---  4. Verification: agents upload a government ID; admins review ID
---     cards, company CAC (existing) and each property document.
---  5. Suspensions: suspend a user or a company; their live listings
---     are hidden and they can't publish.
---  6. Videos: uploaded files are reviewed, then posted to the one
---     Affilhomes YouTube channel. Sold/withdrawn listings -> unlisted.
---     Rejected videos are deleted after 30 days (unless appealed).
---  7. Appeals (in-app) and support tickets (fallback).
---  8. JV listings need approval too.
---  9. Company enquiries visible to company members.
--- ============================================================
 
--- ------------------------------------------------------------
--- 1. AUDIT LOG
--- ------------------------------------------------------------
+
+
+--
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 create table if not exists public.admin_audit_log (
   id bigint generated always as identity primary key,
   admin_id uuid references auth.users(id) on delete set null,
@@ -69,7 +67,7 @@ returns void language sql security definer set search_path = public as $$
 $$;
 revoke all on function public.log_admin_action(text, text, uuid, text, jsonb) from public, anon, authenticated;
 
--- "from day one": copy earlier verification decisions in once.
+
 insert into public.admin_audit_log(admin_id, action, target_type, target_id, reason, details, created_at)
 select vr.reviewed_by, 'verification.' || vr.status::text, vr.subject_type, vr.subject_id, vr.note,
        jsonb_build_object('backfilled', true), vr.created_at
@@ -79,7 +77,7 @@ where not exists (
   where l.target_id = vr.subject_id and l.created_at = vr.created_at
 );
 
--- Shared rule: every decision needs a reason.
+
 create or replace function public.check_decision(_decision text, _reason text)
 returns void language plpgsql immutable as $$
 begin
@@ -95,9 +93,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 5 (early). SUSPENSIONS — other rules depend on is_suspended()
--- ------------------------------------------------------------
+
 create table if not exists public.account_suspensions (
   id uuid primary key default gen_random_uuid(),
   subject_type text not null check (subject_type in ('user', 'company')),
@@ -131,7 +127,7 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
--- Suspended accounts can't publish.
+
 create or replace function public.can_publish_listings(p_user_id uuid)
 returns boolean
 language sql
@@ -155,9 +151,7 @@ as $$
   );
 $$;
 
--- ------------------------------------------------------------
--- 3. LISTING REVIEW
--- ------------------------------------------------------------
+
 alter table public.properties
   add column if not exists review_status text not null default 'none',
   add column if not exists review_note text,
@@ -169,13 +163,13 @@ do $$ begin
     check (review_status in ('none', 'pending', 'approved', 'rejected', 'changes_requested'));
 exception when duplicate_object then null; end $$;
 
--- Listings already live were published before this rule existed.
+
 update public.properties set review_status = 'approved', reviewed_at = now()
 where status in ('active', 'sold', 'rented') and review_status = 'none';
 
 create index if not exists properties_review_status_idx on public.properties(review_status);
 
--- Runs after properties_guard_write (006); triggers fire alphabetically.
+
 create or replace function public.guard_property_review()
 returns trigger
 language plpgsql
@@ -203,7 +197,7 @@ begin
     return new;
   end if;
 
-  -- Review fields are set only by submit_listing_for_review / admins.
+  
   new.review_status := old.review_status;
   new.review_note := old.review_note;
   new.submitted_at := old.submitted_at;
@@ -277,9 +271,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 4. PROPERTY DOCUMENT REVIEW
--- ------------------------------------------------------------
+
 alter table public.property_documents
   add column if not exists review_status text not null default 'pending',
   add column if not exists review_note text,
@@ -291,7 +283,7 @@ do $$ begin
     check (review_status in ('pending', 'approved', 'rejected', 'more_info'));
 exception when duplicate_object then null; end $$;
 
--- Documents on listings that were already live count as checked.
+
 update public.property_documents d set review_status = 'approved', reviewed_at = now()
 from public.properties p
 where p.id = d.property_id and p.review_status = 'approved' and d.review_status = 'pending'
@@ -322,7 +314,7 @@ create trigger property_documents_review_guard
 before insert or update on public.property_documents
 for each row execute function public.guard_property_document_review();
 
--- New / replaced / removed documents send an approved listing back to review.
+
 create or replace function public.property_documents_rereview()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
@@ -347,9 +339,7 @@ create trigger property_documents_rereview
 after insert or update or delete on public.property_documents
 for each row execute function public.property_documents_rereview();
 
--- ------------------------------------------------------------
--- 4b. GOVERNMENT ID DOCUMENTS
--- ------------------------------------------------------------
+
 create table if not exists public.identity_documents (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
@@ -386,7 +376,7 @@ create policy "Users remove pending ID documents"
 on public.identity_documents for delete to authenticated
 using (user_id = auth.uid() and status in ('pending', 'more_info'));
 
--- Agents need an ID on file (not rejected) to ask for verification.
+
 create or replace function public.request_agent_verification()
 returns text
 language plpgsql
@@ -420,10 +410,8 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- VERIFICATION DECISIONS (replaces 010 version: needs a reason,
--- supports "more_info", logs to the audit log)
--- ------------------------------------------------------------
+
+
 alter table public.verification_reviews add column if not exists decision text;
 alter table public.verification_reviews drop constraint if exists verification_reviews_note_check;
 alter table public.verification_reviews add constraint verification_reviews_note_check
@@ -480,7 +468,7 @@ begin
 end;
 $$;
 
--- What the signed-in user (and their company) last heard from admins.
+
 create or replace function public.get_my_verification_feedback()
 returns table (subject_type text, subject_id uuid, decision text, note text, created_at timestamptz)
 language sql stable security definer set search_path = public as $$
@@ -549,9 +537,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- LISTING MODERATION (replaces 010 versions)
--- ------------------------------------------------------------
+
 drop function if exists public.admin_list_properties(public.property_status);
 drop function if exists public.admin_unpublish_property(uuid);
 
@@ -618,7 +604,7 @@ begin
 end;
 $$;
 
--- Take a live listing down. It must be reviewed again to come back.
+
 create or replace function public.admin_unpublish_property(_property_id uuid, _reason text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -632,9 +618,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 5. SUSPEND / UNSUSPEND
--- ------------------------------------------------------------
+
 create or replace function public.admin_suspend(_subject_type text, _subject_id uuid, _reason text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -653,7 +637,7 @@ begin
   values (_subject_type, _subject_id, btrim(_reason), auth.uid())
   on conflict (subject_type, subject_id) do update set reason = excluded.reason;
 
-  -- Hide their live listings; they must be reviewed again later.
+  
   update public.properties pr
   set status = 'inactive', review_status = 'none', review_note = 'Hidden: account suspended'
   where pr.status = 'active' and (
@@ -713,7 +697,7 @@ begin
 end;
 $$;
 
--- Hide suspended accounts from the public directory (011).
+
 create or replace function public.get_public_agents(_id uuid default null)
 returns table (
   id uuid, name text, avatar text, email text, phone text, whatsapp_number text,
@@ -797,9 +781,7 @@ as $$
   order by coalesce(s.active, 0) desc, c.name;
 $$;
 
--- ------------------------------------------------------------
--- 6. LISTING VIDEOS
--- ------------------------------------------------------------
+
 create table if not exists public.listing_videos (
   id uuid primary key default gen_random_uuid(),
   property_id uuid not null references public.properties(id) on delete cascade,
@@ -908,7 +890,7 @@ begin
 end;
 $$;
 
--- Called by the publish route (admin session) once YouTube accepted the upload.
+
 create or replace function public.admin_mark_video_posted(_id uuid, _youtube_video_id text, _privacy text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -930,7 +912,7 @@ begin
 end;
 $$;
 
--- Sold / rented / hidden listings -> video should be unlisted; live again -> public.
+
 create or replace function public.listing_videos_follow_status()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -948,7 +930,7 @@ create trigger properties_videos_follow_status
 after update of status on public.properties
 for each row execute function public.listing_videos_follow_status();
 
--- Public: posted videos of live listings.
+
 create or replace function public.get_public_listing_videos(_property_ids uuid[])
 returns table (property_id uuid, youtube_video_id text)
 language sql stable security definer set search_path = public as $$
@@ -963,9 +945,7 @@ language sql stable security definer set search_path = public as $$
   order by v.created_at;
 $$;
 
--- ------------------------------------------------------------
--- 7a. APPEALS
--- ------------------------------------------------------------
+
 create table if not exists public.appeals (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
@@ -991,7 +971,7 @@ drop policy if exists "Users view their appeals" on public.appeals;
 create policy "Users view their appeals"
 on public.appeals for select to authenticated
 using (user_id = auth.uid());
--- Inserts only through submit_appeal().
+
 
 create or replace function public.submit_appeal(_subject_type text, _subject_id uuid, _message text)
 returns uuid language plpgsql security definer set search_path = public as $$
@@ -1054,7 +1034,7 @@ begin
 end;
 $$;
 
--- Accepting an appeal reopens the item for review (or lifts the suspension).
+
 create or replace function public.admin_resolve_appeal(_id uuid, _accept boolean, _reply text)
 returns void language plpgsql security definer set search_path = public as $$
 declare
@@ -1101,9 +1081,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 7b. SUPPORT TICKETS (fallback for anything else)
--- ------------------------------------------------------------
+
 create table if not exists public.support_tickets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid default auth.uid() references public.profiles(id) on delete set null,
@@ -1158,9 +1136,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 8. JV LISTINGS NEED APPROVAL
--- ------------------------------------------------------------
+
 alter table public.jv_properties
   add column if not exists review_status text not null default 'none',
   add column if not exists review_note text,
@@ -1319,9 +1295,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- 9. COMPANY ENQUIRIES (read-only for teammates)
--- ------------------------------------------------------------
+
 drop policy if exists "Company members view company listing enquiries" on public.inquiries;
 create policy "Company members view company listing enquiries"
 on public.inquiries for select to authenticated
@@ -1375,9 +1349,7 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------
--- STORAGE: ID cards + listing videos (private, own folder)
--- ------------------------------------------------------------
+
 insert into storage.buckets (id, name, public)
 values ('identity-documents', 'identity-documents', false),
        ('listing-videos', 'listing-videos', false)
@@ -1403,9 +1375,7 @@ using (
   and public.has_role(auth.uid(), 'admin')
 );
 
--- ------------------------------------------------------------
--- PERMISSIONS
--- ------------------------------------------------------------
+
 do $$
 declare
   f text;

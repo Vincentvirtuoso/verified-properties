@@ -114,6 +114,18 @@ export async function fetchEnquiryMessages(
   return (data ?? []).map(mapMessage);
 }
 
+export async function fetchTeamEnquiryMessages(
+  enquiryId: string,
+  client?: SupabaseClient,
+): Promise<ThreadEvent[]> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc("get_company_enquiry_messages", {
+    _inquiry_id: enquiryId,
+  });
+  if (error) throw error;
+  return (data ?? []).map(mapMessage);
+}
+
 export async function sendEnquiryMessage(
   enquiryId: string,
   senderId: string,

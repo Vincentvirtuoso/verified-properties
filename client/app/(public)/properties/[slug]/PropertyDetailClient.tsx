@@ -8,7 +8,7 @@ import {
   RiRefreshLine,
   RiHome4Line,
 } from "react-icons/ri";
-import { PopulatedProperty } from "@affilhomes/shared/types/property";
+import type { PopulatedProperty } from "@affilhomes/shared/types/property";
 import PropertyGallery from "@/components/property/PropertyGallery";
 import PropertyHeader from "@/components/property/PropertyHeader";
 import PropertyStats from "@/components/property/PropertyStats";
@@ -17,7 +17,6 @@ import PropertyDocuments from "@/components/property/PropertyDocuments";
 import PropertyVideos from "@/components/property/PropertyVideos";
 import ContactForm from "@/components/property/ContactForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
-import { useEffect, useState } from "react";
 import { LocationPlaceholder } from "@/components/property/PropertyLocation";
 import AgentCard from "@/components/property/AgentCard";
 
@@ -35,24 +34,16 @@ export default function PropertyDetailClient({
   property,
 }: PropertyDetailClientProps) {
   const { bannerHeight } = useBannerHeightContext();
-  const [stickyTop, setStickyTop] = useState<string>("auto");
-
-  useEffect(() => {
-    const updateTop = () => {
-      const isLg = window.innerWidth >= 1024;
-      if (isLg) {
-        setStickyTop(`${85 + (bannerHeight || 0)}px`);
-      } else {
-        setStickyTop("auto");
-      }
-    };
-    updateTop();
-    window.addEventListener("resize", updateTop);
-    return () => window.removeEventListener("resize", updateTop);
-  }, [bannerHeight]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      // Expose the banner height as a CSS var so the sticky sidebar
+      // can offset itself with pure CSS — no resize listener needed.
+      style={
+        { "--banner-offset": `${bannerHeight ?? 0}px` } as React.CSSProperties
+      }
+    >
       <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="container max-w-7xl py-3 flex items-center justify-between gap-4">
           <Link
@@ -165,7 +156,10 @@ export default function PropertyDetailClient({
           </div>
 
           <div className="lg:col-span-1">
-            <div className="lg:sticky space-y-4" style={{ top: stickyTop }}>
+            {/* Pure CSS sticky offset — works on all screen sizes:
+                mobile  → non-sticky (sticky is lg: only)
+                desktop → 85px + banner height, updates reactively */}
+            <div className="space-y-4 lg:sticky lg:top-[calc(85px+var(--banner-offset,0px))]">
               {typeof property.ownerId !== "string" && (
                 <AgentCard
                   owner={property.ownerId}

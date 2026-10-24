@@ -157,3 +157,4 @@ on function public.create_company_for_current_user(
   text
 )
 to authenticated;
+

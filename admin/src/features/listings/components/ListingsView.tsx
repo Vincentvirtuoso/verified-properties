@@ -110,7 +110,7 @@ export function ListingsTab() {
   const [filter, setFilter] = useState<Filter>("pending");
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const { rows, error, reload } = useAdminList<AdminListing>(
+  const { rows, error, reload, loading } = useAdminList<AdminListing>(
     () =>
       filter === "live"
         ? fetchAdminListings("active", null)
@@ -138,14 +138,16 @@ export function ListingsTab() {
               {rows.length} {rows.length === 1 ? "listing" : "listings"}
             </span>
           )}
-          <button
+          <Button
             type="button"
+            size="xs"
+            variant="ghost"
             onClick={reload}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            isLoading={loading}
+            leftIcon={<LuRefreshCw size={12} aria-hidden="true" />}
           >
-            <LuRefreshCw size={12} aria-hidden="true" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -515,7 +517,6 @@ function DocumentRow({
     </div>
   );
 }
-
 
 function ListingThumb({
   image,

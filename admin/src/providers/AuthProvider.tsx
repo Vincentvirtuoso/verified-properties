@@ -151,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Each load gets an id; only the newest one is allowed to write state.
   const requestIdRef = useRef(0);
 
   const refresh = useCallback(async (): Promise<Snapshot> => {
@@ -160,7 +159,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       next = await loadSession(supabase);
     } catch (err) {
-      console.error("Failed to load admin session:", err);
       next = SIGNED_OUT;
     }
     if (id === requestIdRef.current) setSnapshot(next);
@@ -177,7 +175,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        // Defer: Supabase advises against calling its methods inside this callback.
         setTimeout(() => void refresh(), 0);
       }
     });

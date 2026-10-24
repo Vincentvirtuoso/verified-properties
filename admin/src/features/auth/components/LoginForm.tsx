@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { LuEye, LuEyeOff, LuLock, LuMail } from "react-icons/lu";
+import { useEffect } from "react";
+import { LuLock, LuMail } from "react-icons/lu";
 
-import { Button } from "@affilhomes/shared/ui";
+import { Button, Field } from "@affilhomes/shared/ui";
 
 import { useZodForm } from "@/hooks/useZodForm";
 import { useAuth } from "@/providers/AuthProvider";
@@ -18,7 +18,6 @@ export function LoginForm() {
   const next = search.get("next") ?? "/dashboard";
 
   const { login, status, authLoading, authError, clearError } = useAuth();
-  const [showPw, setShowPw] = useState(false);
 
   const { values, errors, setField, handleSubmit } = useZodForm(loginSchema, {
     email: "",
@@ -42,80 +41,48 @@ export function LoginForm() {
     clearError();
     try {
       await login(data);
-    } catch {
-    }
+    } catch {}
   });
 
   const disabled = authLoading || status === "loading";
 
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <div className="relative">
-          <LuMail
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            autoFocus
-            placeholder="you@example.com"
-            value={values.email}
-            onChange={(e) => setField("email", e.target.value)}
-            aria-invalid={!!errors.email}
-            className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-        </div>
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <Link
-            href="/forgot-password"
-            className="text-xs font-medium text-primary hover:underline"
-          >
-            Forgot?
-          </Link>
-        </div>
-        <div className="relative">
-          <LuLock
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            id="password"
-            type={showPw ? "text" : "password"}
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={values.password}
-            onChange={(e) => setField("password", e.target.value)}
-            aria-invalid={!!errors.password}
-            className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring aria-invalid:border-destructive"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPw((v) => !v)}
-            tabIndex={-1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted hover:bg-secondary"
-            aria-label={showPw ? "Hide password" : "Show password"}
-          >
-            {showPw ? <LuEyeOff size={16} /> : <LuEye size={16} />}
-          </button>
-        </div>
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password}</p>
-        )}
+      <Field
+        label="Email"
+        iconElement={
+          <LuMail size={14} className="pointer-events-none text-muted" />
+        }
+        id="email"
+        type="email"
+        autoComplete="email"
+        autoFocus
+        placeholder="you@example.com"
+        value={values.email}
+        onChange={(e) => setField("email", e.target.value)}
+        aria-invalid={!!errors.email}
+        error={errors.email}
+      />
+      <div className="flex flex-col">
+        <Field
+          type={"password"}
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={values.password}
+          onChange={(e) => setField("password", e.target.value)}
+          aria-invalid={!!errors.password}
+          iconElement={
+            <LuLock size={14} className="pointer-events-none text-muted" />
+          }
+          label="Password"
+          error={errors.password}
+        />
+        <Link
+          href="/forgot-password"
+          className="text-xs font-medium text-primary hover:underline place-self-end mt-1"
+        >
+          Forgot password?
+        </Link>
       </div>
 
       {authError && (
@@ -129,14 +96,12 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        disabled={disabled}
         className="h-11 w-full"
-        isLoading={authLoading}
-        loadingText="Signing in…"
+        isLoading={disabled}
+        loadingText={status === "loading" ? "Checking token…" : "Signing in…"}
       >
         Sign in
       </Button>
     </form>
   );
 }
-

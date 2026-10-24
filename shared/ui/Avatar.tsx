@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-import { cn, imageLoader } from "../utils";
+import { cn,  } from "../utils";
+import imageLoader from "../utils/imageLoader";
 
 const DEFAULT_FALLBACK = "/placeholder_avatar.png";
 
@@ -140,7 +141,6 @@ export function Avatar({
         fill
         quality={quality}
         sizes={`${size}px`}
-        loader={imageLoader}
         priority={priority}
         onLoad={() => setIsLoading(false)}
         onError={() => {

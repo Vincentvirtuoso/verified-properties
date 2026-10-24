@@ -1,35 +1,31 @@
 import { cache } from "react";
+import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import PropertyDetailClient from "./PropertyDetailClient";
-import { PropertyNotFound } from "@/components/property/PropertyNotFound";
 import type { PopulatedProperty } from "@affilhomes/shared/types/property";
 import { createClient } from "@affilhomes/shared/supabase/client";
 import { fetchPropertyBySlug } from "@affilhomes/shared/supabase";
-import { properties as mockProperties } from "@/data/properties";
 
-export const revalidate = 3600;
+/**
+ * ISR: page HTML re-renders at most every 60s.
+ * The DB query below is separately cached with a tag so admins can
+ * purge it instantly via `revalidateTag("properties")`.
+ */
+export const revalidate = 60;
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://verified-properties.com.ng";
 
-function findMockProperty(slug: string): PopulatedProperty | null {
-  return (
-    (mockProperties as PopulatedProperty[]).find((p) => p.slug === slug) ?? null
-  );
-}
-
-const getProperty = cache(
-  async (slug: string): Promise<PopulatedProperty | null> => {
-    try {
+  const getProperty = cache(
+  unstable_cache(
+    async (slug: string): Promise<PopulatedProperty | null> => {
       const supabase = await createClient();
-      const dbProperty = await fetchPropertyBySlug(slug, supabase);
-      if (dbProperty) return dbProperty;
-    } catch (err) {
-      console.error(`[property:${slug}] DB fetch failed, using mock:`, err);
-    }
-
-    return findMockProperty(slug);
-  },
+      return fetchPropertyBySlug(slug, supabase);
+    },
+    ["property-by-slug"],
+    { revalidate: 60, tags: ["properties"] },
+  ),
 );
 
 interface PageProps {
@@ -45,8 +41,6 @@ export async function generateMetadata({
   if (!property) {
     return {
       title: "Property not found",
-      description:
-        "The listing you're looking for doesn't exist or has been removed.",
       robots: { index: false, follow: false },
     };
   }
@@ -83,7 +77,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const property = await getProperty(slug);
 
-  if (!property) return <PropertyNotFound slug={slug} />;
+  if (!property) notFound();
 
   return <PropertyDetailClient property={property} />;
 }
