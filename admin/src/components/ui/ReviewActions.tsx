@@ -4,7 +4,6 @@ import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { IconType } from "react-icons";
 import {
   LuCheck,
-  LuCircleAlert,
   LuCircleHelp,
   LuInbox,
   LuPlus,

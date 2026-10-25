@@ -6,8 +6,8 @@ import {
   resolveAppeal,
   type AdminAppeal,
 } from "@affilhomes/shared/supabase/admin";
-import { Empty, FilterChips, ReviewActions, StatusPill } from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+import { useAdminList } from "@/hooks/useAdminList";
+import { Empty, FilterChips,ReviewActions,StatusPill } from "@/components/ui/ReviewActions";
 
 const SUBJECT_LABEL: Record<string, string> = {
   listing: "Listing",
@@ -81,15 +81,13 @@ export function AppealsTab() {
               </div>
               {a.status === "open" && (
                 <ReviewActions
-                  decisions={["approve", "reject"]}
                   labels={{ approve: "Accept & reopen", reject: "Decline" }}
-                  placeholder="Reply to the user (required, saved in the audit log)"
-                  onDecide={async (d: "approve", reply: string) => {
-                    await resolveAppeal(a.id, d === "approve", reply);
+                  onDecide={async (decision, reason) => {
+                    await resolveAppeal(a.id, decision === "approve", reason);
                     reload();
                   }}
                 />
-              )}
+              )}{" "}
             </li>
           ))}
         </ul>

@@ -7,7 +7,7 @@ import {
   type AuditEntry,
 } from "@affilhomes/shared/supabase/admin";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { Empty, FilterChips } from "./ReviewActions";
+import { Empty, FilterChips } from "@/components/ui/ReviewActions";
 
 const AREAS = [
   { value: "", label: "Everything" },
@@ -76,7 +76,7 @@ export function AuditTab() {
       {!rows ? (
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
-        <Empty>No actions recorded yet.</Empty>
+        <Empty message="No actions recorded yet." />
       ) : (
         <>
           <ul className="divide-y divide-border rounded-2xl border border-border bg-card text-sm">

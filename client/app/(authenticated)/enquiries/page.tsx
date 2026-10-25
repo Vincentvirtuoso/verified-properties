@@ -5,15 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
 import { EnquiryThread } from "@/components/enquiries/EnquiryThread";
-import { fetchMyEnquiries as fetchRealMyEnquiries } from "@affilhomes/shared/supabase";
-import { fetchMockMyEnquiries } from "@/data/mock-enquiry";
+import { fetchMyEnquiries } from "@affilhomes/shared/supabase";
 import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { EnquiriesSkeleton } from "@/components/enquiries/EnquirySkeleton";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_DEV_MODE === "development";
-
-const fetchMyEnquiries = USE_MOCK ? fetchMockMyEnquiries : fetchRealMyEnquiries;
 
 export default function EnquiriesPage() {
   const { user, isLoading } = useAuth();

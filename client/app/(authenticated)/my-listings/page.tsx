@@ -25,6 +25,7 @@ import { formatPrice } from "@/lib/formatters";
 import { Button } from "@affilhomes/shared/ui/Button";
 import { Skeleton } from "@affilhomes/shared/ui";
 import { useConfirm } from "@/contexts/ConfirmDialog";
+import { ListingThumb } from "@affilhomes/shared/ui/ListingThumb";
 
 const PAGE_SIZE = 8;
 
@@ -365,7 +366,7 @@ export default function MyListingsPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by title or city"
             aria-label="Search listings"
-            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:ring-2 focus:ring-primary/30 sm:max-w-xs"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:ring-2 focus:ring-primary/30 sm:max-w-xs appearance-none"
           />
           <div
             role="tablist"
@@ -475,6 +476,13 @@ export default function MyListingsPage() {
                       {getBadgeLabel(p)}
                     </span>
                   </div>
+                  {p.image && (
+                    <ListingThumb
+                      image={{ url: p.image, alt: p.title }}
+                      title={p.title}
+                      count={p.gallery ? p.gallery.length : 1}
+                    />
+                  )}
 
                   {bucket === "pending" && (
                     <p className="text-sm text-muted">

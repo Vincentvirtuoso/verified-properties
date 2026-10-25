@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import SavedPropertiesClient from "./SavedPropertiesClient";
 import { fetchSavedProperties } from "@affilhomes/shared/supabase";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import type { SavedProperty } from "@affilhomes/shared/types";
 
 export default function SavedPropertiesPage() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { fetchMyListings } from "@affilhomes/shared/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,7 @@ import {
   LuFileText,
   LuPhone,
 } from "react-icons/lu";
-import { FiBarChart2, FiZap } from "react-icons/fi";
+import { FiZap } from "react-icons/fi";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@affilhomes/shared/ui/Button";
 import Link from "next/link";
@@ -35,7 +35,67 @@ import {
 import { cn } from "@/lib/utils";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
-import { PageSpinner } from "@affilhomes/shared/ui";
+import { LuMapPin, LuImage } from "react-icons/lu";
+import { PropertyStatus } from "@affilhomes/shared/types";
+
+const LISTING_STATUS: Record<
+  PropertyStatus,
+  { label: string; className: string }
+> = {
+  active: { label: "Live", className: "bg-emerald-500/10 text-emerald-600" },
+  draft: {
+    label: "Pending review",
+    className: "bg-amber-500/10 text-amber-600",
+  },
+  sold: { label: "Sold", className: "bg-blue-500/10 text-blue-600" },
+  rented: { label: "Rented", className: "bg-blue-500/10 text-blue-600" },
+  inactive: {
+    label: "Inactive",
+    className: "bg-muted/30 text-muted-foreground",
+  },
+};
+
+function ListingStatusRow({ item }: { item: PopulatedProperty }) {
+  const status = LISTING_STATUS[item.status];
+  const image = item.image ?? item.gallery?.[0]?.url;
+  const place = [item.location.city, item.location.state]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <Link
+      href={`/properties/${item.slug}`}
+      className="flex items-center gap-4 bg-card border border-border rounded-2xl p-4 hover:shadow-md transition-all"
+    >
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="h-16 w-20 rounded-xl object-cover shrink-0 bg-muted"
+        />
+      ) : (
+        <div className="h-16 w-20 rounded-xl bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
+          <LuImage />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold truncate">{item.title}</p>
+        <p className="text-sm text-muted truncate flex items-center gap-1">
+          <LuMapPin className="shrink-0" />
+          {place}
+        </p>
+      </div>
+      <span
+        className={cn(
+          "text-xs font-medium px-2.5 py-1 rounded-full shrink-0",
+          status.className,
+        )}
+      >
+        {status.label}
+      </span>
+    </Link>
+  );
+}
 
 const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   const recommended = properties.slice(0, 2);
@@ -258,7 +318,11 @@ const AgentDashboard = ({
         </div>
       </div>
 
-      <RecentListings title="Your Recent Listings" listings={agentListings} />
+      <RecentListings
+        title="Your Recent Listings"
+        listings={agentListings}
+        renderItem={(item) => <ListingStatusRow item={item} />}
+      />
     </div>
   );
 };
@@ -302,9 +366,11 @@ function DashboardCard({
 function RecentListings({
   title,
   listings,
+  renderItem,
 }: {
   title: string;
   listings: PopulatedProperty[];
+  renderItem?: (item: PopulatedProperty) => React.ReactNode;
 }) {
   return (
     <div>
@@ -315,11 +381,19 @@ function RecentListings({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listings.slice(0, 3).map((item) => (
-              <PropertyCard key={item._id} {...item} />
-            ))}
-          </div>
+          {renderItem ? (
+            <div className="space-y-3">
+              {listings.slice(0, 3).map((item) => (
+                <Fragment key={item._id}>{renderItem(item)}</Fragment>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {listings.slice(0, 3).map((item) => (
+                <PropertyCard key={item._id} {...item} />
+              ))}
+            </div>
+          )}
           <div className="flex justify-center mt-6">
             <Link href="/my-listings">
               <Button variant="outline" className="px-8">

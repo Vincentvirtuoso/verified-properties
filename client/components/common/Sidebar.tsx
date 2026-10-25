@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,10 +30,16 @@ import { FiBarChart2 } from "react-icons/fi";
 import { ListingsIcon } from "@affilhomes/shared/icons";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 import { cn } from "@/utils";
+import { Spinner } from "@affilhomes/shared/ui";
 
 type SidebarSlot =
   | { kind: "count"; value: number; max?: number }
-  | { kind: "label"; value: string; tone?: "info" | "warning" | "success" };
+  | {
+      kind: "label";
+      value: string;
+      tone?: "info" | "warning" | "success" | "danger";
+    }
+  | { kind: "loading" };
 
 export interface SidebarLink {
   href: string;
@@ -45,7 +51,10 @@ export interface SidebarLink {
   disabled?: boolean;
 }
 
-function getRoleLinks(role: Role | undefined): SidebarLink[] {
+function getRoleLinks(
+  role: Role | undefined,
+  data: RoleLinkData = {},
+): SidebarLink[] {
   if (!role) {
     return [
       { href: "/", label: "Home", icon: <LuHouse /> },
@@ -53,6 +62,13 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       { href: "/support", label: "Support", icon: <LuCircleHelp /> },
     ];
   }
+  const isLoading = !!data.isLoading;
+
+  const count = (
+    value: number | null | undefined,
+    max = 99,
+  ): SidebarSlot | undefined =>
+    isLoading ? { kind: "loading" } : countSlot(value, max);
 
   const commonExplore: SidebarLink[] = [
     { href: "/", label: "Home", icon: <LuHouse /> },
@@ -77,6 +93,7 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
       label: "JV Threads",
       icon: <LuInbox />,
       category: "Joint Ventures",
+      ...withSlot(count(data.jvThreadsUnread)),
     },
     {
       href: "/jv-opportunity/new",
@@ -111,14 +128,14 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Enquiries",
           icon: <LuMessagesSquare />,
           category: "Management",
-          slot: { kind: "count", value: 2, max: 9 },
+          ...withSlot(count(data.enquiriesCount)),
         },
         {
           href: "/saved-properties",
           label: "Saved Homes",
           icon: <LuBookmark />,
           category: "Management",
-          slot: { kind: "count", value: 7, max: 99 },
+          ...withSlot(count(data.savedPropertiesCount)),
         },
         ...commonTrailing,
       ];
@@ -137,34 +154,41 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Enquiries",
           icon: <LuMessagesSquare />,
           category: "Management",
-          slot: { kind: "count", value: 12, max: 99 },
+          ...withSlot(count(data.enquiriesCount)),
         },
         {
           href: "/my-listings",
           label: "My Listings",
           icon: <ListingsIcon />,
           category: "Management",
-          slot: { kind: "count", value: 4, max: 99 },
+          ...withSlot(count(data.listingsCount)),
         },
         {
           href: "/list-property",
           label: "List Property",
           icon: <ListNewPropertyIcon />,
           category: "Management",
-          slot: { kind: "label", value: "Draft", tone: "warning" },
+          ...withSlot(
+            data.draftListingsCount
+              ? labelSlot(`Draft (${data.draftListingsCount})`, "warning")
+              : undefined,
+          ),
         },
         {
           href: "/saved-properties",
           label: "Saved Homes",
           icon: <LuBookmark />,
           category: "Management",
+          ...withSlot(count(data.savedPropertiesCount)),
         },
         {
           href: "/analytics",
           label: "Analytics",
           icon: <FiBarChart2 />,
           category: "Management",
-          slot: { kind: "label", value: "New", tone: "info" },
+          ...withSlot(
+            data.analyticsIsNew ? labelSlot("New", "info") : undefined,
+          ),
         },
         ...commonTrailing,
       ];
@@ -183,34 +207,42 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
           label: "Enquiries",
           icon: <LuMessagesSquare />,
           category: "Management",
-          slot: { kind: "count", value: 23, max: 99 },
+          ...withSlot(count(data.enquiriesCount)),
         },
         {
           href: "/company/listings",
           label: "All Listings",
           icon: <ListingsIcon />,
           category: "Management",
-          slot: { kind: "count", value: 41, max: 99 },
+          ...withSlot(count(data.listingsCount)),
         },
         {
           href: "/company/team",
           label: "Team",
           icon: <LuUsers />,
           category: "Management",
-          slot: { kind: "count", value: 8, max: 99 },
+          ...withSlot(count(data.teamMembersCount)),
         },
         {
           href: "/company/analytics",
           label: "Analytics",
           icon: <FiBarChart2 />,
           category: "Management",
+          ...withSlot(
+            data.analyticsIsNew ? labelSlot("New", "info") : undefined,
+          ),
         },
         {
           href: "/company/jobs",
           label: "Open Roles",
           icon: <LuBriefcase />,
           category: "Management",
-          slot: { kind: "label", value: "3", tone: "warning" },
+          ...withSlot(
+            labelSlot(
+              data.openRolesCount ? String(data.openRolesCount) : undefined,
+              "warning",
+            ),
+          ),
         },
         ...commonTrailing,
       ];
@@ -218,6 +250,36 @@ function getRoleLinks(role: Role | undefined): SidebarLink[] {
     default:
       return [...commonExplore, ...commonJv, ...commonTrailing];
   }
+}
+
+export type RoleLinkData = {
+  enquiriesCount?: number | null;
+  savedPropertiesCount?: number | null;
+  listingsCount?: number | null;
+  draftListingsCount?: number | null;
+  teamMembersCount?: number | null;
+  openRolesCount?: number | null;
+  jvThreadsUnread?: number | null;
+  analyticsIsNew?: boolean | null;
+  isLoading?: boolean;
+};
+
+function countSlot(
+  value: number | null | undefined,
+  max = 99,
+): SidebarSlot | undefined {
+  return value && value > 0 ? { kind: "count", value, max } : undefined;
+}
+
+function labelSlot(
+  value: string | undefined,
+  tone: "info" | "warning" | "success" | "danger" = "info",
+): SidebarSlot | undefined {
+  return value ? { kind: "label", value, tone } : undefined;
+}
+
+function withSlot(slot: SidebarSlot | undefined): { slot?: SidebarSlot } {
+  return slot ? { slot } : {};
 }
 
 function formatCount(slot: Extract<SidebarSlot, { kind: "count" }>) {
@@ -233,6 +295,7 @@ const labelToneClasses: Record<
   info: "bg-info/10 text-info",
   warning: "bg-warning/10 text-warning",
   success: "bg-success/10 text-success",
+  danger: "bg-destructive/10 text-destructive",
 };
 
 function SlotBadge({
@@ -251,6 +314,17 @@ function SlotBadge({
         className={`absolute right-2 top-2 h-1.5 w-1.5 rounded-full ${
           active ? "bg-primary-foreground" : "bg-primary"
         }`}
+      />
+    );
+  }
+
+  if (slot.kind === "loading") {
+    return (
+      <Spinner
+        size="xs"
+        label="Loading"
+        variant="muted"
+        className="ml-auto shrink-0"
       />
     );
   }
@@ -465,11 +539,42 @@ export const Sidebar = ({
   const router = useRouter();
   const { bannerHeight } = useBannerHeightContext();
   const { user, logout, isLoading } = useAuth();
+  const [summary, setSummary] = useState<RoleLinkData>({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
-  const activeLinks = useMemo(() => {
-    if (externalLinks) return externalLinks;
-    return getRoleLinks(user?.activeRole);
-  }, [externalLinks, user?.activeRole]);
+  useEffect(() => {
+    if (externalLinks || !user?._id) {
+      setSummary({});
+      setSummaryLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSummaryLoading(true);
+
+    fetch("/api/summary", { signal: controller.signal })
+      .then((r) => (r.ok ? (r.json() as Promise<RoleLinkData>) : null))
+      .then((d) => {
+        if (d) setSummary(d);
+      })
+      .catch((e) => {
+        if (e?.name !== "AbortError") {
+          console.error("[Sidebar] failed to load summary:", e);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSummaryLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [externalLinks, user?._id, user?.activeRole, pathname]);
+
+  const activeLinks = useMemo(
+    () =>
+      externalLinks ??
+      getRoleLinks(user?.activeRole, { ...summary, isLoading: summaryLoading }),
+    [externalLinks, user?.activeRole, summary, summaryLoading],
+  );
 
   const handleLogout = async () => {
     await logout();

@@ -50,7 +50,6 @@ function RegisterForm() {
     email: "",
     firstName: "",
     lastName: "",
-    username: "",
     phone: "",
     password: "",
     repeatPassword: "",
@@ -81,7 +80,6 @@ function RegisterForm() {
     if (!formData.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Please enter a valid email";
-    if (!formData.username.trim()) newErrors.username = "Username is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.password) newErrors.password = "Password is required";
     else if (formData.password.length < 6)
@@ -206,18 +204,6 @@ function RegisterForm() {
         onChange={handleInputChange}
         error={errors.email}
         icon={FiMail}
-        required
-      />
-
-      <Field
-        label="Username"
-        name="username"
-        type="text"
-        placeholder="johndoe"
-        value={formData.username}
-        onChange={handleInputChange}
-        error={errors.username}
-        icon={FiAtSign}
         required
       />
 

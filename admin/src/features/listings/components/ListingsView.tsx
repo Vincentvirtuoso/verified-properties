@@ -34,6 +34,7 @@ import { useAdminList } from "@/hooks/useAdminList";
 import { Alert } from "@affilhomes/shared/ui/Alert";
 import { DocButton, useOpenDocument } from "./Primitives";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { ListingThumb } from "@affilhomes/shared/ui/ListingThumb";
 
 type Filter = ReviewStatus | "live";
 type PillTone = "neutral" | "success" | "warning" | "danger";
@@ -518,44 +519,3 @@ function DocumentRow({
   );
 }
 
-function ListingThumb({
-  image,
-  title,
-  count,
-}: {
-  image: AdminListing["coverImage"];
-  title: string;
-  count: number;
-}) {
-  const [failed, setFailed] = useState(false);
-  const frame =
-    "relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl";
-
-  if (!image || failed) {
-    return (
-      <div
-        aria-hidden="true"
-        className={`${frame} flex items-center justify-center bg-secondary text-muted-foreground`}
-      >
-        <LuImage size={20} />
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${frame} bg-secondary`}>
-      <img
-        src={image.url}
-        alt={image.alt || `Photo of ${title}`}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className="size-full object-cover"
-      />
-      {count > 1 && (
-        <span className="absolute bottom-1.5 right-1.5 rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums backdrop-blur">
-          +{count - 1}
-        </span>
-      )}
-    </div>
-  );
-}

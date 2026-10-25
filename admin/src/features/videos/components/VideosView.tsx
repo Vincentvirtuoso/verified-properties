@@ -9,8 +9,8 @@ import {
   type AdminVideo,
 } from "@affilhomes/shared/supabase/admin";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { Empty, FilterChips, ReviewActions, StatusPill } from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+import { Empty, FilterChips, ReviewActions, StatusPill } from "@/components/ui/ReviewActions";
+import { useAdminList } from "@/hooks/useAdminList";
 
 type Filter = "pending" | "approved" | "changes_requested" | "rejected";
 

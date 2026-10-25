@@ -6,8 +6,13 @@ import {
   fetchTickets,
   type AdminTicket,
 } from "@affilhomes/shared/supabase/admin";
-import { Empty, FilterChips, ReviewActions, StatusPill } from "./ReviewActions";
-import { useAdminList } from "./useAdminList";
+import {
+  Empty,
+  FilterChips,
+  ReviewActions,
+  StatusPill,
+} from "@/components/ui/ReviewActions";
+import { useAdminList } from "@/hooks/useAdminList";
 
 type Filter = "open" | "closed";
 
@@ -36,7 +41,7 @@ export function SupportTab() {
       {!rows ? (
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : rows.length === 0 ? (
-        <Empty>No messages.</Empty>
+        <Empty message="No messages."/>
       ) : (
         <ul className="space-y-3">
           {rows.map((t) => (
@@ -72,9 +77,7 @@ export function SupportTab() {
               </div>
               {t.status === "open" && (
                 <ReviewActions
-                  decisions={["approve"]}
                   labels={{ approve: "Close ticket" }}
-                  placeholder="What was done (required, saved in the audit log)"
                   onDecide={async (_d, note) => {
                     await closeTicket(t.id, note);
                     reload();

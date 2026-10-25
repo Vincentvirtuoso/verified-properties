@@ -2,8 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    loader: "custom",
-    loaderFile: "./utils/image-loader.ts",
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "i.pravatar.cc" },
@@ -17,10 +15,10 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
+    qualities: [75, 90],
     minimumCacheTTL: 60 * 60 * 24,
   },
   transpilePackages: ["@affilhomes/shared"],
-  experimental: {},
 };
 
 export default nextConfig;

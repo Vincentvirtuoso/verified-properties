@@ -88,7 +88,10 @@ async function hydrate(
   if (owners.error) throw owners.error;
   if (docs.error) throw docs.error;
   // Only videos reviewed and posted to the Affilhomes YouTube channel.
-  const videoMap = await fetchPublicVideoIds(rows.map((r) => r.id), supabase);
+  const videoMap = await fetchPublicVideoIds(
+    rows.map((r) => r.id),
+    supabase,
+  );
 
   const ownerMap = new Map<string, PopulatedUser>(
     (owners.data ?? []).map((o: any) => [o.id, mapPublicOwner(o)]),
@@ -156,13 +159,69 @@ export async function fetchPropertyBySlug(
     .from("properties")
     .select(PUBLIC_PROPERTY_SELECT)
     .eq("status", "active")
-    .ilike("slug", slug)
+    .eq("slug", slug.toLowerCase())
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
   const [property] = await hydrate(supabase, [data]);
   return property;
+}
+
+/**
+ * Active listings similar to a given one: same category and city first,
+ * then same category elsewhere to fill the remaining slots.
+ * Used on the unavailable-listing page; excludes the listing being viewed.
+ */
+export async function fetchSimilarProperties(
+  {
+    category,
+    city,
+    excludeId,
+    limit = 3,
+  }: {
+    category: string;
+    city: string;
+    excludeId: string;
+    limit?: number;
+  },
+  client?: SupabaseClient,
+): Promise<PopulatedProperty[]> {
+  const supabase = client ?? createClient();
+
+  const activeBase = (take: number) =>
+    supabase
+      .from("properties")
+      .select(PUBLIC_PROPERTY_SELECT)
+      .eq("status", "active")
+      .neq("id", excludeId)
+      .order("created_at", { ascending: false })
+      .limit(take);
+
+  const { data: nearby, error: nearbyError } = await activeBase(limit)
+    .eq("category", category)
+    .eq("city", city);
+  if (nearbyError) throw nearbyError;
+
+  let rows = nearby ?? [];
+  const remaining = limit - rows.length;
+
+  if (remaining > 0) {
+    let fillQuery = activeBase(remaining).eq("category", category);
+    if (rows.length > 0) {
+      fillQuery = fillQuery.not(
+        "id",
+        "in",
+        `(${rows.map((r) => r.id).join(",")})`,
+      );
+    }
+    const { data: fill, error: fillError } = await fillQuery;
+    if (fillError) throw fillError;
+    rows = rows.concat(fill ?? []);
+  }
+
+  if (rows.length === 0) return [];
+  return hydrate(supabase, rows);
 }
 
 /** Home page counters, computed from active listings. */
