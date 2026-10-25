@@ -82,7 +82,7 @@ export async function proxy(req: NextRequest) {
   }
 
   if (!isAdmin(user)) {
-    if (pathname === "/unauthorized") return res;
+    if (isPublic(pathname)) return res;
     return redirectTo("/unauthorized");
   }
 

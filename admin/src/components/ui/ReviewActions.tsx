@@ -160,7 +160,7 @@ export function FilterChips<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible"
+      className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible hide-scrollbar"
     >
       {options.map((o) => {
         const active = o.value === value;

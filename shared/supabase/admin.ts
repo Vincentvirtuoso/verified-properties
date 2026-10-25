@@ -157,6 +157,18 @@ export interface AdminJV {
   createdAt: string;
 }
 
+export type AdminRequestStatus = "pending" | "approved" | "rejected";
+
+export interface AdminRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string | null;
+  message: string | null;
+  status: AdminRequestStatus;
+  createdAt: string;
+}
+
 export interface AuditEntry {
   id: number;
   adminId: string | null;
@@ -183,6 +195,50 @@ export async function isAdmin(client?: SupabaseClient): Promise<boolean> {
   const { data, error } = await sb(client).rpc("is_admin");
   if (error) return false;
   return data === true;
+}
+
+/** Called by a signed-in user from the public app. Returns the request id. */
+export async function requestAdminAccess(
+  message?: string | null,
+  client?: SupabaseClient,
+): Promise<string> {
+  const trimmed = message?.trim() || null;
+  return rpc<string>("request_admin_access", { _message: trimmed }, client);
+}
+
+/** Super admin only. Pass null to list every status. */
+export async function fetchAdminRequests(
+  status: AdminRequestStatus | null = "pending",
+  client?: SupabaseClient,
+): Promise<AdminRequest[]> {
+  const data = await rpc<any[]>(
+    "super_admin_list_admin_requests",
+    { _status: status },
+    client,
+  );
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    userId: r.user_id,
+    userName: r.user_name,
+    userEmail: r.user_email,
+    message: r.message,
+    status: r.status,
+    createdAt: r.created_at,
+  }));
+}
+
+/** Super admin only. Approving grants the admin role and activates the account. */
+export async function superAdminReviewAdminRequest(
+  id: string,
+  approve: boolean,
+  reason: string,
+  client?: SupabaseClient,
+) {
+  await rpc(
+    "super_admin_review_admin_request",
+    { _id: id, _approve: approve, _reason: reason.trim() },
+    client,
+  );
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

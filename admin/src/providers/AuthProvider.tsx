@@ -181,33 +181,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const requestIdRef = useRef(0);
   const inFlightRef = useRef<Promise<Snapshot> | null>(null);
+  const snapshotRef = useRef<Snapshot>({
+    user: null,
+    role: null,
+    status: "loading",
+  });
 
-  const refresh = useCallback((): Promise<Snapshot> => {
+  const commit = useCallback((next: Snapshot) => {
+    snapshotRef.current = next;
+    setSnapshot(next);
+  }, []);
+
+  const load = useCallback((): Promise<Snapshot> => {
     if (!inFlightRef.current) {
-      inFlightRef.current = loadSession(supabase)
-        .catch((err) => {
-          console.error("[auth] refresh failed", err);
-          return UNAUTHORIZED;
-        })
-        .finally(() => {
-          inFlightRef.current = null;
-        });
+      inFlightRef.current = loadSession(supabase).finally(() => {
+        inFlightRef.current = null;
+      });
     }
-    return inFlightRef.current.then((next) => {
-      setSnapshot(next);
-      return next;
-    });
+    return inFlightRef.current;
   }, [supabase]);
+
+  // Lenient refresh: on failure, keep whatever we already know.
+  const refresh = useCallback(async () => {
+    try {
+      commit(await load());
+    } catch (err) {
+      console.error("[auth] refresh failed, keeping previous state", err);
+    }
+  }, [load, commit]);
 
   useEffect(() => {
     void refresh();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
-        requestIdRef.current++;
-        setSnapshot(SIGNED_OUT);
+        commit(SIGNED_OUT);
         return;
       }
       if (
@@ -235,11 +244,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw error;
 
-        const next = await refresh();
-
+        const next = await load();
+        commit(next);
         if (next.status === "unauthorized") {
           await supabase.auth.signOut();
-          setSnapshot(SIGNED_OUT);
+          commit(SIGNED_OUT);
           setAuthError("This account doesn't have admin access.");
         }
         return next.status;
@@ -261,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) {
       setAuthError("Logout failed. Please try again.");
     } else {
-      setSnapshot(SIGNED_OUT);
+      commit(SIGNED_OUT);
     }
     setAuthLoading(false);
     setIsLoggingOut(false);

@@ -71,7 +71,7 @@ export const Brandmark = forwardRef<
               alt="Brand logo"
               fill
               sizes="64px"
-              className="object-contain rounded-2xl transition-shadow duration-300 group-hover:shadow-lg"
+              className="object-contain transition-shadow duration-300 group-hover:shadow-lg"
               priority
             />
           </div>

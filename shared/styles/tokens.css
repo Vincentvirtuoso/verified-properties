@@ -50,7 +50,7 @@
   --info: #3b82f6;
   --info-foreground: #ffffff;
 
-   --skeleton: var(--color-neutral-200);
+  --skeleton: var(--color-neutral-200);
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -101,7 +101,7 @@
     --info: #1e3a8a;
     --info-foreground: #ffffff;
 
-    --skeleton: var(--color-neutral-800); 
+    --skeleton: var(--color-neutral-800);
   }
 }
 
@@ -169,7 +169,7 @@
   --color-navbar-foreground: var(--navbar-foreground);
   --color-navbar-border: var(--navbar-border);
 
-   --color-skeleton: var(--skeleton);
+  --color-skeleton: var(--skeleton);
 
   --spacing-sidebar-expanded: var(--sidebar-width-expanded);
   --spacing-sidebar-collapsed: var(--sidebar-width-collapsed);
@@ -182,12 +182,14 @@
   --font-sans: var(--font-lato-sans);
   --font-mono: var(--font-geist-mono);
 
-  --animate-shimmer: shimmer 4s infinite;
+  --animate-shimmer: shimmer 2s ease-in-out infinite;
 
   @keyframes shimmer {
     0% {
       transform: translateX(-100%);
     }
+
+    60%,
     100% {
       transform: translateX(100%);
     }
@@ -202,3 +204,8 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}

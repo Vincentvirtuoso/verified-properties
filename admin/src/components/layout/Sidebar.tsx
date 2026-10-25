@@ -11,13 +11,11 @@ import {
   LuChevronLeft,
   LuLayoutDashboard,
   LuUsers,
-  LuBriefcase,
   LuMessagesSquare,
   LuCircleHelp,
   LuSettings,
   LuShieldCheck,
   LuFileWarning,
-  LuBuilding2,
   LuClipboardList,
 } from "react-icons/lu";
 import { FiBarChart2 } from "react-icons/fi";
@@ -55,10 +53,42 @@ export type AdminLinkData = {
   pendingPropertiesCount?: number | null;
   supportCount?: number | null;
   enquiriesCount?: number | null;
+  adminRequestsCount?: number | null;
   isLoading?: boolean;
 };
 
-function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
+import { LuUserPlus } from "react-icons/lu";
+import type { AdminRole } from "@/features/auth/api/admin-roles.api";
+
+type Permission =
+  | "moderation"
+  | "users"
+  | "listings"
+  | "communication"
+  | "insights"
+  | "admin_requests";
+
+const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
+  admin: ["moderation", "users", "listings", "communication", "insights"],
+  super_admin: [
+    "moderation",
+    "users",
+    "listings",
+    "communication",
+    "insights",
+    "admin_requests",
+  ],
+};
+
+type AdminLink = SidebarLink & { permission?: Permission };
+
+function can(role: AdminRole | null, permission?: Permission): boolean {
+  if (!permission) return true; // links without a permission are open to any active admin
+  if (!role) return false;
+  return ROLE_PERMISSIONS[role].includes(permission);
+}
+
+function buildAdminLinks(data: AdminLinkData): AdminLink[] {
   const isLoading = !!data.isLoading;
 
   const count = (
@@ -78,6 +108,7 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Verifications",
       icon: <LuShieldCheck />,
       category: "Moderation",
+      permission: "moderation",
       ...withSlot(count(data.verificationCount)),
     },
     {
@@ -85,6 +116,7 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Appeals",
       icon: <LuFileWarning />,
       category: "Moderation",
+      permission: "moderation",
       ...withSlot(count(data.appealsCount)),
     },
     {
@@ -92,30 +124,21 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Users",
       icon: <LuUsers />,
       category: "Users",
+      permission: "users",
     },
-    // {
-    //   href: "/agents",
-    //   label: "Agents",
-    //   icon: <LuBriefcase />,
-    //   category: "Users",
-    // },
-    // {
-    //   href: "/companies",
-    //   label: "Companies",
-    //   icon: <LuBuilding2 />,
-    //   category: "Users",
-    // },
     {
       href: "/properties",
       label: "Properties",
       icon: <ListingsIcon />,
       category: "Listings",
+      permission: "listings",
     },
     {
       href: "/properties/pending",
       label: "Pending Review",
       icon: <LuClipboardList />,
       category: "Listings",
+      permission: "listings",
       ...withSlot(count(data.pendingPropertiesCount)),
     },
     {
@@ -123,6 +146,7 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Support",
       icon: <LuCircleHelp />,
       category: "Communication",
+      permission: "communication",
       ...withSlot(count(data.supportCount)),
     },
     {
@@ -130,6 +154,7 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Enquiries",
       icon: <LuMessagesSquare />,
       category: "Communication",
+      permission: "communication",
       ...withSlot(count(data.enquiriesCount)),
     },
     {
@@ -137,6 +162,15 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       label: "Analytics",
       icon: <FiBarChart2 />,
       category: "Insights",
+      permission: "insights",
+    },
+    {
+      href: "/admin-requests",
+      label: "Admin requests",
+      icon: <LuUserPlus />,
+      category: "Management",
+      permission: "admin_requests",
+      ...withSlot(count(data.adminRequestsCount)),
     },
     {
       href: "/settings",
@@ -145,6 +179,13 @@ function getAdminLinks(data: AdminLinkData = {}): SidebarLink[] {
       category: "More",
     },
   ];
+}
+
+export function getAdminLinks(
+  role: AdminRole | null,
+  data: AdminLinkData = {},
+): SidebarLink[] {
+  return buildAdminLinks(data).filter((link) => can(role, link.permission));
 }
 
 function countSlot(
@@ -342,10 +383,10 @@ const SidebarContent = ({
   }, [links]);
 
   return (
-    <div className="flex h-full flex-col pr-px">
+    <div className="flex h-[calc(100dvh-90px)] flex-col pr-px">
       <nav
         className={cn(
-          "flex-1 space-y-6 overflow-y-auto px-3",
+          "flex-1 space-y-6 overflow-y-auto px-3 pb-4",
           collapsed && "hide-scrollbar",
         )}
       >
@@ -411,14 +452,13 @@ const AdminBrandmark = ({ logoOnly = false }: { logoOnly?: boolean }) => (
 );
 
 interface SidebarProps {
-  /** Override role-based links (e.g. for previews / tests). */
   links?: SidebarLink[];
 }
 
 export const Sidebar = ({ links: externalLinks }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, isLoading } = useAuth();
+  const { logout, isLoading, role } = useAuth();
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } =
     useSidebar();
 
@@ -454,7 +494,8 @@ export const Sidebar = ({ links: externalLinks }: SidebarProps) => {
 
   const activeLinks = useMemo(
     () =>
-      externalLinks ?? getAdminLinks({ ...summary, isLoading: summaryLoading }),
+      externalLinks ??
+      getAdminLinks(role, { ...summary, isLoading: summaryLoading }),
     [externalLinks, summary, summaryLoading],
   );
 
@@ -497,7 +538,7 @@ export const Sidebar = ({ links: externalLinks }: SidebarProps) => {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed left-0 top-0 z-70 flex h-full w-75 flex-col border-r border-border bg-sidebar-bg shadow-2xl"
+                className="fixed left-0 top-0 z-70 flex h-dvh w-75 flex-col border-r border-border bg-sidebar-bg shadow-2xl"
               >
                 <div className="flex items-center justify-between p-4">
                   <AdminBrandmark logoOnly />
