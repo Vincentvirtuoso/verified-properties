@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   images: {
@@ -8,7 +9,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "www.facebook.com" },
       { protocol: "https", hostname: "www.google.com" },
+      {
+        protocol: "https",
+        hostname: "igebqxbmrhpxadkthgwk.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
+    qualities: [75, 90],
     minimumCacheTTL: 60 * 60 * 24,
   },
   transpilePackages: ["@affilhomes/shared"],

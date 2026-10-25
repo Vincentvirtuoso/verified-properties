@@ -1,24 +1,48 @@
 "use client";
 
+import { cn } from "@affilhomes/shared/utils";
 import { Sidebar } from "./Sidebar";
-import { SidebarProvider } from "./SidebarProvider";
+import { SidebarProvider, useSidebar } from "./SidebarProvider";
 import { Topbar } from "./Topbar";
 
-type Props = {
-  children: React.ReactNode;
-  counts?: Partial<Record<"appeals" | "verification" | "support", number>>;
-};
+const TOPBAR_HEIGHT_CLASS = "h-16";
 
-export function AppShell({ children, counts }: Props) {
+function AppShellInner({ children }: { children: React.ReactNode }) {
+  const { collapsed } = useSidebar();
+
+  return (
+    <>
+      <header
+        className={cn(
+          "fixed top-0 right-0 z-30 border-b border-border bg-background",
+          "left-0 transition-[left] duration-300 ease-in-out",
+          "lg:left-auto",
+          collapsed ? "lg:left-sidebar-collapsed" : "lg:left-sidebar-expanded",
+          TOPBAR_HEIGHT_CLASS,
+        )}
+      >
+        <Topbar />
+      </header>
+
+      <div
+        className={cn(
+          "min-h-screen pt-16 pl-0",
+          "transition-[padding] duration-300 ease-in-out",
+          collapsed ? "lg:pl-sidebar-collapsed" : "lg:pl-sidebar-expanded",
+        )}
+      >
+        <main className="px-4 py-6 md:px-6 lg:px-8">{children}</main>
+      </div>
+
+      <Sidebar />
+    </>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background text-foreground">
-        <Sidebar counts={counts} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar />
-          <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">{children}</main>
-        </div>
-      </div>
+      <AppShellInner>{children}</AppShellInner>
     </SidebarProvider>
   );
 }

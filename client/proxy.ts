@@ -1,44 +1,62 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@affilhomes/shared/supabase/middleware";
 
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/company",
+  "/list-property",
+  "/profile",
+  "/complete-registration",
+  "/welcome",
+  "/add-role",
+  "/my-listings",
+  "/enquiries",
+  "/saved-properties",
+  "/verification",
+];
+
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
+
+function matches(pathname: string, routes: string[]): boolean {
+  return routes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
+function safeCallback(value: string | null): string | null {
+  if (!value) return null;
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
+  const { pathname, search } = request.nextUrl;
 
-  const { pathname } = request.nextUrl;
+  const redirectTo = (path: string, params?: Record<string, string>) => {
+    const url = new URL(path, request.url);
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        url.searchParams.set(key, value);
+      }
+    }
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) {
+      redirect.cookies.set(cookie);
+    }
+    return redirect;
+  };
 
-  const protectedRoutes = [
-    "/dashboard",
-    "/company",
-    "/list-property",
-    "/profile",
-    "/complete-registration",
-    "/welcome",
-    "/add-role",
-    "/my-listings",
-    "/admin",
-    "/enquiries",
-    "/saved-properties",
-    "/verification",
-  ];
-
-  const authRoutes = ["/login", "/register", "/forgot-password"];
-
-  const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-
-  const isAuthRoute = authRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  const isProtectedRoute = matches(pathname, PROTECTED_ROUTES);
+  const isAuthRoute = matches(pathname, AUTH_ROUTES);
 
   if (isProtectedRoute && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    return redirectTo("/login", { callbackUrl: pathname + search });
   }
 
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const cb = safeCallback(request.nextUrl.searchParams.get("callbackUrl"));
+    return redirectTo(cb ?? "/dashboard");
   }
 
   return response;
@@ -46,20 +64,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/company/:path*",
-    "/complete-registration/:path*",
-    "/welcome/:path*",
-    "/list-property/:path*",
-    "/profile/:path*",
-    "/login/:path*",
-    "/register/:path*",
-    "/forgot-password/:path*",
-    "/add-role/:path*",
-    "/my-listings/:path*",
-    "/admin/:path*",
-    "/enquiries/:path*",
-    "/saved-properties/:path*",
-    "/verification/:path*",
+    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.json|.*\\.[a-z0-9]+$).*)",
   ],
 };

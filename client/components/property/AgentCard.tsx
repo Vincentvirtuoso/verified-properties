@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   RiPhoneLine,
@@ -11,13 +10,12 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { useState } from "react";
-import { imageLoader } from "@/utils";
 import {
   PopulatedProperty,
   Company,
   PropertyOwnerType,
 } from "@affilhomes/shared/types";
-import { VerifiedBadge } from "@affilhomes/shared/ui";
+import { Avatar, VerifiedBadge } from "@affilhomes/shared/ui";
 import CompanyIcon from "@affilhomes/shared/icons/CompanyIcon";
 
 interface OwnerCardProps {
@@ -28,15 +26,6 @@ interface OwnerCardProps {
 export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
   const isCompany = ownerType === "company";
   const name = isCompany ? owner.companyId?.name : owner.name;
-
-  const defaultAvatar = "/placeholder_avatar.png";
-  const defaultLogo = "/placeholder_company.svg";
-
-  const imageSrc = isCompany
-    ? owner.companyId?.logo || defaultLogo
-    : owner.avatar || defaultAvatar;
-
-  const [imgSrc, setImgSrc] = useState(imageSrc);
 
   const isVerified = isCompany
     ? owner.companyId?.verificationStatus === "verified"
@@ -80,13 +69,15 @@ export default function OwnerCard({ owner, ownerType }: OwnerCardProps) {
     >
       <div className="p-5 space-y-4">
         <div className="flex items-center gap-3.5">
-          <div
-            className={`flex items-center justify-center w-14 h-14 shrink-0 overflow-hidden bg-muted/10 ring-2 ring-violet-100 dark:ring-violet-900 ${
-              isCompany ? "rounded-xl" : "rounded-full"
-            }`}
-          >
-            <CompanyIcon/>
-          </div>
+          {isCompany ? (
+            <div
+              className={`flex items-center justify-center w-14 h-14 shrink-0 overflow-hidden bg-muted/10 ring-2 ring-violet-100 dark:ring-violet-900 rounded-full`}
+            >
+              <CompanyIcon />
+            </div>
+          ) : (
+            <Avatar src={owner.avatar} alt={owner.name} name={owner.name} />
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link, { LinkProps } from "next/link";
-import logo from "@/app/logo.png";
 import { forwardRef } from "react";
 import { cn } from "@affilhomes/shared/utils";
 
@@ -68,7 +67,7 @@ export const Brandmark = forwardRef<
             style={{ width: logoSize, height: logoSize }}
           >
             <Image
-              src={logo}
+              src="/logo.png"
               alt="Brand logo"
               fill
               sizes="64px"

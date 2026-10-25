@@ -1,3 +1,4 @@
+import { Role, isAdminRole } from "@affilhomes/shared/types";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -5,7 +6,6 @@ const ADMIN_COOKIE_NAME = "sb-admin-auth-token";
 
 const PUBLIC_ROUTES = [
   "/login",
-  "/register",
   "/pending",
   "/rejected",
   "/suspended",
@@ -18,9 +18,28 @@ function isPublic(pathname: string): boolean {
   );
 }
 
-export async function proxy(req: NextRequest) {
-  const res = NextResponse.next();
+type MaybeUser = {
+  app_metadata?: Record<string, unknown>;
+} | null;
 
+function getRoles(user: MaybeUser): Role[] {
+  const raw = user?.app_metadata?.roles;
+
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (r): r is Role =>
+      typeof r === "string" && (Object.values(Role) as string[]).includes(r),
+  );
+}
+
+function isAdmin(user: MaybeUser): boolean {
+  return getRoles(user).some(isAdminRole);
+}
+
+export async function proxy(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+
+  const res = NextResponse.next();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -41,30 +60,33 @@ export async function proxy(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname, search } = req.nextUrl;
-
-  const redirectTo = (path: string, searchParams?: Record<string, string>) => {
+  const redirectTo = (path: string, params?: Record<string, string>) => {
     const url = req.nextUrl.clone();
     url.pathname = path;
     url.search = "";
-    if (searchParams) {
-      for (const [key, value] of Object.entries(searchParams)) {
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
         url.searchParams.set(key, value);
       }
     }
     const redirect = NextResponse.redirect(url);
-    // Keep any refreshed admin cookies on the redirect response.
     for (const cookie of res.cookies.getAll()) {
       redirect.cookies.set(cookie);
     }
     return redirect;
   };
 
-  if (!user && !isPublic(pathname)) {
+  if (!user) {
+    if (isPublic(pathname)) return res;
     return redirectTo("/login", { next: pathname + search });
   }
 
-  if (user && pathname === "/login") {
+  if (!isAdmin(user)) {
+    if (pathname === "/unauthorized") return res;
+    return redirectTo("/unauthorized");
+  }
+
+  if (pathname === "/login") {
     return redirectTo("/");
   }
 
@@ -73,6 +95,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|api|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.json|.*\\.[a-z0-9]+$).*)",
   ],
 };

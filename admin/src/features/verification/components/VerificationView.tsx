@@ -25,7 +25,7 @@ import {
   type VerificationStatus,
 } from "@affilhomes/shared/supabase/admin";
 import { ID_DOC_LABEL, type IdDocType } from "@affilhomes/shared/supabase";
-import { Skeleton } from "@affilhomes/shared/ui";
+import { Button, Skeleton } from "@affilhomes/shared/ui";
 import {
   Empty,
   FilterChips,
@@ -134,8 +134,6 @@ export function VerificationView() {
   const openDocument: OpenDocument = async (path, bucket) => {
     setDocError(null);
     setOpeningPath(path);
-    // Don't pass "noopener" to window.open: it makes the call return null,
-    // which would look like a pop-up block. Clear the opener manually instead.
     const win = window.open("about:blank", "_blank");
     if (!win) {
       setDocError(
@@ -182,17 +180,20 @@ export function VerificationView() {
               {count} {count === 1 ? "request" : "requests"}
             </span>
           )}
-          <button
+          <Button
             type="button"
             onClick={() => {
               queue.reload();
               ids.reload();
             }}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            variant="ghost"
+            size="xs"
+            leftIcon={<LuRefreshCw aria-hidden="true" />}
+            isLoading={queue.loading || ids.loading}
+            loadingText="Refreshing..."
           >
-            <LuRefreshCw size={12} aria-hidden="true" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -11,8 +11,6 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
-
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { FilterSidebar } from "@/components/propertiesList/FilterSidebar";
 import { MobileFilterDrawer } from "@/components/propertiesList/MobileFilterDropdown";

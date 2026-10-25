@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import "@fontsource-variable/inter";
 
 import { Providers } from "@/providers/Providers";
-
 import "./globals.css";
 import {
   SIDEBAR_COLLAPSED_WIDTH,
@@ -10,11 +9,6 @@ import {
 } from "@affilhomes/shared/utils";
 import { CSSProperties } from "react";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +41,6 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={inter.variable}
       suppressHydrationWarning
       style={
         {

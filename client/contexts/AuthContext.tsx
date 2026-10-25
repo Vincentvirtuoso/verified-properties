@@ -48,11 +48,9 @@ interface AuthContextType {
   isLoading: boolean;
   authLoading: boolean;
   authError: string | null;
+  isSuspended: boolean;
+  suspensionReason: string | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  /**
-   * Creates the auth account. Resolves to true when the user is signed in
-   * immediately, false when they must confirm their email first.
-   */
   register: (
     newUser: PopulatedUser,
     password: string,
@@ -67,11 +65,6 @@ interface AuthContextType {
     userId: string,
     updates: Partial<PopulatedUser>,
   ) => Promise<PopulatedUser>;
-  /**
-   * Updates the currently signed-in user's own profile. Only editable
-   * columns are sent (see `toProfileUpdates`); the DB guard enforces
-   * the rest. Pass an avatar `File` in `files` to upload and attach it.
-   */
   updateProfile: (
     updates: Partial<PopulatedUser>,
     files?: ProfileUpdateFiles,
@@ -105,8 +98,6 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
     whatsappNumber: profile.whatsapp_number ?? "",
     avatar: profile.avatar ?? "",
 
-   
-   
     passwordHash: "",
 
     roles: profile.roles ?? ["viewer"],
@@ -115,7 +106,6 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
     isEmailVerified: profile.is_email_verified ?? false,
     isPhoneVerified: profile.is_phone_verified ?? false,
 
-   
     companyId: company,
     companyRole: profile.company_role ?? undefined,
 
@@ -140,7 +130,6 @@ function toProfileUpdates(updates: Partial<PopulatedUser>) {
     out.whatsapp_number = updates.whatsappNumber;
   if (updates.avatar !== undefined) out.avatar = updates.avatar;
   if (updates.roles !== undefined)
-   
     out.roles = updates.roles.filter((r) => r !== Role.Company);
   if (updates.activeRole !== undefined && updates.activeRole !== Role.Company)
     out.active_role = updates.activeRole;
@@ -165,12 +154,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
+
+  const userId = user?._id;
 
   const clearError = useCallback(() => {
     setAuthError(null);
   }, []);
 
-  /** Loads profile + company (with team) for the signed-in user. */
   const loadUser = useCallback(async (): Promise<PopulatedUser | null> => {
     try {
       const profile = await getCurrentProfile();
@@ -178,6 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!profile) {
         setUser(null);
         setCompanies([]);
+        setIsSuspended(false);
+        setSuspensionReason(null);
         return null;
       }
 
@@ -188,6 +182,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("Failed to load company:", error);
         }
+      }
+
+      const supabase = createClient();
+      const { data: suspended, error: suspendedError } = await supabase.rpc(
+        "is_suspended",
+        { _user_id: profile.id },
+      );
+
+      if (suspendedError) {
+        console.error("Suspension check failed:", suspendedError);
+      }
+
+      const active = suspendedError ? false : Boolean(suspended);
+      setIsSuspended(active);
+
+      if (active) {
+        const { data: row } = await supabase
+          .from("account_suspensions")
+          .select("reason")
+          .eq("subject_type", "user")
+          .eq("subject_id", profile.id)
+          .maybeSingle();
+        setSuspensionReason(row?.reason ?? null);
+      } else {
+        setSuspensionReason(null);
       }
 
       const mapped = mapProfileToUser(profile, company);
@@ -235,6 +254,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [loadUser]);
 
+  useEffect(() => {
+    if (!userId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`account-suspensions:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "account_suspensions" },
+        () => {
+          void loadUser();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, loadUser]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (document.visibilityState === "visible") void loadUser();
+    };
+    document.addEventListener("visibilitychange", onFocus);
+    return () => document.removeEventListener("visibilitychange", onFocus);
+  }, [loadUser]);
+
   const refreshUser = useCallback(async () => {
     await loadUser();
   }, [loadUser]);
@@ -268,8 +315,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-       
-       
         const { session } = await signUpWithEmail(
           newUser.email,
           password,
@@ -281,11 +326,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         );
 
-       
         void company;
 
         if (!session) {
-         
           return false;
         }
 
@@ -353,7 +396,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-       
         let avatar = updates.avatar;
         if (files?.avatar) {
           avatar = await uploadUserFile(
@@ -364,7 +406,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
         }
 
-       
         const mergedUpdates: Partial<PopulatedUser> = {
           ...updates,
           avatar,
@@ -538,6 +579,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut();
       setUser(null);
       setCompanies([]);
+      setIsSuspended(false);
+      setSuspensionReason(null);
     } catch (error) {
       setAuthError("Logout failed. Please try again.");
       throw error;
@@ -556,6 +599,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         authLoading,
         authError,
+        isSuspended,
+        suspensionReason,
         login,
         register,
         logout,

@@ -11,6 +11,7 @@ import {
 import { SidebarProvider, useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/utils";
+import { SuspensionBanner } from "./SuspensionBanner";
 
 const getAds = () =>
   new Promise<Ad[]>((resolve) => setTimeout(() => resolve(dummyAds), 800));
@@ -49,6 +50,7 @@ const LayoutWithBanner = ({ children }: { children: React.ReactNode }) => {
           transition: "padding-left 0.3s ease",
         }}
       >
+        <SuspensionBanner />
         <Banner ads={ads} />
       </header>
       <div

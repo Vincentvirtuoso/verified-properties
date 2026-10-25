@@ -1,8 +1,7 @@
 @import "tailwindcss";
-@import "@affilhomes/shared/styles/tokens.css";
-@import "@affilhomes/shared/styles/components.css";
+@import "../../shared/styles/tokens.css";
+@import "../../shared/styles/components.css";
 
-@source "../";
 @source "../../shared/ui";
 
 @layer base {

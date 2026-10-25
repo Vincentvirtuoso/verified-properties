@@ -1,0 +1,204 @@
+:root {
+  --primary-50: #f5f3ff;
+  --primary-100: #ede9fe;
+  --primary-200: #ddd6fe;
+  --primary-300: #c4b5fd;
+  --primary-400: #a78bfa;
+  --primary-500: #8b5cf6;
+  --primary-600: #7c3aed;
+  --primary-700: #6d28d9;
+  --primary-800: #5b21b6;
+  --primary-900: #4c1d95;
+  --primary-950: #2e1065;
+
+  --background: #ffffff;
+  --foreground: #171717;
+
+  --text-muted: var(--color-neutral-500);
+  --text-subtle: var(--color-neutral-400);
+  --text-inverse: var(--color-neutral-50);
+
+  --card-bg: #ffffff;
+  --card-foreground: #171717;
+  --popover-bg: #ffffff;
+  --popover-foreground: #171717;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-foreground: #171717;
+  --sidebar-border: var(--color-neutral-200);
+  --sidebar-active-bg: var(--primary-50);
+  --sidebar-active-foreground: var(--primary-700);
+  --sidebar-hover-bg: var(--color-neutral-100);
+
+  --navbar-bg: #ffffff;
+  --navbar-foreground: #171717;
+  --navbar-border: var(--color-neutral-200);
+
+  --border: #e4e4e7;
+  --input: #7c3aed;
+  --ring: #a78bfa;
+  --primary: var(--primary-500);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-neutral-900);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+
+   --skeleton: var(--color-neutral-200);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #f5f5f5;
+
+    --text-muted: var(--color-neutral-400);
+    --text-subtle: var(--color-neutral-500);
+    --text-inverse: var(--color-neutral-950);
+
+    --card-bg: #171717;
+    --card-foreground: #f5f5f5;
+    --popover-bg: #171717;
+    --popover-foreground: #f5f5f5;
+
+    --sidebar-bg: #0a0a0a;
+    --sidebar-foreground: #e5e5e5;
+    --sidebar-border: #262626;
+    --sidebar-active-bg: #4c1d95;
+    --sidebar-active-foreground: #ffffff;
+    --sidebar-hover-bg: #171717;
+
+    --navbar-bg: #0a0a0a;
+    --navbar-foreground: #e5e5e5;
+    --navbar-border: #262626;
+
+    --border: #262626;
+    --input: #a78bfa;
+    --ring: #8b5cf6;
+    --primary: var(--primary-500);
+    --primary-foreground: #ffffff;
+    --secondary: #262626;
+    --secondary-foreground: #e5e5e5;
+    --destructive: #7f1a1a;
+    --destructive-foreground: #ffffff;
+    --success: #065f46;
+    --success-foreground: #ffffff;
+    --warning: #b45309;
+    --warning-foreground: #ffffff;
+    --info: #1e3a8a;
+    --info-foreground: #ffffff;
+
+    --skeleton: var(--color-neutral-800); 
+  }
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-inverse: var(--text-inverse);
+
+  --color-card: var(--card-bg);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover-bg);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  --color-color-neutral-50: var(--color-neutral-50);
+  --color-color-neutral-100: var(--color-neutral-100);
+  --color-color-neutral-200: var(--color-neutral-200);
+  --color-color-neutral-300: var(--color-neutral-300);
+  --color-color-neutral-400: var(--color-neutral-400);
+  --color-color-neutral-500: var(--color-neutral-500);
+  --color-color-neutral-600: var(--color-neutral-600);
+  --color-color-neutral-700: var(--color-neutral-700);
+  --color-color-neutral-800: var(--color-neutral-800);
+  --color-color-neutral-900: var(--color-neutral-900);
+  --color-color-neutral-950: var(--color-neutral-950);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-hover-bg: var(--sidebar-hover-bg);
+
+  --color-navbar-bg: var(--navbar-bg);
+  --color-navbar-foreground: var(--navbar-foreground);
+  --color-navbar-border: var(--navbar-border);
+
+   --color-skeleton: var(--skeleton);
+
+  --spacing-sidebar-expanded: var(--sidebar-width-expanded);
+  --spacing-sidebar-collapsed: var(--sidebar-width-collapsed);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --font-sans: var(--font-lato-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --animate-shimmer: shimmer 4s infinite;
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+

@@ -1,30 +1,51 @@
-import { Button } from "@affilhomes/shared/ui/Button";
-import { LuHouse, LuCircleHelp } from "react-icons/lu";
+"use client";
 
-export default function NotFound() {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { LuArrowLeft, LuLayoutDashboard, LuSearchX } from "react-icons/lu";
+import { Button } from "@affilhomes/shared/ui";
+
+export default function AdminNotFound() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md text-center">
-        <div className="relative">
-          <div className="text-9xl font-bold text-subtle">404</div>
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mt-4">
-          Page not found
-        </h1>
-        <p className="text-muted mt-2">
-          Sorry, we couldn’t find the page you’re looking for. It might have
-          been moved or deleted.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
-          <Button asChild variant="secondary" href="/">
-            <LuHouse className="mr-2 h-4 w-4" />
-            Go Home
-          </Button>
-          <Button asChild variant="outline" href="/support">
-            <LuCircleHelp className="mr-2 h-4 w-4" />
-            Visit Support
-          </Button>
-        </div>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="mb-6 grid size-20 place-items-center rounded-2xl bg-primary/10 text-primary shadow-lg shadow-primary/10">
+        <LuSearchX className="h-10 w-10" />
+      </div>
+
+      <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-muted">
+        Error 404
+      </p>
+
+      <h1 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+        This admin page doesn&apos;t exist
+      </h1>
+
+      <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted">
+        The page you tried to access isn&apos;t part of the admin panel, or you
+        may not have permission to view it.
+      </p>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          className="justify-center gap-2"
+          leftIcon={<LuArrowLeft size={16} />}
+        >
+          Go back
+        </Button>
+
+        <Button
+          asChild
+          className="justify-center gap-2"
+          href="/dashboard"
+          leftIcon={<LuLayoutDashboard size={16} />}
+        >
+          Admin dashboard
+        </Button>
       </div>
     </div>
   );

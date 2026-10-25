@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { fetchActiveProperties } from "@affilhomes/shared/supabase";
 import type { PopulatedProperty } from "@affilhomes/shared/types";
-import { properties as mockProperties } from "@/data/properties";
 
 export function usePropertiesData() {
   const [properties, setProperties] = useState<PopulatedProperty[]>([]);
@@ -15,7 +14,7 @@ export function usePropertiesData() {
 
     fetchActiveProperties()
       .then((rows) => {
-        if (!cancelled) setProperties(rows.length > 0 ? rows : mockProperties);
+        if (!cancelled) setProperties(rows);
       })
       .catch((err) => {
         console.error(err);

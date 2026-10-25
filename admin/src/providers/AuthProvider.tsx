@@ -37,6 +37,11 @@ const SIGNED_OUT: Snapshot = {
   role: null,
   status: "unauthenticated",
 };
+const UNAUTHORIZED: Snapshot = {
+  user: null,
+  role: null,
+  status: "unauthorized",
+};
 
 interface AuthContextValue {
   user: PopulatedUser | null;
@@ -53,6 +58,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -65,7 +71,25 @@ function errorMessage(err: unknown, fallback: string) {
   return fallback;
 }
 
-// Only the fields the admin UI reads. Everything else is left out on purpose.
+function withTimeout<T>(promise: Promise<T>, ms = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Timed out after ${ms}ms`)),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 function mapProfileToUser(profile: Record<string, unknown>): PopulatedUser {
   return {
     _id: String(profile.id),
@@ -121,22 +145,28 @@ function resolveStatus(
 async function loadSession(
   supabase: ReturnType<typeof createAdminBrowserClient>,
 ): Promise<Snapshot> {
-  // getUser() verifies the token with Supabase. getSession() only reads the cookie.
-  const { data: authData, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !authData.user) return SIGNED_OUT;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const authUser = session?.user;
+  if (!authUser) return SIGNED_OUT;
 
-  const { data: profile, error: profileErr } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", authData.user.id)
-    .maybeSingle();
-  if (profileErr) throw profileErr;
-  if (!profile) return { user: null, role: null, status: "unauthorized" };
+  const [profileRes, adminRoles] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "id, email, name, avatar, phone, whatsapp_number, roles, active_role, is_email_verified, is_phone_verified, admin_status, created_at, updated_at",
+      )
+      .eq("id", authUser.id)
+      .maybeSingle(),
+    fetchAdminRoles(supabase, authUser.id),
+  ]);
 
-  const adminRoles = await fetchAdminRoles(supabase, authData.user.id);
-  const user = mapProfileToUser(profile as Record<string, unknown>);
+  if (profileRes.error) throw profileRes.error;
+  if (!profileRes.data) return UNAUTHORIZED;
+
+  const user = mapProfileToUser(profileRes.data as Record<string, unknown>);
   const role = resolveRole(user.adminStatus, adminRoles);
-
   return { user, role, status: resolveStatus(user.adminStatus, role) };
 }
 
@@ -152,17 +182,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const requestIdRef = useRef(0);
+  const inFlightRef = useRef<Promise<Snapshot> | null>(null);
 
-  const refresh = useCallback(async (): Promise<Snapshot> => {
-    const id = ++requestIdRef.current;
-    let next: Snapshot;
-    try {
-      next = await loadSession(supabase);
-    } catch (err) {
-      next = SIGNED_OUT;
+  const refresh = useCallback((): Promise<Snapshot> => {
+    if (!inFlightRef.current) {
+      inFlightRef.current = loadSession(supabase)
+        .catch((err) => {
+          console.error("[auth] refresh failed", err);
+          return UNAUTHORIZED;
+        })
+        .finally(() => {
+          inFlightRef.current = null;
+        });
     }
-    if (id === requestIdRef.current) setSnapshot(next);
-    return next;
+    return inFlightRef.current.then((next) => {
+      setSnapshot(next);
+      return next;
+    });
   }, [supabase]);
 
   useEffect(() => {
@@ -174,7 +210,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSnapshot(SIGNED_OUT);
         return;
       }
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+      if (
+        event === "SIGNED_IN" ||
+        event === "USER_UPDATED" ||
+        event === "TOKEN_REFRESHED"
+      ) {
         setTimeout(() => void refresh(), 0);
       }
     });
@@ -231,6 +271,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const refreshSession = useCallback(async () => {
+    await supabase.auth.refreshSession();
+    await refresh();
+  }, [supabase, refresh]);
+
   const value: AuthContextValue = {
     user: snapshot.user,
     role: snapshot.role,
@@ -245,6 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     clearError,
     refreshUser,
+    refreshSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
