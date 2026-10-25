@@ -36,13 +36,15 @@ export default function SavedPropertiesPage() {
       </p>
     );
   }
-  if (!properties) return <SavedPropertiesSkeleton />;
 
+  // Wait for BOTH the DB fetch and the saved-ids context to be ready.
+  if (!properties || !isLoaded) return <SavedPropertiesSkeleton />;
+
+  // Pass the full fetched list + reactive savedIds — the client filters.
   return (
     <SavedPropertiesClient
-      initialProperties={
-        isLoaded ? properties.filter((p) => savedIds.has(p._id)) : properties
-      }
+      initialProperties={properties}
+      savedIds={savedIds}
     />
   );
 }

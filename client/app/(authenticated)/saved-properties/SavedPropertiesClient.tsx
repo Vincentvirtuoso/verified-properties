@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   FiArrowUpRight,
@@ -12,77 +12,37 @@ import {
 import { LuBookmark, LuHouse } from "react-icons/lu";
 
 import { cn } from "@/lib/utils";
-import { SavedProperty } from "@affilhomes/shared/types";
+import type { SavedProperty } from "@affilhomes/shared/types";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { NoResults } from "@/components/propertiesList/NoResults";
-import {
-  SAVED_PROPERTIES_EVENT,
-  SAVED_PROPERTIES_STORAGE_KEY,
-  getSavedEntries,
-} from "@/lib/saved-properties-storage";
-import { properties as allProperties } from "@/data/properties";
 
 interface SavedPropertiesClientProps {
-  initialProperties?: SavedProperty[];
+  initialProperties: SavedProperty[];
+  savedIds: Set<string>;
 }
 
 type Filter = "all" | "sale" | "rent";
 
-const propertyBySlug = new Map(
-  allProperties.map((property) => [property.slug, property]),
-);
-
-function readSavedFromStorage(): SavedProperty[] {
-  if (typeof window === "undefined") return [];
-
-  return getSavedEntries()
-    .map(({ slug, savedAt }) => {
-      const property = propertyBySlug.get(slug);
-      if (!property) return null;
-      return { ...property, savedAt } as SavedProperty;
-    })
-    .filter((p): p is SavedProperty => p !== null)
-    .sort(
-      (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-    );
-}
-
 export default function SavedPropertiesClient({
-  initialProperties = [],
+  initialProperties,
+  savedIds,
 }: SavedPropertiesClientProps) {
-  const [properties, setProperties] =
-    useState<SavedProperty[]>(initialProperties);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  const refresh = useCallback(() => {
-    setProperties(readSavedFromStorage());
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === SAVED_PROPERTIES_STORAGE_KEY) refresh();
-    };
-    const onLocal = () => refresh();
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener(SAVED_PROPERTIES_EVENT, onLocal);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener(SAVED_PROPERTIES_EVENT, onLocal);
-    };
-  }, [refresh]);
+  // The backend-backed `savedIds` set is the source of truth.
+  // When a user unsaves (or re-saves) a card, the context updates
+  // and this memo re-derives the list reactively.
+  const savedProperties = useMemo(
+    () => initialProperties.filter((p) => savedIds.has(p._id)),
+    [initialProperties, savedIds],
+  );
 
   const filteredProperties = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return properties.filter((property) => {
+    return savedProperties.filter((property) => {
       const location = property.location
         ? `${property.location.city}, ${property.location.state}`
         : "";
@@ -99,9 +59,9 @@ export default function SavedPropertiesClient({
 
       return matchesSearch && matchesFilter;
     });
-  }, [properties, search, filter]);
+  }, [savedProperties, search, filter]);
 
-  const hasProperties = properties.length > 0;
+  const hasProperties = savedProperties.length > 0;
   const hasResults = filteredProperties.length > 0;
 
   return (
@@ -130,11 +90,11 @@ export default function SavedPropertiesClient({
               </span>
 
               <span className="font-semibold text-foreground">
-                {properties.length}
+                {savedProperties.length}
               </span>
 
               <span className="text-muted">
-                {properties.length === 1 ? "property" : "properties"}
+                {savedProperties.length === 1 ? "property" : "properties"}
               </span>
             </div>
           )}
@@ -266,18 +226,6 @@ export default function SavedPropertiesClient({
               </div>
             )}
 
-            {hasResults && (
-              <div className="mb-5">
-                <p className="text-sm text-muted">
-                  Showing{" "}
-                  <span className="font-semibold text-foreground">
-                    {filteredProperties.length}
-                  </span>{" "}
-                  {filteredProperties.length === 1 ? "property" : "properties"}
-                </p>
-              </div>
-            )}
-
             {hasResults ? (
               <motion.div
                 layout
@@ -285,7 +233,7 @@ export default function SavedPropertiesClient({
               >
                 {filteredProperties.map((property, index) => (
                   <motion.div
-                    key={property.slug}
+                    key={property._id}
                     layout
                     initial={{ opacity: 0, y: 18 }}
                     animate={{ opacity: 1, y: 0 }}
