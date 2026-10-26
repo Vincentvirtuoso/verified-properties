@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { Brandmark } from "@/components/ui/BrandMark";
+import { AuthPageLinks } from "@/features/auth/components/AuthPageLinks";
 
 export const metadata = { title: "Sign in" };
 
@@ -10,7 +11,7 @@ export default function LoginPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2 text-center">
-        <Brandmark/>
+        <Brandmark />
         <h1 className="text-xl font-semibold tracking-tight">
           Sign in to Admin
         </h1>
@@ -23,15 +24,7 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      <p className="text-center text-xs text-muted">
-        No account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-primary hover:underline"
-        >
-          Request access
-        </Link>
-      </p>
+      <AuthPageLinks current="login" />
     </div>
   );
 }

@@ -10,6 +10,8 @@ import {
   AgentSubRole,
   Role,
   PROFILE_ROLES,
+  ADMIN_ROLES,
+  AdminRole,
 } from "../types";
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
@@ -708,6 +710,11 @@ export const roleLabels: Record<ProfileRole, string> = {
   [Role.Viewer]: "Buyer",
   [Role.Agent]: "Agent",
   [Role.Company]: "Company",
+};
+
+export const adminRoleLabels: Record<AdminRole, string> = {
+  [Role.Admin]: "Admin",
+  [Role.SuperAdmin]: "Super Admin",
 };
 
 export const roleDescriptions: Record<ProfileRole, string> = {

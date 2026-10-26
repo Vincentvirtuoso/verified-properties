@@ -21,6 +21,7 @@ export type AuthStatus =
   | "loading"
   | "authenticated"
   | "unauthenticated"
+  | "unrequested"
   | "pending"
   | "rejected"
   | "suspended"
@@ -138,7 +139,7 @@ function resolveStatus(
     case "active":
       return role ? "authenticated" : "unauthorized";
     default:
-      return "unauthorized";
+      return "unrequested";
   }
 }
 

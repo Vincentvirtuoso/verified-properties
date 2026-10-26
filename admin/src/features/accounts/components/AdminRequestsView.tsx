@@ -13,6 +13,7 @@ import {
   AskReason,
   Empty,
   FilterChips,
+  ReloadButton,
   StatusPill,
 } from "@/components/ui/ReviewActions";
 import { useAdminList } from "@/hooks/useAdminList";
@@ -48,7 +49,7 @@ const REJECT_SUGGESTIONS = [
 export function AdminRequestsTab() {
   const [filter, setFilter] = useState<Filter>("pending");
 
-  const { rows, error, reload } = useAdminList<AdminRequest>(
+  const { rows, error, reload, loading } = useAdminList<AdminRequest>(
     () => fetchAdminRequests(filter === "all" ? null : filter),
     [filter],
   );
@@ -73,20 +74,13 @@ export function AdminRequestsTab() {
           onChange={setFilter}
           options={FILTER_OPTIONS}
         />
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted">
           {rows && (
             <span className="tabular-nums">
               {rows.length} {rows.length === 1 ? "request" : "requests"}
             </span>
           )}
-          <button
-            type="button"
-            onClick={reload}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <LuRefreshCw size={12} aria-hidden="true" />
-            Refresh
-          </button>
+          <ReloadButton reload={reload} loading={loading} />
         </div>
       </div>
 

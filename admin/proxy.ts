@@ -1,4 +1,4 @@
-import { Role, isAdminRole } from "@affilhomes/shared/types";
+import { AdminRole, Role, isAdminRole } from "@affilhomes/shared/types";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -22,12 +22,12 @@ type MaybeUser = {
   app_metadata?: Record<string, unknown>;
 } | null;
 
-function getRoles(user: MaybeUser): Role[] {
+function getRoles(user: MaybeUser): AdminRole[] {
   const raw = user?.app_metadata?.roles;
 
   if (!Array.isArray(raw)) return [];
   return raw.filter(
-    (r): r is Role =>
+    (r): r is AdminRole =>
       typeof r === "string" && (Object.values(Role) as string[]).includes(r),
   );
 }
@@ -36,7 +36,7 @@ function isAdmin(user: MaybeUser): boolean {
   return getRoles(user).some(isAdminRole);
 }
 
-export async function proxy(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   const res = NextResponse.next();
@@ -56,9 +56,22 @@ export async function proxy(req: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const getUserWithTimeout = async (timeoutMs = 3000) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      clearTimeout(timeout);
+      if (error) return null;
+      return data.user;
+    } catch {
+      clearTimeout(timeout);
+      return null;
+    }
+  };
+
+  const user = await getUserWithTimeout();
 
   const redirectTo = (path: string, params?: Record<string, string>) => {
     const url = req.nextUrl.clone();

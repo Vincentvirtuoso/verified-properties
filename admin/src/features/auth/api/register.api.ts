@@ -1,11 +1,16 @@
 import { createAdminBrowserClient } from "@/lib/supabase";
-import type { RegisterInput } from "../schemas/register.schema";
+
+export type RegisterInput = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 export type RegisterResult = {
   needsConfirm: boolean;
 };
 
-export async function requestAdminAccess(
+export async function signUpForAdmin(
   input: RegisterInput,
 ): Promise<RegisterResult> {
   const supabase = createAdminBrowserClient();
@@ -16,17 +21,15 @@ export async function requestAdminAccess(
     options: {
       data: {
         full_name: input.name.trim(),
-        access_request: "admin",
-        admin_reason: input.reason.trim().slice(0, 1000),
       },
     },
   });
 
   if (error) {
-    const message: string =
-      error.message ??
-      "We couldn't submit your request. Check your details and try again.";
-    throw new Error(message);
+    throw new Error(
+      error.message ||
+        "We couldn't create your account. Check your details and try again.",
+    );
   }
 
   return { needsConfirm: !data.session };

@@ -53,7 +53,6 @@ export interface ListingImage {
   sortOrder: number;
 }
 
-
 export interface AdminListing {
   id: string;
   slug: string;
@@ -116,6 +115,8 @@ export interface AdminAccount {
   suspended: boolean;
   suspensionReason: string | null;
   createdAt: string;
+  adminRole: string | null;
+  adminStatus: string | null;
 }
 
 export interface AdminAppeal {
@@ -199,11 +200,18 @@ export async function isAdmin(client?: SupabaseClient): Promise<boolean> {
 
 /** Called by a signed-in user from the public app. Returns the request id. */
 export async function requestAdminAccess(
-  message?: string | null,
+  message: string,
   client?: SupabaseClient,
 ): Promise<string> {
-  const trimmed = message?.trim() || null;
-  return rpc<string>("request_admin_access", { _message: trimmed }, client);
+  const trimmed = message.trim();
+  if (trimmed.length < 20) {
+    throw new Error("Please write at least 20 characters.");
+  }
+  return rpc<string>(
+    "request_admin_access",
+    { _message: trimmed.slice(0, 1000) },
+    client,
+  );
 }
 
 /** Super admin only. Pass null to list every status. */
@@ -510,6 +518,8 @@ export async function searchAccounts(
     suspended: !!r.suspended,
     suspensionReason: r.suspension_reason,
     createdAt: r.created_at,
+    adminRole: r.admin_role ?? null,
+    adminStatus: r.admin_status ?? null,
   }));
 }
 

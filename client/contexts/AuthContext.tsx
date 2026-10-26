@@ -31,6 +31,7 @@ import {
 } from "@affilhomes/shared/supabase";
 import { uploadUserFile } from "@affilhomes/shared/supabase";
 import { createClient } from "@affilhomes/shared/supabase/client";
+import { setMyRoles, switchActiveRole } from "@affilhomes/shared/supabase/roles";
 
 export interface CompanyOnboardingFiles {
   logo?: File | null;
@@ -129,10 +130,6 @@ function toProfileUpdates(updates: Partial<PopulatedUser>) {
   if (updates.whatsappNumber !== undefined)
     out.whatsapp_number = updates.whatsappNumber;
   if (updates.avatar !== undefined) out.avatar = updates.avatar;
-  if (updates.roles !== undefined)
-    out.roles = updates.roles.filter((r) => r !== Role.Company);
-  if (updates.activeRole !== undefined && updates.activeRole !== Role.Company)
-    out.active_role = updates.activeRole;
   if (updates.viewerProfile !== undefined)
     out.viewer_profile = updates.viewerProfile;
   if (updates.agentProfile !== undefined)
@@ -357,19 +354,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null);
 
       try {
-        const payload = toProfileUpdates({
+        if (updates.roles) {
+          await setMyRoles(updates.roles, createClient());
+        }
+
+        const otherFields = toProfileUpdates({
           ...updates,
-          roles: updates.roles
-            ? [...new Set([...user.roles, ...updates.roles])]
-            : undefined,
+          roles: undefined,
           metadata: {
             ...user.metadata,
             ...(updates.metadata ?? {}),
             lastRoleSwitch: new Date(),
           },
         });
+        if (Object.keys(otherFields).length > 0) {
+          await updateCurrentProfile(userId, otherFields);
+        }
 
-        await updateCurrentProfile(userId, payload);
         const updated = await loadUser();
         if (!updated) throw new Error("Failed to reload profile");
         return updated;
@@ -534,42 +535,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, loadUser],
   );
 
-  const switchRole = useCallback(
-    async (newRole: Role) => {
-      if (!user) {
-        throw new Error("No user logged in");
-      }
+ const switchRole = useCallback(
+   async (newRole: Role) => {
+     if (!user) throw new Error("No user logged in");
 
-      setAuthLoading(true);
-      setAuthError(null);
+     setAuthLoading(true);
+     setAuthError(null);
 
-      try {
-        if (LOCKED_ROLES.includes(user.activeRole)) {
-          throw new Error("This account role cannot be changed.");
-        }
-
-        if (!user.roles.includes(newRole)) {
-          throw new Error("You cannot switch to this role.");
-        }
-
-        await updateCurrentProfile(user._id, {
-          active_role: newRole,
-          metadata: {
-            ...user.metadata,
-            lastRoleSwitch: new Date().toISOString(),
-          },
-        });
-
-        await loadUser();
-      } catch (error) {
-        setAuthError(errorMessage(error, "Failed to switch role."));
-        throw error;
-      } finally {
-        setAuthLoading(false);
-      }
-    },
-    [user, loadUser],
-  );
+     try {
+       await switchActiveRole(newRole, createClient());
+       await loadUser();
+     } catch (error) {
+       setAuthError(errorMessage(error, "Failed to switch role."));
+       throw error;
+     } finally {
+       setAuthLoading(false);
+     }
+   },
+   [user, loadUser],
+ );
 
   const logout = useCallback(async () => {
     setAuthLoading(true);

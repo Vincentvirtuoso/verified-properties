@@ -34,8 +34,9 @@ export function LoginForm() {
       router.replace("/rejected");
     } else if (status === "suspended") {
       router.replace("/suspended");
-    }
-  }, [status, next, router]);
+    } else if (status === "unrequested") {
+      router.replace("/request-access");
+    }  }, [status, next, router]);
 
   const onSubmit = handleSubmit(async (data) => {
     clearError();

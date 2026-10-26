@@ -1,14 +1,10 @@
-type SkeletonProps = {
-  className?: string;
-};
-
-export function Skeleton({ className = "" }: SkeletonProps) {
+export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`relative isolate overflow-hidden rounded-md bg-border ${className}`}
-      aria-hidden="true"
+      className={`relative overflow-hidden rounded-md bg-border ${className}`}
+      aria-hidden
     >
-      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-foreground/10 to-transparent" />
+      <div className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-foreground/10 to-transparent" />
     </div>
   );
 }

@@ -203,7 +203,11 @@ function AccountCard({
             </div>
             <p className="text-xs capitalize text-muted-foreground">
               {isCompany ? "Company" : "User"}
-              {a.detail && ` · ${humanize(a.detail)}`}
+              {a.adminRole
+                ? a.adminRole
+                : a.detail
+                  ? ` · ${humanize(a.detail)}`
+                  : null }
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {a.email ?? "No email on file"}
@@ -224,7 +228,7 @@ function AccountCard({
           </div>
         </div>
       </div>
-
+  
       <footer className="mt-4 space-y-2 border-t border-border pt-4">
         <p className="text-xs text-muted-foreground">
           {a.suspended

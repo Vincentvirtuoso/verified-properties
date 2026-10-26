@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   LuBell,
   LuChevronDown,
@@ -10,14 +16,15 @@ import {
   LuLogOut,
   LuMenu,
   LuMoon,
-  LuPlus,
   LuSearch,
   LuSettings,
   LuSun,
   LuUser,
 } from "react-icons/lu";
 
-import { Avatar, Button } from "@affilhomes/shared/ui";
+import { Avatar } from "@affilhomes/shared/ui";
+import { adminRoleLabels } from "@affilhomes/shared/utils";
+import type { AdminRole } from "@affilhomes/shared/types";
 
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -26,15 +33,28 @@ import { titleForPath } from "./nav-config";
 import { useSidebar } from "./SidebarProvider";
 
 const iconButton =
-  "rounded-lg p-2 text-muted transition-colors hover:bg-sidebar-hover-bg hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "inline-flex size-9 shrink-0 items-center justify-center rounded-lg " +
+  "text-muted transition-colors duration-150 " +
+  "hover:bg-sidebar-hover-bg hover:text-foreground " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+  "disabled:pointer-events-none disabled:opacity-50";
 
 const menuItem =
-  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:bg-secondary";
+  "flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 " +
+  "text-sm text-foreground transition-colors " +
+  "hover:bg-muted/30 focus-visible:bg-muted/30 " +
+  "focus-visible:outline-none";
+
+const popover =
+  "absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-xl " +
+  "border border-border bg-popover p-1 shadow-xl " +
+  "animate-fade-in";
 
 export function Topbar() {
   const { setMobileOpen } = useSidebar();
   const { theme, toggle } = useTheme();
-  const { user, logout: signOut } = useAuth();
+  const { user, logout, role } = useAuth();
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -42,89 +62,123 @@ export function Topbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
-  //- TODO: replace with the real unread count from your notifications source
+
+  // Connect this to your notifications provider when available.
   const unreadCount = 0;
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
+  const closePopovers = useCallback(() => {
+    setMenuOpen(false);
+    setNotifOpen(false);
   }, []);
 
   useEffect(() => {
-    const onPointerDown = (e: MouseEvent) => {
-      const target = e.target as Node;
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) return;
+
       if (userMenuRef.current && !userMenuRef.current.contains(target)) {
         setMenuOpen(false);
       }
+
       if (notifRef.current && !notifRef.current.contains(target)) {
         setNotifOpen(false);
       }
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMenuOpen(false);
-        setNotifOpen(false);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closePopovers();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
         searchRef.current?.focus();
         searchRef.current?.select();
       }
     };
 
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [closePopovers]);
 
   useEffect(() => {
-    setMenuOpen(false);
-    setNotifOpen(false);
-  }, [pathname]);
+    closePopovers();
+  }, [pathname, closePopovers]);
 
-  const onSearch = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     const trimmed = query.trim();
-    if (!trimmed) return;
+
+    if (!trimmed) {
+      searchRef.current?.focus();
+      return;
+    }
+
+    closePopovers();
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   };
 
   const title = titleForPath(pathname);
   const userName = user?.name ?? "Admin";
   const userEmail = user?.email ?? "";
+  const userRole = adminRoleLabels[role as AdminRole] ?? "";
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 md:px-6">
+    <header
+      ref={headerRef}
+      className="
+        sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3
+        border-b border-border bg-background/85 px-4
+        backdrop-blur-xl supports-backdrop-filter:bg-background/70
+        md:px-6
+      "
+    >
+      {/* Mobile sidebar */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className={`${iconButton} lg:hidden`}
+        className={iconButton + " lg:hidden"}
         aria-label="Open sidebar"
       >
-        <LuMenu size={20} />
+        <LuMenu size={20} aria-hidden="true" />
       </button>
 
+      {/* Current page */}
       {title && (
-        <h1 className="min-w-0 truncate text-base font-semibold">{title}</h1>
+        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">
+          {title}
+        </h1>
       )}
 
-      <div className="ml-auto flex items-center gap-1 md:gap-2">
+      {/* Search and actions */}
+      <div className="ml-auto flex min-w-0 items-center gap-1.5 md:gap-2">
+        {/* Mobile search */}
         <Link
           href="/search"
-          className={`${iconButton} md:hidden`}
-          aria-label="Search"
+          className={iconButton + " md:hidden"}
+          aria-label="Open search"
         >
-          <LuSearch size={18} />
+          <LuSearch size={18} aria-hidden="true" />
         </Link>
 
+        {/* Desktop search */}
         <form
           role="search"
           onSubmit={onSearch}
@@ -133,67 +187,112 @@ export function Topbar() {
           <LuSearch
             size={16}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            className="
+              pointer-events-none absolute left-3 top-1/2
+              -translate-y-1/2 text-muted
+            "
           />
+
           <input
             ref={searchRef}
-            type="text"
+            type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Search accounts, listings…"
             aria-label="Search accounts and listings"
-            className="h-9 w-56 rounded-lg border border-border bg-background pl-9 lg:pr-12 text-sm outline-none transition-shadow placeholder:text-muted focus:ring-2 focus:ring-ring lg:w-72"
+            className="
+              h-9 w-52 rounded-lg border border-border
+              bg-secondary/50 pl-9 pr-3 text-sm
+              outline-none transition-[background-color,border-color,box-shadow]
+              placeholder:text-muted
+              hover:bg-secondary/80
+              focus:border-ring focus:bg-background focus:ring-2
+              focus:ring-ring/20
+              [&::-webkit-search-cancel-button]:cursor-pointer
+              lg:w-64 lg:pr-16
+            "
           />
+
           <kbd
             aria-hidden="true"
-            className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted lg:block"
+            className="
+              pointer-events-none absolute right-2 top-1/2
+              hidden -translate-y-1/2 rounded-md border
+              border-border bg-background px-1.5 py-0.5
+              text-[10px] font-medium text-muted lg:block
+            "
           >
-            {isMac ? "⌘K" : "Ctrl K"}
+            {isMac ? "⌘ K" : "Ctrl K"}
           </kbd>
         </form>
 
+        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => {
-              setNotifOpen((o) => !o);
+              setNotifOpen((open) => !open);
               setMenuOpen(false);
             }}
+            className={iconButton + " relative"}
             aria-expanded={notifOpen}
-            aria-haspopup="true"
+            aria-haspopup="dialog"
+            aria-controls="topbar-notifications"
             aria-label={
               unreadCount > 0
                 ? `Notifications, ${unreadCount} unread`
                 : "Notifications"
             }
-            className={`relative ${iconButton}`}
           >
-            <LuBell size={18} />
+            <LuBell size={18} aria-hidden="true" />
+
             {unreadCount > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+                className="
+                  absolute right-1 top-1 flex h-4 min-w-4
+                  items-center justify-center rounded-full
+                  bg-primary px-1 text-[10px] font-semibold
+                  text-primary-foreground ring-2 ring-background
+                "
               >
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
+
           {notifOpen && (
-            <div
+            <section
+              id="topbar-notifications"
               role="dialog"
               aria-label="Notifications"
-              className="animate-fade-in absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover p-1 shadow-lg"
+              className={popover + " w-80 max-w-[calc(100vw-2rem)]"}
             >
-              <div className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm font-semibold">Notifications</span>
+              <div className="flex items-center justify-between border-b border-border px-3 py-3">
+                <h2 className="text-sm font-semibold">Notifications</h2>
+
+                <span className="text-xs text-muted">{unreadCount} unread</span>
               </div>
-              <div className="px-3 py-8 text-center text-sm text-muted">
-                You&apos;re all caught up.
+
+              <div
+                className="flex flex-col items-center px-5 py-9 text-center"
+                aria-live="polite"
+              >
+                <span className="mb-3 flex size-11 items-center justify-center rounded-full bg-secondary">
+                  <LuBell size={20} className="text-muted" aria-hidden="true" />
+                </span>
+
+                <p className="text-sm font-medium">You&apos;re all caught up</p>
+
+                <p className="mt-1 text-xs leading-relaxed text-muted">
+                  New notifications will appear here.
+                </p>
               </div>
-            </div>
+            </section>
           )}
         </div>
 
+        {/* Theme */}
         <button
           type="button"
           onClick={toggle}
@@ -201,72 +300,136 @@ export function Topbar() {
           aria-label={
             theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
           }
+          title={theme === "dark" ? "Light theme" : "Dark theme"}
         >
-          {theme === "dark" ? <LuSun size={18} /> : <LuMoon size={18} />}
+          {theme === "dark" ? (
+            <LuSun size={18} aria-hidden="true" />
+          ) : (
+            <LuMoon size={18} aria-hidden="true" />
+          )}
         </button>
 
+        {/* Public website */}
         <Link
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className={`${iconButton} hidden md:block`}
+          className={iconButton + " hidden md:inline-flex"}
           aria-label="View public site (opens in a new tab)"
+          title="View public site"
         >
-          <LuExternalLink size={18} />
+          <LuExternalLink size={18} aria-hidden="true" />
         </Link>
 
+        {/* Account menu */}
         <div className="relative" ref={userMenuRef}>
           <button
             type="button"
             onClick={() => {
-              setMenuOpen((o) => !o);
+              setMenuOpen((open) => !open);
               setNotifOpen(false);
             }}
+            className="
+              flex max-w-44 items-center gap-2 rounded-lg
+              border border-transparent py-1 pl-1 pr-2
+              transition-colors hover:border-border
+              hover:bg-sidebar-hover-bg
+              focus-visible:outline-none focus-visible:ring-2
+              focus-visible:ring-ring
+              md:max-w-52
+            "
             aria-expanded={menuOpen}
             aria-haspopup="menu"
+            aria-controls="topbar-account-menu"
             aria-label={`Account menu for ${userName}`}
-            className="flex items-center gap-2 rounded-lg p-1 pr-2 transition-colors hover:bg-sidebar-hover-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Avatar size={24} name={userName} />
+            <Avatar size={28} name={userName} />
+
+            <span className="hidden min-w-0 text-left sm:block">
+              <span className="block truncate text-xs font-medium leading-4">
+                {userName}
+              </span>
+              <span className="block truncate text-[10px] leading-4 text-muted">
+                {userRole || "Administrator"}
+              </span>
+            </span>
+
             <LuChevronDown
               size={14}
               aria-hidden="true"
-              className={`hidden text-muted transition-transform md:block ${
-                menuOpen ? "rotate-180" : ""
-              }`}
+              className={
+                "hidden shrink-0 text-muted transition-transform duration-200 md:block " +
+                (menuOpen ? "rotate-180" : "")
+              }
             />
           </button>
 
           {menuOpen && (
             <div
+              id="topbar-account-menu"
               role="menu"
-              className="animate-fade-in absolute right-0 mt-2 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover p-1 shadow-lg"
+              aria-label="Account options"
+              className={popover + " w-64 max-w-[calc(100vw-2rem)]"}
             >
-              <div className="px-3 py-2">
-                <div className="truncate text-sm font-semibold">{userName}</div>
-                {userEmail && (
-                  <div className="truncate text-xs text-muted">{userEmail}</div>
-                )}
+              <div className="flex items-center gap-3 px-3 py-3">
+                <Avatar size={36} name={userName} />
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{userName}</p>
+
+                  {userEmail && (
+                    <p className="truncate text-xs text-muted">{userEmail}</p>
+                  )}
+
+                  {userRole && (
+                    <p className="mt-1 truncate text-[11px] text-muted">
+                      {userRole}
+                    </p>
+                  )}
+                </div>
               </div>
+
               <div className="my-1 h-px bg-border" />
+
               <Link
                 role="menuitem"
                 href="/settings/profile"
+                onClick={closePopovers}
                 className={menuItem}
               >
-                <LuUser size={16} aria-hidden="true" /> Profile
+                <LuUser size={16} className="text-muted" aria-hidden="true" />
+                Profile
               </Link>
-              <Link role="menuitem" href="/settings" className={menuItem}>
-                <LuSettings size={16} aria-hidden="true" /> Settings
+
+              <Link
+                role="menuitem"
+                href="/settings"
+                onClick={closePopovers}
+                className={menuItem}
+              >
+                <LuSettings
+                  size={16}
+                  className="text-muted"
+                  aria-hidden="true"
+                />
+                Settings
               </Link>
+
               <div className="my-1 h-px bg-border" />
+
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => signOut?.()}
-                className={`${menuItem} text-destructive`}
+                onClick={() => {
+                  closePopovers();
+                  void logout?.();
+                }}
+                className={
+                  menuItem + " text-destructive hover:bg-destructive/10"
+                }
               >
-                <LuLogOut size={16} aria-hidden="true" /> Sign out
+                <LuLogOut size={16} aria-hidden="true" />
+                Sign out
               </button>
             </div>
           )}

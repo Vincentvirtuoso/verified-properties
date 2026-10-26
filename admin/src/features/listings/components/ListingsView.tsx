@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   LuArrowUpRight,
@@ -27,6 +27,7 @@ import {
   AskReason,
   Empty,
   FilterChips,
+  ReloadButton,
   ReviewActions,
   StatusPill,
 } from "@/components/ui/ReviewActions";
@@ -110,6 +111,8 @@ function ownerStatus(listing: AdminListing): { label: string; tone: PillTone } {
 export function ListingsTab() {
   const [filter, setFilter] = useState<Filter>("pending");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Partial<Record<Filter, number>>>({});
+
 
   const { rows, error, reload, loading } = useAdminList<AdminListing>(
     () =>
@@ -119,10 +122,43 @@ export function ListingsTab() {
     [filter],
   );
 
+   const loadCounts = useCallback(async () => {
+     try {
+       const [pending, live, changes, rejected] = await Promise.all([
+         fetchAdminListings(null, "pending"),
+         fetchAdminListings("active", null),
+         fetchAdminListings(null, "changes_requested"),
+         fetchAdminListings(null, "rejected"),
+       ]);
+       setCounts({
+         pending: pending.length,
+         live: live.length,
+         changes_requested: changes.length,
+         rejected: rejected.length,
+       });
+     } catch {
+     }
+   }, []);
+
+   useEffect(() => {
+     loadCounts();
+   }, [loadCounts]);
+
+     const refresh = useCallback(() => {
+       reload();
+       loadCounts();
+     }, [reload, loadCounts]);
+
   const changeFilter = (next: Filter) => {
     setOpenId(null);
     setFilter(next);
   };
+
+
+  const filterOptions = FILTER_OPTIONS.map((o) => ({
+    ...o,
+    count: counts[o.value],
+  }));
 
   return (
     <section className="space-y-4" aria-label="Listings">
@@ -131,24 +167,18 @@ export function ListingsTab() {
           label="Listing status"
           value={filter}
           onChange={changeFilter}
-          options={FILTER_OPTIONS}
+          options={filterOptions}
         />
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted">
           {rows && (
             <span className="tabular-nums">
               {rows.length} {rows.length === 1 ? "listing" : "listings"}
             </span>
           )}
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            onClick={reload}
-            isLoading={loading}
-            leftIcon={<LuRefreshCw size={12} aria-hidden="true" />}
-          >
-            Refresh
-          </Button>
+          <ReloadButton
+            reload={refresh}
+            loading={loading}
+          />
         </div>
       </div>
 

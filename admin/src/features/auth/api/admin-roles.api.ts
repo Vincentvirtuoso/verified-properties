@@ -1,8 +1,6 @@
 import type { createAdminBrowserClient } from "@/lib/supabase";
-
-export type AdminRole = "admin" | "super_admin";
-
-const ADMIN_ROLES: readonly string[] = ["admin", "super_admin"];
+import { AdminRole } from "@/types";
+import { ADMIN_ROLES } from "@affilhomes/shared/types";
 
 export async function fetchAdminRoles(
   supabase: ReturnType<typeof createAdminBrowserClient>,
@@ -16,6 +14,6 @@ export async function fetchAdminRoles(
   if (error) throw error;
 
   return (data ?? [])
-    .map((row) => row.role as string)
+    .map((row) => row.role as AdminRole)
     .filter((role): role is AdminRole => ADMIN_ROLES.includes(role));
 }

@@ -10,16 +10,23 @@ export enum Role {
 
 export type AdminStatus = "pending" | "active" | "rejected" | "suspended";
 
-
 export const LOCKED_ROLES: Role[] = [Role.Company, Role.Admin, Role.SuperAdmin];
 
 export const PARTNER_ROLES: Role[] = [Role.Company];
 
-export const ADMIN_ROLES: Role[] = [Role.Admin, Role.SuperAdmin];
+export const ADMIN_ROLES = [Role.Admin, Role.SuperAdmin] as const;
+
+export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 export const SUPER_ADMIN_ROLES: Role[] = [Role.SuperAdmin];
 
 export const PROFILE_ROLES = [Role.Viewer, Role.Agent, Role.Company] as const;
+
+export const SELF_ASSIGNABLE_ROLES: Role[] = [Role.Viewer, Role.Agent];
+
+export function isSelfAssignable(role: Role): boolean {
+  return SELF_ASSIGNABLE_ROLES.includes(role);
+}
 
 export type AgentSubRole =
   | "realtor"
@@ -121,10 +128,12 @@ export const agentSubRoleLabels: Record<AgentSubRole, string> = {
   other: "Other",
 };
 
-export function isAdminRole(role: Role | undefined | null): boolean {
+export function isAdminRole(role: AdminRole | undefined | null): boolean {
   return !!role && ADMIN_ROLES.includes(role);
 }
 
-export function isSuperAdminRole(role: Role | undefined | null): boolean {
+export function isSuperAdminRole(
+  role: Role.SuperAdmin | undefined | null,
+): boolean {
   return !!role && SUPER_ADMIN_ROLES.includes(role);
 }

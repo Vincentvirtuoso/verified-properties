@@ -10,8 +10,9 @@ import { Button, Field, Textarea } from "@affilhomes/shared/ui";
 import { useZodForm } from "@/hooks/useZodForm";
 import { useAuth } from "@/providers/AuthProvider";
 
-import { requestAdminAccess } from "../api/register.api";
+import {  signUpForAdmin } from "../api/register.api";
 import { registerSchema } from "../schemas/register.schema";
+import { AuthPageLinks } from "./AuthPageLinks";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -30,17 +31,16 @@ export function RegisterForm() {
       email: "",
       password: "",
       confirm: "",
-      reason: "",
     },
   );
 
   useEffect(() => {
-    if (!done) return;
-    if (status === "authenticated") {
+    if (!done || done.needsConfirm) return;
+    if (status === "unrequested") router.replace("/request-access");
+    else if (status === "pending") router.replace("/pending");
+    else if (status === "authenticated") {
       router.replace("/dashboard");
       router.refresh();
-    } else if (status === "pending") {
-      router.replace("/pending");
     }
   }, [done, status, router]);
 
@@ -48,7 +48,7 @@ export function RegisterForm() {
     setFormError(null);
     setSubmitting(true);
     try {
-      const result = await requestAdminAccess(data);
+      const result = await signUpForAdmin(data);
       setDone(result);
     } catch (err) {
       setFormError(
@@ -68,8 +68,8 @@ export function RegisterForm() {
         <h2 className="text-base font-semibold">Request submitted</h2>
         <p className="mt-1 text-sm text-muted">
           {done.needsConfirm
-            ? "Check your inbox to confirm your email. Your application will be reviewed after that."
-            : "Your application is under review. You can sign in to check its status."}
+            ? "Check your inbox to confirm your email. Then sign in to send your access request."
+            : "Your account is ready. Sign in to send your access request."}
         </p>
         <Link
           href="/login"
@@ -134,16 +134,6 @@ export function RegisterForm() {
         placeholder="••••••••"
       />
 
-      <Textarea
-        id="reason"
-        rows={4}
-        value={values.reason}
-        onChange={(value) => setField("reason", value)}
-        aria-invalid={!!errors.reason}
-        label="Why do you need access?"
-        error={errors.reason}
-        placeholder="Briefly describe your role and what you'll be doing in the admin panel."
-      />
 
       {formError && (
         <div
@@ -163,15 +153,7 @@ export function RegisterForm() {
         {submitting ? "Submitting…" : "Request access"}
       </Button>
 
-      <p className="text-center text-xs text-muted">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="font-medium text-primary hover:underline"
-        >
-          Sign in
-        </Link>
-      </p>
+      <AuthPageLinks current="register" />
     </form>
   );
 }

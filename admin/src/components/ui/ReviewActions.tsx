@@ -7,6 +7,7 @@ import {
   LuCircleHelp,
   LuInbox,
   LuPlus,
+  LuRefreshCw,
   LuX,
 } from "react-icons/lu";
 import { Button, Textarea } from "@affilhomes/shared/ui";
@@ -142,6 +143,27 @@ export function StatusPill({
     >
       {children}
     </span>
+  );
+}
+
+export function ReloadButton({
+  reload,
+  loading,
+}: {
+  reload: () => Promise<void> | void;
+  loading: boolean;
+}) {
+  return (
+    <Button
+      type="button"
+      size="xs"
+      variant="ghost"
+      onClick={reload}
+      isLoading={loading}
+      leftIcon={<LuRefreshCw size={12} aria-hidden="true" />}
+    >
+      Refresh
+    </Button>
   );
 }
 

@@ -58,7 +58,7 @@ export type AdminLinkData = {
 };
 
 import { LuUserPlus } from "react-icons/lu";
-import type { AdminRole } from "@/features/auth/api/admin-roles.api";
+import { AdminRole } from "@/types";
 
 type Permission =
   | "moderation"
@@ -83,7 +83,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
 type AdminLink = SidebarLink & { permission?: Permission };
 
 function can(role: AdminRole | null, permission?: Permission): boolean {
-  if (!permission) return true; // links without a permission are open to any active admin
+  if (!permission) return true; 
   if (!role) return false;
   return ROLE_PERMISSIONS[role].includes(permission);
 }
@@ -127,8 +127,8 @@ function buildAdminLinks(data: AdminLinkData): AdminLink[] {
       permission: "users",
     },
     {
-      href: "/properties",
-      label: "Properties",
+      href: "/listings",
+      label: "Listings",
       icon: <ListingsIcon />,
       category: "Listings",
       permission: "listings",
