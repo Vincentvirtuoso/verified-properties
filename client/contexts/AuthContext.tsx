@@ -5,6 +5,7 @@ import {
   PopulatedUser,
   Role,
   LOCKED_ROLES,
+  CompanyRegistration,
 } from "@affilhomes/shared/types";
 
 import React, {
@@ -31,7 +32,12 @@ import {
 } from "@affilhomes/shared/supabase";
 import { uploadUserFile } from "@affilhomes/shared/supabase";
 import { createClient } from "@affilhomes/shared/supabase/client";
-import { setMyRoles, switchActiveRole } from "@affilhomes/shared/supabase/roles";
+import {
+  setMyRoles,
+  switchActiveRole,
+} from "@affilhomes/shared/supabase/roles";
+import { ProfileRole } from "@/utils";
+import { RegistrationGuard } from "@/components/common/RegistrationGuard";
 
 export interface CompanyOnboardingFiles {
   logo?: File | null;
@@ -40,6 +46,14 @@ export interface CompanyOnboardingFiles {
 
 export interface ProfileUpdateFiles {
   avatar?: File | null;
+}
+
+interface CompanyRegistrationDraft {
+  companyName: string;
+  companyType: CompanyRegistration["companyType"];
+  contactEmail: string;
+  contactPhone: string;
+  whatsappNumber: string;
 }
 
 interface AuthContextType {
@@ -56,7 +70,7 @@ interface AuthContextType {
     newUser: PopulatedUser,
     password: string,
     company?: Company,
-    options?: { next?: string },
+    options?: { next?: string; accountType: "company" | "agent" | "seeker" },
   ) => Promise<boolean>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -85,6 +99,14 @@ interface AuthContextType {
     whatsappNumber?: string;
     logo?: string;
   }) => Promise<Company>;
+  pendingRegistration: CompanyRegistration | null;
+  saveCompanyRegistrationDraft: (
+    fields: CompanyRegistrationDraft,
+  ) => Promise<void>;
+  submitCompanyRegistration: (files: {
+    cacCertificate: File;
+    logo?: File | null;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -120,6 +142,19 @@ function mapProfileToUser(profile: any, company?: Company): PopulatedUser {
     updatedAt: profile.updated_at ? new Date(profile.updated_at) : new Date(),
   } as PopulatedUser;
 }
+function mapRegistration(row: any): CompanyRegistration {
+  return {
+    id: row.id,
+    status: row.status,
+    companyName: row.company_name ?? "",
+    companyType: row.company_type ?? null,
+    contactEmail: row.contact_email ?? "",
+    contactPhone: row.contact_phone ?? "",
+    whatsappNumber: row.whatsapp_number ?? "",
+    logoUrl: row.logo_url ?? null,
+    rejectionReason: row.rejection_reason ?? null,
+  };
+}
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Only columns the user may edit are sent; the DB guard enforces the rest. */
@@ -153,8 +188,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
   const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
+  const [pendingRegistration, setPendingRegistration] =
+    useState<CompanyRegistration | null>(null);
 
   const userId = user?._id;
+  const supabase = createClient();
 
   const clearError = useCallback(() => {
     setAuthError(null);
@@ -167,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!profile) {
         setUser(null);
         setCompanies([]);
+        setPendingRegistration(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         return null;
@@ -181,7 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const supabase = createClient();
       const { data: suspended, error: suspendedError } = await supabase.rpc(
         "is_suspended",
         { _user_id: profile.id },
@@ -209,11 +247,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mapped = mapProfileToUser(profile, company);
       setUser(mapped);
       setCompanies(company ? [company] : []);
+      const { data: regRow } = await supabase
+        .from("company_registrations")
+        .select("*")
+        .in("status", ["draft", "docs_submitted", "rejected"])
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setPendingRegistration(regRow ? mapRegistration(regRow) : null);
       return mapped;
     } catch (error) {
       console.error("Failed to load authenticated user:", error);
       setUser(null);
       setCompanies([]);
+      setPendingRegistration(null);
       return null;
     }
   }, []);
@@ -236,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "SIGNED_OUT") {
         setUser(null);
         setCompanies([]);
+        setPendingRegistration(null);
         return;
       }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
@@ -306,7 +354,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       newUser: PopulatedUser,
       password: string,
       company?: Company,
-      options?: { next?: string },
+      options?: { next?: string; accountType: "company" | "agent" | "seeker" },
     ) => {
       setAuthLoading(true);
       setAuthError(null);
@@ -320,6 +368,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             phone: newUser.phone,
             whatsappNumber: newUser.whatsappNumber ?? newUser.phone,
             next: options?.next,
+            accountType:options?.accountType,
           },
         );
 
@@ -339,6 +388,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [loadUser],
+  );
+
+  const saveCompanyRegistrationDraft = useCallback(
+    async (fields: CompanyRegistrationDraft) => {
+      if (!user) throw new Error("No user logged in");
+      const supabase = createClient();
+      const payload = {
+        company_name: fields.companyName.trim(),
+        company_type: fields.companyType,
+        contact_email: fields.contactEmail.trim(),
+        contact_phone: fields.contactPhone.trim() || null,
+        whatsapp_number: fields.whatsappNumber.trim() || null,
+      };
+
+      // Draft and rejected rows are handled differently: a rejected registration
+      // is a closed record, so starting again creates a new draft.
+      const { error } =
+        pendingRegistration?.status === "draft"
+          ? await supabase
+              .from("company_registrations")
+              .update({ ...payload, updated_at: new Date().toISOString() })
+              .eq("id", pendingRegistration.id)
+          : await supabase
+              .from("company_registrations")
+              .insert({ ...payload, user_id: user._id, status: "draft" });
+
+      if (error) throw error;
+      await loadUser();
+    },
+    [user, pendingRegistration, loadUser],
+  );
+
+  const submitCompanyRegistration = useCallback(
+    async (files: { cacCertificate: File; logo?: File | null }) => {
+      if (!user) throw new Error("No user logged in");
+      const supabase = createClient();
+
+      const logoUrl = files.logo
+        ? await uploadUserFile(
+            "avatars",
+            user._id,
+            files.logo,
+            files.logo.name,
+            supabase,
+          )
+        : null;
+      const cacPath = await uploadUserFile(
+        "company-documents",
+        user._id,
+        files.cacCertificate,
+        files.cacCertificate.name,
+        supabase,
+      );
+
+      const { error } = await supabase.rpc("submit_company_registration", {
+        p_cac_path: cacPath,
+        p_logo_url: logoUrl,
+      });
+      if (error) throw error;
+      await loadUser();
+    },
+    [user, loadUser],
   );
 
   const updateUserRole = useCallback(
@@ -535,25 +646,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, loadUser],
   );
 
- const switchRole = useCallback(
-   async (newRole: Role) => {
-     if (!user) throw new Error("No user logged in");
+  const switchRole = useCallback(
+    async (newRole: Role) => {
+      if (!user) throw new Error("No user logged in");
 
-     setAuthLoading(true);
-     setAuthError(null);
+      setAuthLoading(true);
+      setAuthError(null);
 
-     try {
-       await switchActiveRole(newRole, createClient());
-       await loadUser();
-     } catch (error) {
-       setAuthError(errorMessage(error, "Failed to switch role."));
-       throw error;
-     } finally {
-       setAuthLoading(false);
-     }
-   },
-   [user, loadUser],
- );
+      try {
+        await switchActiveRole(newRole, createClient());
+        await loadUser();
+      } catch (error) {
+        setAuthError(errorMessage(error, "Failed to switch role."));
+        throw error;
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [user, loadUser],
+  );
 
   const logout = useCallback(async () => {
     setAuthLoading(true);
@@ -593,10 +704,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         switchRole,
         updateUserRole,
         updateProfile,
+        pendingRegistration,
+        saveCompanyRegistrationDraft,
+        submitCompanyRegistration,
         completeRegistration,
       }}
     >
-      {children}
+      <RegistrationGuard>{children}</RegistrationGuard>
     </AuthContext.Provider>
   );
 }

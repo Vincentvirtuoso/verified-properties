@@ -565,7 +565,7 @@ export const Sidebar = ({ links: externalLinks }: SidebarProps) => {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-border bg-sidebar-bg transition-all duration-300 ease-in-out lg:flex",
+          "fixed left-0 top-0 z-70 hidden h-full flex-col border-r border-border bg-sidebar-bg transition-all duration-300 ease-in-out lg:flex",
           width,
         )}
       >

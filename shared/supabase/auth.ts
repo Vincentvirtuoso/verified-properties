@@ -23,17 +23,18 @@ export interface SignUpExtras {
   next?: string;
   requested_role?: Role;
   admin_reason?: string;
+  accountType?: "company" | "agent" | "seeker";
 }
 
 export async function signUpWithEmail(
   email: string,
   password: string,
   name?: string,
-  extras: SignUpExtras = {},
+  extras: SignUpExtras = { },
 ) {
   const supabase = createClient();
 
-  const next = extras.next ?? "/dashboard";
+  const next = extras.next ?? "/";
 
   const redirectTo =
     typeof window !== "undefined"
@@ -45,11 +46,11 @@ export async function signUpWithEmail(
     password,
     options: {
       emailRedirectTo: redirectTo,
-      // Read by the handle_new_user() trigger to fill the profile row.
       data: {
         name: name ?? "",
         phone: extras.phone ?? "",
         whatsapp_number: extras.whatsappNumber ?? extras.phone ?? "",
+        account_type: extras.accountType??"seeker",
       },
     },
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@affilhomes/shared/ui/Field";
@@ -26,11 +26,20 @@ import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
 import { AuthFormSkeleton } from "./FormSkeleton";
 import Link from "next/link";
+import { getErrorMessage } from "@/utils";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 
 function CompleteRegistrationForm() {
-  const { user, completeRegistration, authLoading } = useAuth();
+  const {
+    user,
+    pendingRegistration,
+    saveCompanyRegistrationDraft,
+    submitCompanyRegistration,
+    updateUserRole,
+    authLoading,
+  } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
@@ -67,6 +76,46 @@ function CompleteRegistrationForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const prefilled = useRef(false);
+
+  useEffect(() => {
+    if (prefilled.current || pendingRegistration?.status !== "draft") return;
+    prefilled.current = true;
+    setCompanyData((prev) => ({
+      ...prev,
+      companyName: pendingRegistration.companyName,
+      companyType: pendingRegistration.companyType ?? prev.companyType,
+      contactEmail: pendingRegistration.contactEmail || prev.contactEmail,
+      contactPhone: pendingRegistration.contactPhone || prev.contactPhone,
+      whatsappNumber: pendingRegistration.whatsappNumber || prev.whatsappNumber,
+    }));
+  }, [pendingRegistration]);
+
+  useEffect(() => {
+    if (!pendingRegistration || pendingRegistration.status !== "draft") return;
+    setCompanyData((prev) => ({
+      ...prev,
+      companyName: pendingRegistration.companyName,
+      companyType: pendingRegistration.companyType ?? prev.companyType,
+      contactEmail: pendingRegistration.contactEmail || prev.contactEmail,
+      contactPhone: pendingRegistration.contactPhone || prev.contactPhone,
+      whatsappNumber: pendingRegistration.whatsappNumber || prev.whatsappNumber,
+    }));
+  }, [pendingRegistration]);
+
+  useEffect(() => {
+    if (
+      initialRole !== Role.Company ||
+      !user ||
+      !companyData.companyName.trim()
+    )
+      return;
+    const t = setTimeout(() => {
+      void saveCompanyRegistrationDraft(companyData).catch(() => {});
+    }, 800);
+    return () => clearTimeout(t);
+  }, [companyData]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!initialRole || !VALID_ROLES.includes(initialRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-950 p-4">
@@ -83,7 +132,11 @@ function CompleteRegistrationForm() {
     );
   }
 
-  if (authLoading) return <AuthFormSkeleton variant={initialRole} />;
+  if (authLoading) return (
+    <AuthFormSkeleton
+      variant={roleParam === Role.Company ? "company" : "agent"}
+    />
+  );
 
   if (!user) {
     return (
@@ -96,7 +149,7 @@ function CompleteRegistrationForm() {
           </p>
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <Link
-              href={`/login?redirect=${encodeURIComponent(
+              href={`/login?callbackUrl=${encodeURIComponent(
                 window.location.pathname + window.location.search,
               )}`}
               className="flex-1 inline-flex items-center justify-center h-11 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -104,12 +157,29 @@ function CompleteRegistrationForm() {
               Sign in
             </Link>
             <Link
-              href="/signup"
+              href="/register"
               className="flex-1 inline-flex items-center justify-center h-11 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
             >
               Create account
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingRegistration?.status === "docs_submitted") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-8 text-center space-y-3">
+          <h2 className="text-xl font-bold text-foreground">
+            Documents under review
+          </h2>
+          <p className="text-sm text-muted">
+            We're verifying {pendingRegistration.companyName}. This usually
+            takes 2 to 5 business days. Your account stays a viewer until
+            approval.
+          </p>
         </div>
       </div>
     );
@@ -129,9 +199,10 @@ function CompleteRegistrationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: Record<string, string> = {};
+    setErrors({});
 
     if (initialRole === Role.Agent) {
+      const newErrors: Record<string, string> = {};
       if (agentSubRole === "realtor" && !agentData.licenseNumber.trim())
         newErrors.licenseNumber = "License number is required for Realtors";
       if (agentSubRole === "lawyer" && !agentData.barNumber.trim())
@@ -140,109 +211,76 @@ function CompleteRegistrationForm() {
       if (agentSubRole === "surveyor" && !agentData.surveyorRegNumber.trim())
         newErrors.surveyorRegNumber =
           "SURCON registration number is required for Surveyors";
-    }
+      if (Object.keys(newErrors).length) return setErrors(newErrors);
 
-    if (initialRole === Role.Company) {
-      if (!companyData.companyName.trim())
-        newErrors.companyName = "Company name is required";
-      if (!companyData.contactEmail.trim())
-        newErrors.contactEmail = "Contact email is required";
-      if (!cacCertFile)
-        newErrors.cacCert =
-          "CAC certificate is required for partnership registration";
-    }
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
-    const updates: Partial<PopulatedUser> = {
-      roles: Array.from(new Set([...user.roles, initialRole])),
-      activeRole: initialRole,
-    };
-
-    let companyPayload: Company | undefined;
-
-    if (initialRole === Role.Agent) {
-      updates.agentProfile = {
-        subRole: agentSubRole,
-        verificationStatus: "unverified",
-        activeListings: 0,
-        activeBoostedListings: 0,
-        licenseNumber:
-          agentSubRole === "realtor"
-            ? agentData.licenseNumber.trim()
-            : undefined,
-        brokerage:
-          agentSubRole === "realtor" && agentData.brokerage.trim()
-            ? agentData.brokerage.trim()
-            : undefined,
-        barNumber:
-          agentSubRole === "lawyer" ? agentData.barNumber.trim() : undefined,
-        surveyorRegNumber:
-          agentSubRole === "surveyor"
-            ? agentData.surveyorRegNumber.trim()
-            : undefined,
-      };
-    }
-
-    if (initialRole === Role.Company) {
-      const companyId = `comp_${Date.now()}`;
-      updates.companyRole = "admin";
-
-      companyPayload = {
-        _id: companyId,
-        name: companyData.companyName.trim(),
-        slug: companyData.companyName.toLowerCase().replace(/\s+/g, "-"),
-        logo: undefined,
-        type: companyData.companyType,
-        verificationStatus: "unverified",
-        onboardingDocs: {
-          cacCertificateUrl: "",
-        },
-        features: {
-          whatsappNotifications: false,
-          prioritySupport: false,
-          dedicatedAccountManager: false,
-          whiteLabel: false,
-        },
-        team: [
-          {
-            userId: user._id,
-            role: "admin",
-            permissions: [
-              "manage_listings",
-              "manage_members",
-              "view_analytics",
-            ],
+      setSubmitting(true);
+      try {
+        await updateUserRole(user._id, {
+          roles: Array.from(new Set([...user.roles, Role.Agent])),
+          activeRole: Role.Agent,
+          agentProfile: {
+            subRole: agentSubRole,
+            verificationStatus: "unverified",
+            activeListings: 0,
+            activeBoostedListings: 0,
+            licenseNumber:
+              agentSubRole === "realtor"
+                ? agentData.licenseNumber.trim()
+                : undefined,
+            brokerage:
+              agentSubRole === "realtor" && agentData.brokerage.trim()
+                ? agentData.brokerage.trim()
+                : undefined,
+            barNumber:
+              agentSubRole === "lawyer"
+                ? agentData.barNumber.trim()
+                : undefined,
+            surveyorRegNumber:
+              agentSubRole === "surveyor"
+                ? agentData.surveyorRegNumber.trim()
+                : undefined,
           },
-        ],
-        contactEmail: companyData.contactEmail.trim(),
-        contactPhone: companyData.contactPhone.trim() || undefined,
-        whatsappNumber: companyData.whatsappNumber.trim() || undefined,
-        activeListings: 0,
-        totalRemitted: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as unknown as Company;
+        });
+        router.push("/welcome");
+      } catch (err) {
+        setErrors({
+          submit: getErrorMessage(
+            err,
+            "Could not save your profile. Please retry.",
+          ),
+        });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
     }
 
+    const cac = cacCertFile;
+    const newErrors: Record<string, string> = {};
+    if (!companyData.companyName.trim())
+      newErrors.companyName = "Company name is required";
+    if (!companyData.contactEmail.trim())
+      newErrors.contactEmail = "Contact email is required";
+    if (!cac)
+      newErrors.cacCert =
+        "CAC certificate is required for partnership registration";
+    if (Object.keys(newErrors).length || !cac) return setErrors(newErrors);
+
+    setSubmitting(true);
     try {
-      await completeRegistration(user._id, updates, companyPayload, {
+      await saveCompanyRegistrationDraft(companyData);
+      await submitCompanyRegistration({
+        cacCertificate: cac,
         logo: companyLogoFile,
-        cacCertificate: cacCertFile,
       });
-      router.push("/welcome");
-    } catch (error) {
-      console.error("Onboarding error:", error);
+    } catch (err) {
       setErrors({
-        submit:
-          error instanceof Error && error.message
-            ? error.message
-            : "An error occurred while saving your profile. Please retry.",
+        submit: getErrorMessage(err, "Could not submit. Please retry."),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
-
   return (
     <AuthForm
       title={
@@ -262,9 +300,8 @@ function CompleteRegistrationForm() {
       footerHref=""
       showSocialLogins={false}
       className="max-w-xl"
-      loading={authLoading}
+      loading={submitting || authLoading}
     >
-      {/* ── AGENT PACKAGE ── */}
       {initialRole === Role.Agent && (
         <div className="space-y-4">
           <div className="bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800 rounded-xl p-4">
@@ -362,7 +399,6 @@ function CompleteRegistrationForm() {
         </div>
       )}
 
-      {/* ── PARTNERSHIP PACKAGE ── */}
       {initialRole === Role.Company && (
         <div className="space-y-4">
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
@@ -484,13 +520,8 @@ function CompleteRegistrationForm() {
 }
 
 export default function CompleteRegistration() {
-  const variant =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("role") === Role.Company
-      ? "company"
-      : "agent";
   return (
-    <Suspense fallback={<AuthFormSkeleton variant={variant} />}>
+    <Suspense fallback={<AuthFormSkeleton variant="agent" />}>
       <CompleteRegistrationForm />
     </Suspense>
   );

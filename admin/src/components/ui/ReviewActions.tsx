@@ -12,6 +12,7 @@ import {
 } from "react-icons/lu";
 import { Button, Textarea } from "@affilhomes/shared/ui";
 import { getErrorMessage } from "@affilhomes/shared/utils";
+import { Modal } from "./Modal";
 
 export type ReviewDecision = "approve" | "reject" | "more_info";
 type Size = "sm" | "md" | "lg";
@@ -103,7 +104,7 @@ const QUICK_REASONS: Record<ReviewDecision, string[]> = {
 };
 
 const TONE_BY_STATUS = {
-  neutral: "bg-secondary text-secondary-foreground",
+  neutral: "bg-muted/30 text-muted",
   success: "bg-success/15 text-success",
   warning: "bg-warning/15 text-warning",
   danger: "bg-destructive/15 text-destructive",
@@ -424,6 +425,22 @@ function ReasonForm({
   );
 }
 
+type AskReasonProps = {
+  label?: string;
+  prompt?: string;
+  placeholder?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
+  size?: Size;
+  disabled?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  onConfirm: (reason: string) => Promise<void>;
+  suggestions?: string[];
+  variant?: "inline" | "modal";
+};
+
 export function AskReason({
   label = "Ask reason",
   prompt,
@@ -437,38 +454,14 @@ export function AskReason({
   maxLength = 1000,
   onConfirm,
   suggestions,
-}: {
-  label?: string;
-  prompt?: string;
-  placeholder?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  destructive?: boolean;
-  size?: Size;
-  disabled?: boolean;
-  minLength?: number;
-  maxLength?: number;
-  onConfirm: (reason: string) => Promise<void>;
-  suggestions?: string[];
-}) {
+  variant = "inline",
+}: AskReasonProps) {
   const [open, setOpen] = useState(false);
 
-  if (!open) {
-    return (
-      <Button
-        type="button"
-        size={size}
-        variant="outline"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-        className={destructive ? TONE.danger.outline : undefined}
-      >
-        {label}
-      </Button>
-    );
-  }
+  const presentation: "inline" | "modal" = variant ?? "inline";
+  const close = () => setOpen(false);
 
-  return (
+  const form = (
     <ReasonForm
       tone={destructive ? "danger" : "info"}
       prompt={prompt}
@@ -478,13 +471,42 @@ export function AskReason({
       size={size}
       minLength={minLength}
       maxLength={maxLength}
+      suggestions={suggestions}
+      onCancel={close}
       onSubmit={async (reason) => {
         await onConfirm(reason);
         setOpen(false);
       }}
-      suggestions={suggestions}
-      onCancel={() => setOpen(false)}
     />
+  );
+  const button = (
+    <Button
+      type="button"
+      size={size}
+      variant="outline"
+      disabled={disabled}
+      onClick={() => setOpen(true)}
+      className={destructive ? TONE.danger.outline : undefined}
+      aria-haspopup={presentation === "modal" ? "dialog" : undefined}
+      aria-expanded={presentation === "inline" ? false : undefined}
+    >
+      {label}
+    </Button>
+  );
+
+  if (!open) {
+    return button;
+  }
+
+  return presentation === "modal" ? (
+    <>
+      {button}
+      <Modal open onClose={close}>
+        {form}
+      </Modal>
+    </>
+  ) : (
+    form
   );
 }
 

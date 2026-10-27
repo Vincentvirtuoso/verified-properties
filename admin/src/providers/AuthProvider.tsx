@@ -8,14 +8,15 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { AdminStatus, PopulatedUser } from "@affilhomes/shared/types";
-import { Role } from "@affilhomes/shared/types";
+import {
+  Role,
+  type AdminStatus,
+  type PopulatedUser,
+} from "@affilhomes/shared/types";
+import type { AdminRole } from "@affilhomes/shared/types";
 
 import { createAdminBrowserClient } from "@/lib/supabase";
-import {
-  fetchAdminRoles,
-  type AdminRole,
-} from "@/features/auth/api/admin-roles.api";
+import { fetchAdminRoles } from "@/features/auth/api/admin-roles.api";
 
 export type AuthStatus =
   | "loading"
@@ -120,8 +121,8 @@ function resolveRole(
   adminRoles: AdminRole[],
 ): AdminRole | null {
   if (adminStatus !== "active") return null;
-  if (adminRoles.includes("super_admin")) return "super_admin";
-  if (adminRoles.includes("admin")) return "admin";
+  if (adminRoles.includes(Role.SuperAdmin)) return Role.SuperAdmin;
+  if (adminRoles.includes(Role.Admin)) return Role.Admin;
   return null;
 }
 
@@ -292,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     status: snapshot.status,
     isAuthenticated: snapshot.status === "authenticated",
     isLoading: snapshot.status === "loading",
-    isSuperAdmin: snapshot.role === "super_admin",
+    isSuperAdmin: snapshot.role === Role.SuperAdmin,
     isLoggingOut,
     authLoading,
     authError,

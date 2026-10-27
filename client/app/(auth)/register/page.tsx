@@ -2,25 +2,21 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RadioGroup } from "@affilhomes/shared/ui/RadioGroup";
 import { Field } from "@affilhomes/shared/ui/Field";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
-import { Role, PopulatedUser } from "@affilhomes/shared/types";
-import { FiAtSign, FiLock, FiMail, FiUser } from "react-icons/fi";
-import { useAuth } from "@/contexts/AuthContext";
 import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
-import { useRouter, useSearchParams } from "next/navigation";
-import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { Role, PopulatedUser } from "@affilhomes/shared/types";
+import { FiLock, FiMail, FiUser } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
 
-const accountTypeToRole: Record<string, Role> = {
-  seeker: Role.Viewer,
-  agent: Role.Agent,
-  company: Role.Company,
-};
+const ACCOUNT_TYPES = ["seeker", "agent", "company"] as const;
+type AccountType = (typeof ACCOUNT_TYPES)[number];
 
-const accountTypes = [
+const ACCOUNT_OPTIONS = [
   {
     value: "seeker",
     label: "Seeker Account",
@@ -30,100 +26,155 @@ const accountTypes = [
     value: "agent",
     label: "Agent Package",
     description:
-      "For realtors, lawyers, surveyors, landlords and individual listers — free to join",
+      "For realtors, lawyers, surveyors, landlords and individual listers. Free to join.",
   },
   {
     value: "company",
     label: "Partnership Package",
     description:
-      "For CAC-registered real estate firms, developers and brokerages — featured placement",
+      "For CAC-registered real estate firms, developers and brokerages. Requires document review.",
   },
 ];
+
+const NEXT_BY_ACCOUNT_TYPE: Record<AccountType, string> = {
+  seeker: "/",
+  agent: "/complete-registration?role=agent",
+  company: "/complete-registration?role=company",
+};
+
+interface FormState {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  password: string;
+  repeatPassword: string;
+  agreeToTerms: boolean;
+}
+
+const INITIAL_FORM: FormState = {
+  email: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  password: "",
+  repeatPassword: "",
+  agreeToTerms: false,
+};
+
+function isAccountType(value: string | null): value is AccountType {
+  return !!value && (ACCOUNT_TYPES as readonly string[]).includes(value);
+}
+
+function validate(form: FormState): Record<string, string> {
+  const errors: Record<string, string> = {};
+
+  if (!form.firstName.trim()) errors.firstName = "First name is required";
+  if (!form.lastName.trim()) errors.lastName = "Last name is required";
+
+  if (!form.email.trim()) errors.email = "Email is required";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
+    errors.email = "Please enter a valid email";
+
+  const digits = form.phone.replace(/\D/g, "");
+  if (!digits) errors.phone = "Phone number is required";
+  else if (digits.length < 10 || digits.length > 13)
+    errors.phone = "Please enter a valid phone number";
+
+  if (!form.password) errors.password = "Password is required";
+  else if (form.password.length < 8)
+    errors.password = "Password must be at least 8 characters";
+
+  if (form.password !== form.repeatPassword)
+    errors.repeatPassword = "Passwords do not match";
+
+  if (!form.agreeToTerms)
+    errors.agreeToTerms = "You must agree to the Terms & Conditions";
+
+  return errors;
+}
+
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("already registered") || m.includes("already exists"))
+    return "An account with this email already exists. Sign in instead.";
+  if (m.includes("password"))
+    return "That password doesn't meet the requirements. Try a longer or different one.";
+  if (m.includes("rate limit") || m.includes("too many"))
+    return "Too many attempts. Wait a minute and try again.";
+  return "We couldn't create your account. Please try again.";
+}
+
+function buildSignupUser(form: FormState): PopulatedUser {
+  const now = new Date();
+  const phone = form.phone.trim();
+  return {
+    _id: "",
+    email: form.email.trim(),
+    phone,
+    whatsappNumber: phone,
+    passwordHash: "",
+    name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+    isEmailVerified: false,
+    isPhoneVerified: false,
+    roles: [Role.Viewer],
+    activeRole: Role.Viewer,
+    viewerProfile: { savedListingIds: [] },
+    createdAt: now,
+    updatedAt: now,
+  } as PopulatedUser;
+}
 
 function RegisterForm() {
   const { register, authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const accountTypeParam = searchParams.get("accountType");
-  const [accountType, setAccountType] = useState(accountTypeParam || "seeker");
-  const [formData, setFormData] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    password: "",
-    repeatPassword: "",
-    agreeToTerms: false,
-  });
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
+  const accountParam = searchParams.get("accountType");
+  const [accountType, setAccountType] = useState<AccountType>(
+    isAccountType(accountParam) ? accountParam : "seeker",
+  );
+  const [showInvalidAccountNotice, setShowInvalidAccountNotice] = useState(
+    !!accountParam && !isAccountType(accountParam),
+  );
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+  const setField = <K extends keyof FormState>(
+    name: K,
+    value: FormState[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.name as Exclude<keyof FormState, "agreeToTerms">;
+    setField(name, e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: Record<string, string> = {};
+    setNotice("");
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Please enter a valid email";
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
-    if (formData.password !== formData.repeatPassword)
-      newErrors.repeatPassword = "Passwords do not match";
-    if (!formData.agreeToTerms)
-      newErrors.agreeToTerms = "You must agree to the Terms & Conditions";
-
+    const newErrors = validate(form);
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    const role = accountTypeToRole[accountType];
-    const now = new Date();
+    const next = NEXT_BY_ACCOUNT_TYPE[accountType];
 
-    const newUser: PopulatedUser = {
-      _id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      whatsappNumber: formData.phone.trim(),
-      passwordHash: "",
-      name: `${formData.firstName} ${formData.lastName}`.trim(),
-      avatar: avatarFile ? URL.createObjectURL(avatarFile) : undefined,
-      isEmailVerified: false,
-      isPhoneVerified: false,
-      roles: [role],
-      activeRole: role,
-      viewerProfile: role === Role.Viewer ? { savedListingIds: [] } : undefined,
-      agentProfile: undefined,
-      companyId: undefined,
-      companyRole: undefined,
-      createdAt: now,
-      updatedAt: now,
-    };
-
+    setSubmitting(true);
     try {
-      const next =
-        role === Role.Viewer ? "/" : `/complete-registration?role=${role}`;
-      const signedIn = await register(newUser, formData.password, undefined, {
-        next,
-      });
+      const signedIn = await register(
+        buildSignupUser(form),
+        form.password,
+        undefined,
+        { next, accountType },
+      );
 
       if (!signedIn) {
-        // Email confirmation required: the link brings them back to `next`.
         setNotice(
           "Account created. Check your email and click the confirmation link to continue.",
         );
@@ -131,11 +182,12 @@ function RegisterForm() {
       }
 
       router.replace(next);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
       setErrors({
-        submit: error instanceof Error ? error.message : "Registration failed.",
+        submit: friendlyAuthError(err instanceof Error ? err.message : ""),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -150,24 +202,31 @@ function RegisterForm() {
       footerHref="/login"
       showSocialLogins={false}
       className="max-w-3xl"
-      loading={authLoading}
+      loading={submitting || authLoading}
     >
+      {showInvalidAccountNotice && (
+        <div
+          role="status"
+          className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-3"
+        >
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            The account type in this link isn't recognized, so we've selected
+            Seeker Account. Choose the option that fits you below.
+          </p>
+        </div>
+      )}
       <RadioGroup
         label="Account Type"
         name="accountType"
-        options={accountTypes}
+        options={ACCOUNT_OPTIONS}
         value={accountType}
-        onChange={setAccountType}
+        onChange={(value: string) => {
+          if (isAccountType(value)) {
+            setAccountType(value);
+            setShowInvalidAccountNotice(false);
+          }
+        }}
         required
-      />
-
-      <FileUpload
-        variant="avatar"
-        label="Profile Picture (optional)"
-        maxFiles={1}
-        allowedTypes={["image/jpeg", "image/png", "image/webp"]}
-        className="mb-4"
-        onUploadComplete={(files) => setAvatarFile(files[0] || null)}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -176,8 +235,8 @@ function RegisterForm() {
           name="firstName"
           type="text"
           placeholder="John"
-          value={formData.firstName}
-          onChange={handleInputChange}
+          value={form.firstName}
+          onChange={handleTextChange}
           error={errors.firstName}
           icon={FiUser}
           required
@@ -187,8 +246,8 @@ function RegisterForm() {
           name="lastName"
           type="text"
           placeholder="Doe"
-          value={formData.lastName}
-          onChange={handleInputChange}
+          value={form.lastName}
+          onChange={handleTextChange}
           error={errors.lastName}
           icon={FiUser}
           required
@@ -199,9 +258,10 @@ function RegisterForm() {
         label="Email"
         name="email"
         type="email"
+        autoComplete="email"
         placeholder="john@example.com"
-        value={formData.email}
-        onChange={handleInputChange}
+        value={form.email}
+        onChange={handleTextChange}
         error={errors.email}
         icon={FiMail}
         required
@@ -209,11 +269,8 @@ function RegisterForm() {
 
       <PhoneField
         label="Phone Number"
-        value={formData.phone}
-        onChange={(phone) => {
-          setFormData((prev) => ({ ...prev, phone }));
-          if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
-        }}
+        value={form.phone}
+        onChange={(phone: string) => setField("phone", phone)}
         error={errors.phone}
         required
         defaultCountry="ng"
@@ -225,9 +282,9 @@ function RegisterForm() {
           name="password"
           type="password"
           placeholder="••••••••"
-          autoComplete="current-password"
-          value={formData.password}
-          onChange={handleInputChange}
+          autoComplete="new-password"
+          value={form.password}
+          onChange={handleTextChange}
           error={errors.password}
           icon={FiLock}
           required
@@ -238,8 +295,8 @@ function RegisterForm() {
           type="password"
           placeholder="••••••••"
           autoComplete="new-password"
-          value={formData.repeatPassword}
-          onChange={handleInputChange}
+          value={form.repeatPassword}
+          onChange={handleTextChange}
           error={errors.repeatPassword}
           icon={FiLock}
           required
@@ -267,8 +324,10 @@ function RegisterForm() {
             </span>
           }
           name="agreeToTerms"
-          checked={formData.agreeToTerms}
-          onChange={handleInputChange}
+          checked={form.agreeToTerms}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setField("agreeToTerms", e.target.checked)
+          }
         />
         {errors.agreeToTerms && (
           <p className="text-red-500 text-xs mt-1.5 ml-8">
@@ -276,6 +335,7 @@ function RegisterForm() {
           </p>
         )}
       </div>
+
       {notice && (
         <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-3">
           <p className="text-sm text-green-700 dark:text-green-400">{notice}</p>

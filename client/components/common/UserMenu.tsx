@@ -31,6 +31,7 @@ import RoleIcon from "@/components/ui/RoleIcon";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { UpgradeToProCTA } from "./UpgradeToProCTA";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
+import { useConfirm } from "@/contexts/ConfirmDialog";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -133,6 +134,20 @@ const ProfileMenu = ({
   const navLinks = getNavLinks(user, isAdmin);
   const contextActions = getContextActions(user);
   const addableRoles = getAddableRoles(user);
+  const { confirm } = useConfirm();
+
+  const handleLogout = async () => {
+    const res = await confirm({
+      title: "Log out",
+      message: "Are you sure you want to log out?",
+      confirmLabel: "Yes logout",
+      variant: "danger",
+    });
+
+    if (res && onLogout) {
+      onLogout();
+    }
+  };
 
   return (
     <div className="flex items-center gap-1.5">
@@ -271,7 +286,7 @@ const ProfileMenu = ({
             <>
               <DropdownSeparator />
               <DropdownItem
-                onClick={onLogout}
+                onClick={handleLogout}
                 icon={<LuLogOut className="w-4 h-4" />}
                 className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-500/10 cursor-pointer transition-colors"
               >

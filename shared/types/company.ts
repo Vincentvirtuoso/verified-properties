@@ -71,3 +71,15 @@ export const companyTypeLabels: Record<CompanyType, string> = {
   developer: "Developer",
   broker: "Broker",
 };
+
+export interface CompanyRegistration {
+  id: string;
+  status: "draft" | "docs_submitted" | "rejected";
+  companyName: string;
+  companyType: CompanyType| null;
+  contactEmail: string;
+  contactPhone: string;
+  whatsappNumber: string;
+  logoUrl: string | null;
+  rejectionReason: string | null;
+}

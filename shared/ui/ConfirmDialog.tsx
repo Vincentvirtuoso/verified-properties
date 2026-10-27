@@ -23,6 +23,7 @@ interface ConfirmOptions {
   cancelLabel?: string;
   variant?: ConfirmVariant;
   icon?: React.ReactNode;
+  info?: React.ReactNode | string;
 
   rememberKey?: string;
   rememberLabel?: string;
