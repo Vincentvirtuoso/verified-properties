@@ -59,23 +59,26 @@ export type AdminLinkData = {
 
 import { LuUserPlus } from "react-icons/lu";
 import { AdminRole } from "@/types";
+import CompanyIcon from "@affilhomes/shared/icons/CompanyIcon";
 
 type Permission =
   | "moderation"
-  | "users"
+  | "accounts"
   | "listings"
   | "communication"
+  | "company_requests"
   | "insights"
   | "admin_requests";
 
 const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
-  admin: ["moderation", "users", "listings", "communication", "insights"],
+  admin: ["moderation", "accounts", "listings", "communication", "insights"],
   super_admin: [
     "moderation",
-    "users",
+    "accounts",
     "listings",
     "communication",
     "insights",
+    "company_requests",
     "admin_requests",
   ],
 };
@@ -83,7 +86,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
 type AdminLink = SidebarLink & { permission?: Permission };
 
 function can(role: AdminRole | null, permission?: Permission): boolean {
-  if (!permission) return true; 
+  if (!permission) return true;
   if (!role) return false;
   return ROLE_PERMISSIONS[role].includes(permission);
 }
@@ -123,8 +126,8 @@ function buildAdminLinks(data: AdminLinkData): AdminLink[] {
       href: "/accounts",
       label: "Users",
       icon: <LuUsers />,
-      category: "Users",
-      permission: "users",
+      category: "Accounts",
+      permission: "accounts",
     },
     {
       href: "/listings",
@@ -171,6 +174,14 @@ function buildAdminLinks(data: AdminLinkData): AdminLink[] {
       category: "Management",
       permission: "admin_requests",
       ...withSlot(count(data.adminRequestsCount)),
+    },
+    {
+      href: "/company-requests",
+      label: "Company requests",
+      icon: <CompanyIcon />,
+      category: "Management",
+      permission: "company_requests",
+      // ...withSlot(count(data.companyRequests)),
     },
     {
       href: "/settings",

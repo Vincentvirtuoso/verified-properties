@@ -12,6 +12,8 @@ import { SidebarProvider, useSidebar } from "@/contexts/SidebarContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/utils";
 import { SuspensionBanner } from "./SuspensionBanner";
+import { RegistrationRejectedBanner } from "./RegistrationRejectedBanner";
+import { PartnershipApprovedBanner } from "./PartnershipApprovedBanner";
 
 const getAds = () =>
   new Promise<Ad[]>((resolve) => setTimeout(() => resolve(dummyAds), 800));
@@ -51,6 +53,8 @@ const LayoutWithBanner = ({ children }: { children: React.ReactNode }) => {
         }}
       >
         <SuspensionBanner />
+        <RegistrationRejectedBanner />
+        <PartnershipApprovedBanner />
         <Banner ads={ads} />
       </header>
       <div

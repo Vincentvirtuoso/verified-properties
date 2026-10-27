@@ -2,16 +2,17 @@
 
 import { useState, Suspense, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@affilhomes/shared/ui/Field";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Role,
-  PopulatedUser,
-  Company,
   AgentSubRole,
   agentSubRoleLabels,
   CompanyType,
+  companyTypeLabels,
+  CompanyRegistrationDraft,
 } from "@affilhomes/shared/types";
 import {
   FiBriefcase,
@@ -21,12 +22,16 @@ import {
   FiBookOpen,
   FiLayers,
 } from "react-icons/fi";
-import { LuBuilding } from "react-icons/lu";
+import { LuBuilding, LuUser } from "react-icons/lu";
 import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import { PhoneField } from "@affilhomes/shared/ui/PhoneField";
+import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
+import Select from "@affilhomes/shared/ui/Select";
+import { Centered } from "@affilhomes/shared/ui/Centered";
 import { AuthFormSkeleton } from "./FormSkeleton";
-import Link from "next/link";
 import { getErrorMessage } from "@/utils";
+import { Button } from "@affilhomes/shared/ui";
+import { error } from "console";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 
@@ -39,7 +44,6 @@ function CompleteRegistrationForm() {
     updateUserRole,
     authLoading,
   } = useAuth();
-  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
@@ -48,8 +52,8 @@ function CompleteRegistrationForm() {
   if (roleParam === Role.Agent) initialRole = Role.Agent;
   else if (roleParam === Role.Company) initialRole = Role.Company;
 
+  const [submitting, setSubmitting] = useState(false);
   const [agentSubRole, setAgentSubRole] = useState<AgentSubRole>("realtor");
-
   const [agentData, setAgentData] = useState({
     licenseNumber: "",
     brokerage: "",
@@ -57,23 +61,20 @@ function CompleteRegistrationForm() {
     surveyorRegNumber: "",
   });
 
-  const [companyData, setCompanyData] = useState<{
-    companyName: string;
-    companyType: CompanyType;
-    contactEmail: string;
-    contactPhone: string;
-    whatsappNumber: string;
-  }>({
+  const [companyData, setCompanyData] = useState<CompanyRegistrationDraft>({
     companyName: "",
     companyType: "real_estate_company",
     contactEmail: user?.email || "",
     contactPhone: user?.phone || "",
     whatsappNumber: user?.whatsappNumber || user?.phone || "",
+    applicantName: user?.name || "",
+    applicantPhone: user?.phone || "",
   });
 
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
   const [cacCertFile, setCacCertFile] = useState<File | null>(null);
 
+  const [authorised, setAuthorised] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const prefilled = useRef(false);
@@ -88,33 +89,24 @@ function CompleteRegistrationForm() {
       contactEmail: pendingRegistration.contactEmail || prev.contactEmail,
       contactPhone: pendingRegistration.contactPhone || prev.contactPhone,
       whatsappNumber: pendingRegistration.whatsappNumber || prev.whatsappNumber,
+      applicantName: pendingRegistration.applicantName || prev.applicantName,
+      applicantPhone: pendingRegistration.applicantPhone || prev.applicantPhone,
     }));
   }, [pendingRegistration]);
 
   useEffect(() => {
-    if (!pendingRegistration || pendingRegistration.status !== "draft") return;
-    setCompanyData((prev) => ({
-      ...prev,
-      companyName: pendingRegistration.companyName,
-      companyType: pendingRegistration.companyType ?? prev.companyType,
-      contactEmail: pendingRegistration.contactEmail || prev.contactEmail,
-      contactPhone: pendingRegistration.contactPhone || prev.contactPhone,
-      whatsappNumber: pendingRegistration.whatsappNumber || prev.whatsappNumber,
-    }));
-  }, [pendingRegistration]);
+    const status = pendingRegistration?.status;
+    if (initialRole !== Role.Company || !user) return;
+    if (status === "docs_submitted" || status === "rejected") return;
+    if (!companyData.companyName.trim()) return;
 
-  useEffect(() => {
-    if (
-      initialRole !== Role.Company ||
-      !user ||
-      !companyData.companyName.trim()
-    )
-      return;
     const t = setTimeout(() => {
-      void saveCompanyRegistrationDraft(companyData).catch(() => {});
+      saveCompanyRegistrationDraft(companyData).catch((err) =>
+        console.error("Draft autosave failed:", err),
+      );
     }, 800);
     return () => clearTimeout(t);
-  }, [companyData]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [companyData]);
 
   if (!initialRole || !VALID_ROLES.includes(initialRole)) {
     return (
@@ -124,64 +116,60 @@ function CompleteRegistrationForm() {
             Invalid Package
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Please select a valid package — Agent Package or Partnership
-            Package.
+            Please select a valid package: Agent Package or Partnership Package.
           </p>
         </div>
       </div>
     );
   }
 
-  if (authLoading) return (
-    <AuthFormSkeleton
-      variant={roleParam === Role.Company ? "company" : "agent"}
-    />
-  );
+  if (authLoading)
+    return (
+      <AuthFormSkeleton
+        variant={initialRole === Role.Company ? "company" : "agent"}
+      />
+    );
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-xl p-8 text-center space-y-4">
-          <h2 className="text-xl font-bold text-foreground">Please sign in</h2>
-          <p className="text-sm text-muted">
-            You need an account to complete registration. Sign in or create one
-            to continue.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Link
-              href={`/login?callbackUrl=${encodeURIComponent(
-                window.location.pathname + window.location.search,
-              )}`}
-              className="flex-1 inline-flex items-center justify-center h-11 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="flex-1 inline-flex items-center justify-center h-11 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
-            >
-              Create account
-            </Link>
-          </div>
+      <Centered className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground">Please sign in</h2>
+        <p className="text-sm text-muted">
+          You need an account to complete registration. Sign in or create one to
+          continue.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2 mt-4 sm:items-center">
+          <Button
+            href={`/login?callbackUrl=${encodeURIComponent(
+              window.location.pathname + window.location.search,
+            )}`}
+            fullWidth
+            size="sm"
+          >
+            Sign in
+          </Button>
+          <Button size="sm" href="/register" variant="ghost" fullWidth>
+            Create account
+          </Button>
         </div>
-      </div>
+      </Centered>
     );
   }
 
   if (pendingRegistration?.status === "docs_submitted") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-8 text-center space-y-3">
+      <Centered>
+        <div className="w-full p-8 text-center space-y-3">
           <h2 className="text-xl font-bold text-foreground">
             Documents under review
           </h2>
           <p className="text-sm text-muted">
-            We're verifying {pendingRegistration.companyName}. This usually
+            We&apos;re verifying {pendingRegistration.companyName}. This usually
             takes 2 to 5 business days. Your account stays a viewer until
             approval.
           </p>
         </div>
-      </div>
+      </Centered>
     );
   }
 
@@ -255,23 +243,29 @@ function CompleteRegistrationForm() {
       return;
     }
 
-    const cac = cacCertFile;
     const newErrors: Record<string, string> = {};
     if (!companyData.companyName.trim())
       newErrors.companyName = "Company name is required";
     if (!companyData.contactEmail.trim())
       newErrors.contactEmail = "Contact email is required";
-    if (!cac)
+    if (!companyData.applicantName.trim())
+      newErrors.applicantName = "Your full name is required";
+    if (!cacCertFile)
       newErrors.cacCert =
         "CAC certificate is required for partnership registration";
-    if (Object.keys(newErrors).length || !cac) return setErrors(newErrors);
+    if (!authorised)
+      newErrors.authorised =
+        "You must confirm you are authorised to act for this company";
+
+    if (Object.keys(newErrors).length > 0) return setErrors(newErrors);
 
     setSubmitting(true);
     try {
       await saveCompanyRegistrationDraft(companyData);
       await submitCompanyRegistration({
-        cacCertificate: cac,
+        cacCertificate: cacCertFile!,
         logo: companyLogoFile,
+        authorised,
       });
     } catch (err) {
       setErrors({
@@ -281,6 +275,7 @@ function CompleteRegistrationForm() {
       setSubmitting(false);
     }
   };
+
   return (
     <AuthForm
       title={
@@ -401,6 +396,25 @@ function CompleteRegistrationForm() {
 
       {initialRole === Role.Company && (
         <div className="space-y-4">
+          {pendingRegistration?.status === "rejected" && (
+            <div
+              role="alert"
+              className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800 rounded-xl p-4 space-y-1"
+            >
+              <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+                Your last application wasn&apos;t approved
+              </p>
+              {pendingRegistration.rejectionReason && (
+                <p className="text-xs text-rose-800 dark:text-rose-300">
+                  {pendingRegistration.rejectionReason}
+                </p>
+              )}
+              <p className="text-xs text-rose-800 dark:text-rose-300">
+                Update the details and documents below, then resubmit.
+              </p>
+            </div>
+          )}
+
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
             <h3 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
               Partnership Package — Featured Tier
@@ -425,14 +439,13 @@ function CompleteRegistrationForm() {
 
           <FileUpload
             variant="document"
-            label="CAC Certificate *"
+            label="CAC Certificate"
             description="Upload your Corporate Affairs Commission certificate. PDF, JPG or PNG."
             maxSizeInMB={5}
             maxFiles={1}
             allowedTypes={["application/pdf", "image/jpeg", "image/png"]}
             onUploadComplete={(files) => {
               setCacCertFile(files[0] || null);
-
               if (errors.cacCert)
                 setErrors((prev) => ({ ...prev, cacCert: "" }));
             }}
@@ -455,25 +468,19 @@ function CompleteRegistrationForm() {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Company Type
-              </label>
-              <select
-                value={companyData.companyType}
-                onChange={(e) =>
-                  setCompanyData((prev) => ({
-                    ...prev,
-                    companyType: e.target.value as CompanyType,
-                  }))
-                }
-                className="w-full px-3 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
-              >
-                <option value="real_estate_company">Real Estate Company</option>
-                <option value="developer">Property Developer</option>
-                <option value="broker">Real Estate Brokerage</option>
-              </select>
-            </div>
+            <Select
+              onChange={(value) =>
+                setCompanyData((prev) => ({
+                  ...prev,
+                  companyType: value as CompanyType,
+                }))
+              }
+              value={companyData.companyType as CompanyType}
+              label="Company Type"
+              options={Object.entries(companyTypeLabels).map(
+                ([value, label]) => ({ label, value }),
+              )}
+            />
 
             <Field
               label="Corporate Contact Email"
@@ -505,6 +512,54 @@ function CompleteRegistrationForm() {
               setCompanyData((prev) => ({ ...prev, whatsappNumber: value }))
             }
           />
+
+          <div className="space-y-4 rounded-xl border border-border p-4">
+            <p className="text-sm font-semibold text-foreground">
+              Your details
+            </p>
+            <p className="text-xs text-muted">
+              Tell us who is making this application.
+            </p>
+
+            <Field
+              label="Your full name"
+              name="applicantName"
+              type="text"
+              value={companyData.applicantName}
+              onChange={handleCompanyChange}
+              error={errors.applicantName}
+              icon={LuUser}
+              required
+            />
+
+            <PhoneField
+              label="Your phone number"
+              name="applicantPhone"
+              value={companyData.applicantPhone}
+              onChange={(value) =>
+                setCompanyData((prev) => ({ ...prev, applicantPhone: value }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Checkbox
+              name="authorised"
+              checked={authorised}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setAuthorised(e.target.checked);
+                if (errors.authorised)
+                  setErrors((prev) => ({ ...prev, authorised: "" }));
+              }}
+              label={
+                <span className="text-sm text-muted leading-relaxed">
+                  I confirm I am authorised to act for this company and to
+                  submit this application.
+                </span>
+              }
+              error={errors.authorised}
+            />
+          </div>
         </div>
       )}
 

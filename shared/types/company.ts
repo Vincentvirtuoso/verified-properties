@@ -68,18 +68,38 @@ export interface Company {
 
 export const companyTypeLabels: Record<CompanyType, string> = {
   real_estate_company: "Real Estate Company",
-  developer: "Developer",
-  broker: "Broker",
+  developer: "Real Estate Developer",
+  broker: "Real Estate Broker",
 };
 
 export interface CompanyRegistration {
   id: string;
   status: "draft" | "docs_submitted" | "rejected";
   companyName: string;
-  companyType: CompanyType| null;
+  companyType: CompanyType | null;
   contactEmail: string;
   contactPhone: string;
   whatsappNumber: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone: string;
+  applicantAuthorised: boolean;
   logoUrl: string | null;
   rejectionReason: string | null;
+}
+
+export interface CompanyRegistrationDraft {
+  companyName: string;
+  companyType: CompanyRegistration["companyType"];
+  contactEmail: string;
+  contactPhone: string;
+  whatsappNumber: string;
+  applicantName: string;
+  applicantPhone: string;
+}
+
+export interface CompanyRegistrationSubmission {
+  cacCertificate: File;
+  logo?: File | null;
+  authorised: boolean;
 }

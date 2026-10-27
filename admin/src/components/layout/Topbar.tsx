@@ -23,7 +23,7 @@ import {
 } from "react-icons/lu";
 
 import { Avatar } from "@affilhomes/shared/ui";
-import { adminRoleLabels } from "@affilhomes/shared/utils";
+import { adminRoleLabels, cn } from "@affilhomes/shared/utils";
 import type { AdminRole } from "@affilhomes/shared/types";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -53,7 +53,7 @@ const popover =
 export function Topbar() {
   const { setMobileOpen } = useSidebar();
   const { theme, toggle } = useTheme();
-  const { user, logout, role } = useAuth();
+  const { user, logout, role, status } = useAuth();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -150,35 +150,31 @@ export function Topbar() {
         md:px-6
       "
     >
-      {/* Mobile sidebar */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
         className={iconButton + " lg:hidden"}
         aria-label="Open sidebar"
+        disabled={status === "loading"}
       >
         <LuMenu size={20} aria-hidden="true" />
       </button>
 
-      {/* Current page */}
       {title && (
         <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">
           {title}
         </h1>
       )}
 
-      {/* Search and actions */}
       <div className="ml-auto flex min-w-0 items-center gap-1.5 md:gap-2">
-        {/* Mobile search */}
         <Link
           href="/search"
-          className={iconButton + " md:hidden"}
+          className={cn(iconButton, " md:hidden")}
           aria-label="Open search"
         >
           <LuSearch size={18} aria-hidden="true" />
         </Link>
 
-        {/* Desktop search */}
         <form
           role="search"
           onSubmit={onSearch}
@@ -226,7 +222,6 @@ export function Topbar() {
           </kbd>
         </form>
 
-        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
@@ -266,7 +261,7 @@ export function Topbar() {
               id="topbar-notifications"
               role="dialog"
               aria-label="Notifications"
-              className={popover + " w-80 max-w-[calc(100vw-2rem)]"}
+              className={cn(popover, " w-80 max-w-[calc(100vw-2rem)]")}
             >
               <div className="flex items-center justify-between border-b border-border px-3 py-3">
                 <h2 className="text-sm font-semibold">Notifications</h2>
@@ -292,7 +287,6 @@ export function Topbar() {
           )}
         </div>
 
-        {/* Theme */}
         <button
           type="button"
           onClick={toggle}
@@ -309,19 +303,17 @@ export function Topbar() {
           )}
         </button>
 
-        {/* Public website */}
         <Link
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className={iconButton + " hidden md:inline-flex"}
+          className={cn(iconButton, " hidden md:inline-flex")}
           aria-label="View public site (opens in a new tab)"
           title="View public site"
         >
           <LuExternalLink size={18} aria-hidden="true" />
         </Link>
 
-        {/* Account menu */}
         <div className="relative" ref={userMenuRef}>
           <button
             type="button"
@@ -343,7 +335,7 @@ export function Topbar() {
             aria-controls="topbar-account-menu"
             aria-label={`Account menu for ${userName}`}
           >
-            <Avatar size={28} name={userName} />
+            <Avatar size={28} name={userName} fallbackIcon={<LuUser />} />
 
             <span className="hidden min-w-0 text-left sm:block">
               <span className="block truncate text-xs font-medium leading-4">
@@ -357,10 +349,10 @@ export function Topbar() {
             <LuChevronDown
               size={14}
               aria-hidden="true"
-              className={
-                "hidden shrink-0 text-muted transition-transform duration-200 md:block " +
-                (menuOpen ? "rotate-180" : "")
-              }
+              className={cn(
+                "hidden shrink-0 text-muted transition-transform duration-200 md:block ",
+                menuOpen ? "rotate-180" : "",
+              )}
             />
           </button>
 
@@ -369,10 +361,10 @@ export function Topbar() {
               id="topbar-account-menu"
               role="menu"
               aria-label="Account options"
-              className={popover + " w-64 max-w-[calc(100vw-2rem)]"}
+              className={cn(popover, " w-64 max-w-[calc(100vw-2rem)]")}
             >
               <div className="flex items-center gap-3 px-3 py-3">
-                <Avatar size={36} name={userName} />
+                <Avatar size={36} name={userName} fallbackIcon={<LuUser />} />
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{userName}</p>
@@ -424,9 +416,10 @@ export function Topbar() {
                   closePopovers();
                   void logout?.();
                 }}
-                className={
-                  menuItem + " text-destructive hover:bg-destructive/10"
-                }
+                className={cn(
+                  menuItem,
+                  " text-destructive hover:bg-destructive/10",
+                )}
               >
                 <LuLogOut size={16} aria-hidden="true" />
                 Sign out

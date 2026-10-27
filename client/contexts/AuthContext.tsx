@@ -4,8 +4,9 @@ import {
   Company,
   PopulatedUser,
   Role,
-  LOCKED_ROLES,
   CompanyRegistration,
+  CompanyRegistrationDraft,
+  CompanyRegistrationSubmission,
 } from "@affilhomes/shared/types";
 
 import React, {
@@ -36,24 +37,10 @@ import {
   setMyRoles,
   switchActiveRole,
 } from "@affilhomes/shared/supabase/roles";
-import { ProfileRole } from "@/utils";
 import { RegistrationGuard } from "@/components/common/RegistrationGuard";
-
-export interface CompanyOnboardingFiles {
-  logo?: File | null;
-  cacCertificate?: File | null;
-}
 
 export interface ProfileUpdateFiles {
   avatar?: File | null;
-}
-
-interface CompanyRegistrationDraft {
-  companyName: string;
-  companyType: CompanyRegistration["companyType"];
-  contactEmail: string;
-  contactPhone: string;
-  whatsappNumber: string;
 }
 
 interface AuthContextType {
@@ -88,7 +75,7 @@ interface AuthContextType {
     userId: string,
     updates: Partial<PopulatedUser>,
     company?: Company,
-    files?: CompanyOnboardingFiles,
+    files?: CompanyRegistrationSubmission,
   ) => Promise<void>;
   createCompany: (companyData: {
     name: string;
@@ -103,10 +90,9 @@ interface AuthContextType {
   saveCompanyRegistrationDraft: (
     fields: CompanyRegistrationDraft,
   ) => Promise<void>;
-  submitCompanyRegistration: (files: {
-    cacCertificate: File;
-    logo?: File | null;
-  }) => Promise<void>;
+  submitCompanyRegistration: (
+    files: CompanyRegistrationSubmission,
+  ) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -151,6 +137,10 @@ function mapRegistration(row: any): CompanyRegistration {
     contactEmail: row.contact_email ?? "",
     contactPhone: row.contact_phone ?? "",
     whatsappNumber: row.whatsapp_number ?? "",
+    applicantName: row.applicant_name ?? "",
+    applicantEmail: row.applicant_email ?? "",
+    applicantPhone: row.applicant_phone ?? "",
+    applicantAuthorised: row.applicantAuthorised ?? false,
     logoUrl: row.logo_url ?? null,
     rejectionReason: row.rejection_reason ?? null,
   };
@@ -320,6 +310,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [userId, loadUser]);
 
   useEffect(() => {
+    if (!userId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`account-state:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${userId}`,
+        },
+        () => void loadUser(),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "company_registrations",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => void loadUser(),
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, loadUser]);
+
+  useEffect(() => {
     const onFocus = () => {
       if (document.visibilityState === "visible") void loadUser();
     };
@@ -368,7 +391,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             phone: newUser.phone,
             whatsappNumber: newUser.whatsappNumber ?? newUser.phone,
             next: options?.next,
-            accountType:options?.accountType,
+            accountType: options?.accountType,
           },
         );
 
@@ -394,34 +417,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (fields: CompanyRegistrationDraft) => {
       if (!user) throw new Error("No user logged in");
       const supabase = createClient();
-      const payload = {
-        company_name: fields.companyName.trim(),
-        company_type: fields.companyType,
-        contact_email: fields.contactEmail.trim(),
-        contact_phone: fields.contactPhone.trim() || null,
-        whatsapp_number: fields.whatsappNumber.trim() || null,
-      };
 
-      // Draft and rejected rows are handled differently: a rejected registration
-      // is a closed record, so starting again creates a new draft.
-      const { error } =
-        pendingRegistration?.status === "draft"
-          ? await supabase
-              .from("company_registrations")
-              .update({ ...payload, updated_at: new Date().toISOString() })
-              .eq("id", pendingRegistration.id)
-          : await supabase
-              .from("company_registrations")
-              .insert({ ...payload, user_id: user._id, status: "draft" });
+      const { error } = await supabase.rpc("save_company_registration_draft", {
+        p_company_name: fields.companyName.trim(),
+        p_company_type: fields.companyType,
+        p_contact_email: fields.contactEmail.trim(),
+        p_contact_phone: fields.contactPhone.trim() || null,
+        p_whatsapp_number: fields.whatsappNumber.trim() || null,
+        p_applicant_name: fields.applicantName.trim(),
+        p_applicant_phone: fields.applicantPhone.trim() || null,
+        p_applicant_email: user.email,
+      });
 
       if (error) throw error;
-      await loadUser();
     },
-    [user, pendingRegistration, loadUser],
+    [user],
   );
 
   const submitCompanyRegistration = useCallback(
-    async (files: { cacCertificate: File; logo?: File | null }) => {
+    async (files: CompanyRegistrationSubmission) => {
       if (!user) throw new Error("No user logged in");
       const supabase = createClient();
 
@@ -445,6 +459,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.rpc("submit_company_registration", {
         p_cac_path: cacPath,
         p_logo_url: logoUrl,
+        p_authorised: files.authorised,
       });
       if (error) throw error;
       await loadUser();
@@ -584,7 +599,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userId: string,
       updates: Partial<PopulatedUser>,
       company?: Company,
-      files?: CompanyOnboardingFiles,
+      files?: CompanyRegistrationSubmission,
     ) => {
       if (!user || user._id !== userId) {
         throw new Error("User not found");

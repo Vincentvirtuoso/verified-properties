@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { IconType } from "react-icons";
 import {
@@ -26,12 +25,18 @@ import {
   DropdownTrigger,
 } from "@affilhomes/shared/ui/Dropdown";
 import { Spinner } from "@affilhomes/shared/ui/Spinner";
-import { PopulatedUser, Role } from "@affilhomes/shared/types";
+import {
+  CompanyRegistration,
+  PopulatedUser,
+  Role,
+} from "@affilhomes/shared/types";
 import RoleIcon from "@/components/ui/RoleIcon";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { UpgradeToProCTA } from "./UpgradeToProCTA";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 import { useConfirm } from "@/contexts/ConfirmDialog";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -73,30 +78,19 @@ function getNavLinks(user: PopulatedUser, isAdmin: boolean): MenuLink[] {
   return links;
 }
 
-function getContextActions(user: PopulatedUser): MenuLink[] {
+function getContextActions(
+  user: PopulatedUser,
+  registration: CompanyRegistration | null,
+): MenuLink[] {
   const actions: MenuLink[] = [];
-  const isPureViewer =
-    user.roles.length === 1 && user.roles.includes(Role.Viewer);
+  const applicationOpen =
+    registration?.status === "draft" ||
+    registration?.status === "docs_submitted";
 
-  if (isPureViewer) {
-    actions.push(
-      {
-        label: "Become an Agent",
-        href: "/onboarding/become-an-agent",
-        icon: LuUserCheck,
-      },
-      {
-        label: "List your Property",
-        href: "/list-property",
-        icon: LuCirclePlus,
-      },
-    );
-  }
-
-  if (!user.companyId) {
+  if (!user.companyId && !applicationOpen) {
     actions.push({
-      label: "Register Company",
-      href: "/onboarding/company",
+      label: "Apply for Partnership",
+      href: "/complete-registration?role=company",
       icon: LuPlus,
     });
   }
@@ -132,19 +126,21 @@ const ProfileMenu = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const navLinks = getNavLinks(user, isAdmin);
-  const contextActions = getContextActions(user);
+  const { pendingRegistration } = useAuth();
+  const contextActions = getContextActions(user, pendingRegistration);
   const addableRoles = getAddableRoles(user);
   const { confirm } = useConfirm();
 
   const handleLogout = async () => {
-    const res = await confirm({
-      title: "Log out",
-      message: "Are you sure you want to log out?",
-      confirmLabel: "Yes logout",
+    const confirmed = await confirm({
+      title: "Log out?",
+      message: "You'll need to sign in again to access your account.",
+      confirmLabel: "Log out",
+      cancelLabel: "Stay signed in",
       variant: "danger",
     });
 
-    if (res && onLogout) {
+    if (confirmed && onLogout) {
       onLogout();
     }
   };
@@ -182,6 +178,10 @@ const ProfileMenu = ({
                 <Badge className="ml-2 capitalize">{user.activeRole}</Badge>
               </p>
               <p className="text-muted truncate text-[11px]">{user.email}</p>
+              <AccountStatusNote
+                user={user}
+                registration={pendingRegistration}
+              />
             </div>
             <UpgradeToProCTA variant="compact" />
           </div>
@@ -367,5 +367,77 @@ function UserMenuSkeleton() {
 
       <div className="md:hidden h-10 w-10 rounded-full bg-muted/30" />
     </div>
+  );
+}
+
+function AccountStatusNote({
+  user,
+  registration,
+}: {
+  user: PopulatedUser;
+  registration: CompanyRegistration | null;
+}) {
+  if (user.activeRole === Role.Company) return null;
+
+  const amber =
+    "mt-2 rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/10 dark:text-amber-200";
+  const rose =
+    "mt-2 rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-900/10 dark:text-rose-200";
+  const sky =
+    "mt-2 rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-900/10 dark:text-sky-200";
+
+  if (registration?.status === "draft") {
+    return (
+      <div className={amber}>
+        <p>
+          Your account is a viewer account until your partnership application is
+          complete.
+        </p>
+        <Link
+          href="/complete-registration?role=company"
+          className="mt-1 inline-block font-semibold underline"
+        >
+          Finish application
+        </Link>
+      </div>
+    );
+  }
+
+  if (registration?.status === "docs_submitted") {
+    return (
+      <div className={sky}>
+        <p>
+          Your partnership application is under review. Your account switches to
+          a company account once it's approved. Until then it stays a viewer
+          account.
+        </p>
+      </div>
+    );
+  }
+
+  if (registration?.status === "rejected") {
+    return (
+      <div className={rose}>
+        <p>
+          Your partnership application wasn't approved
+          {registration.rejectionReason
+            ? `: ${registration.rejectionReason}`
+            : "."}
+        </p>
+        <Link
+          href="/complete-registration?role=company"
+          className="mt-1 inline-block font-semibold underline"
+        >
+          Update and resubmit
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <p className="mt-2 text-[11px] leading-relaxed text-muted">
+      Viewer accounts browse and save listings. Agent and partnership access are
+      granted separately.
+    </p>
   );
 }

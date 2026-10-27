@@ -53,6 +53,7 @@ interface FileUploadProps {
   className?: string;
   accept?: string;
   currentImageUrl?: string;
+  required?: boolean;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -81,6 +82,7 @@ export default function FileUpload({
   description,
   className,
   accept,
+  required,
   currentImageUrl,
 }: FileUploadProps) {
   const [files, setFiles] = useState<FileWithMeta[]>([]);
@@ -280,7 +282,9 @@ export default function FileUpload({
     return (
       <div className={cn("flex flex-col items-center gap-3", className)}>
         {label && (
-          <p className="text-sm font-medium text-foreground">{label}</p>
+          <p className="text-sm font-medium text-foreground">
+            {label} {required && <span className="text-destructive">*</span>}
+          </p>
         )}
         <div
           onClick={triggerFileInput}
@@ -301,6 +305,7 @@ export default function FileUpload({
             multiple={false}
             className="hidden"
             accept={accept || effectiveAllowedTypes.join(",")}
+            required={required}
           />
           <Avatar
             src={avatarSrc}
@@ -350,7 +355,7 @@ export default function FileUpload({
       <div className={cn("w-full", className)}>
         {label && (
           <label className="block text-sm font-medium text-foreground mb-2">
-            {label}
+            {label} {required && <span className="text-destructive">*</span>}
           </label>
         )}
         <div
@@ -373,6 +378,7 @@ export default function FileUpload({
             multiple={effectiveMaxFiles > 1}
             className="hidden"
             accept={accept || effectiveAllowedTypes.join(",")}
+            required={required}
           />
           <FiFolder className="w-10 h-10 text-muted mb-3" />
           <p className="text-sm font-medium text-foreground mb-1">

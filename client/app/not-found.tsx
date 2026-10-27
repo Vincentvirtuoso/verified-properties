@@ -16,11 +16,11 @@ export default function NotFound() {
           been moved or deleted.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
-          <Button asChild variant="secondary" href="/">
+          <Button variant="secondary" href="/" fullWidth>
             <LuHouse className="mr-2 h-4 w-4" />
             Go Home
           </Button>
-          <Button asChild variant="outline" href="/support">
+          <Button variant="outline" href="/support" fullWidth>
             <LuCircleHelp className="mr-2 h-4 w-4" />
             Visit Support
           </Button>
