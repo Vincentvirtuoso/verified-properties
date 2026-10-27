@@ -244,7 +244,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setPendingRegistration(regRow ? mapRegistration(regRow) : null);
+      setPendingRegistration(
+        regRow && regRow.status !== "verified" ? mapRegistration(regRow) : null,
+      );
       return mapped;
     } catch (error) {
       console.error("Failed to load authenticated user:", error);
