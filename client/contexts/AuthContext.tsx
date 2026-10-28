@@ -24,13 +24,7 @@ import {
   signUpWithEmail,
   updateCurrentProfile,
 } from "@affilhomes/shared/supabase";
-import {
-  createCompanyForCurrentUser,
-  getCompanyWithTeam,
-  mapCompanyRow,
-  slugifyCompanyName,
-  submitCompanyOnboardingDocs,
-} from "@affilhomes/shared/supabase";
+import { getCompanyWithTeam } from "@affilhomes/shared/supabase";
 import { uploadUserFile } from "@affilhomes/shared/supabase";
 import { createClient } from "@affilhomes/shared/supabase/client";
 import {
@@ -38,9 +32,22 @@ import {
   switchActiveRole,
 } from "@affilhomes/shared/supabase/roles";
 import { RegistrationGuard } from "@/components/common/RegistrationGuard";
+import { sha256Hex } from "@/utils";
 
 export interface ProfileUpdateFiles {
   avatar?: File | null;
+}
+
+export interface CompanyProfileUpdate {
+  contactEmail: string;
+  contactPhone: string | null;
+  whatsappNumber: string | null;
+  /** Only company admins may send this. Omit the key for everyone else. */
+  remittanceDetails?: {
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
+  } | null;
 }
 
 interface AuthContextType {
@@ -71,21 +78,11 @@ interface AuthContextType {
     updates: Partial<PopulatedUser>,
     files?: ProfileUpdateFiles,
   ) => Promise<PopulatedUser>;
-  completeRegistration: (
-    userId: string,
-    updates: Partial<PopulatedUser>,
-    company?: Company,
-    files?: CompanyRegistrationSubmission,
+  updateCompany: (
+    companyId: string,
+    updates: CompanyProfileUpdate,
+    logo?: File | null,
   ) => Promise<void>;
-  createCompany: (companyData: {
-    name: string;
-    slug: string;
-    type: "real_estate_company" | "developer" | "broker";
-    contactEmail: string;
-    contactPhone?: string;
-    whatsappNumber?: string;
-    logo?: string;
-  }) => Promise<Company>;
   pendingRegistration: CompanyRegistration | null;
   saveCompanyRegistrationDraft: (
     fields: CompanyRegistrationDraft,
@@ -140,9 +137,11 @@ function mapRegistration(row: any): CompanyRegistration {
     applicantName: row.applicant_name ?? "",
     applicantEmail: row.applicant_email ?? "",
     applicantPhone: row.applicant_phone ?? "",
-    applicantAuthorised: row.applicantAuthorised ?? false,
+    applicantAuthorised: row.applicant_authorised ?? false,
     logoUrl: row.logo_url ?? null,
+    cacCertPath: row.cac_cert_path ?? null,
     rejectionReason: row.rejection_reason ?? null,
+    rejectionScope: row.rejection_scope ?? null,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -182,13 +181,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useState<CompanyRegistration | null>(null);
 
   const userId = user?._id;
-  const supabase = createClient();
 
   const clearError = useCallback(() => {
     setAuthError(null);
   }, []);
 
   const loadUser = useCallback(async (): Promise<PopulatedUser | null> => {
+    const supabase = createClient();
     try {
       const profile = await getCurrentProfile();
 
@@ -209,6 +208,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to load company:", error);
         }
       }
+      const { data: memberships } = await supabase
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", profile.id);
+
+      const companyIds = new Set<string>(
+        (memberships ?? []).map((m) => m.company_id as string),
+      );
+      if (profile.company_id) companyIds.add(profile.company_id);
+
+      const loaded = await Promise.all(
+        [...companyIds].map((id) => getCompanyWithTeam(id).catch(() => null)),
+      );
+      const companyList = loaded.filter((c): c is Company => !!c);
+      const ownCompany = companyList.find((c) => c._id === profile.company_id);
 
       const { data: suspended, error: suspendedError } = await supabase.rpc(
         "is_suspended",
@@ -234,16 +248,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSuspensionReason(null);
       }
 
-      const mapped = mapProfileToUser(profile, company);
+      const mapped = mapProfileToUser(profile, ownCompany);
       setUser(mapped);
-      setCompanies(company ? [company] : []);
+      setCompanies(companyList);
       const { data: regRow } = await supabase
         .from("company_registrations")
         .select("*")
-        .in("status", ["draft", "docs_submitted", "rejected"])
-        .order("updated_at", { ascending: false })
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+
       setPendingRegistration(
         regRow && regRow.status !== "verified" ? mapRegistration(regRow) : null,
       );
@@ -450,20 +465,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             supabase,
           )
         : null;
-      const cacPath = await uploadUserFile(
-        "company-documents",
-        user._id,
-        files.cacCertificate,
-        files.cacCertificate.name,
-        supabase,
-      );
+
+      let cacPath: string | null = null;
+      let cacHash: string | null = null;
+
+      if (files.cacCertificate) {
+        [cacHash, cacPath] = await Promise.all([
+          sha256Hex(files.cacCertificate),
+          uploadUserFile(
+            "company-documents",
+            user._id,
+            files.cacCertificate,
+            files.cacCertificate.name,
+            supabase,
+          ),
+        ]);
+      }
 
       const { error } = await supabase.rpc("submit_company_registration", {
         p_cac_path: cacPath,
         p_logo_url: logoUrl,
         p_authorised: files.authorised,
+        p_cac_hash: cacHash,
       });
       if (error) throw error;
+
       await loadUser();
     },
     [user, loadUser],
@@ -508,6 +534,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } finally {
         setAuthLoading(false);
       }
+    },
+    [user, loadUser],
+  );
+
+  const updateCompany = useCallback(
+    async (
+      companyId: string,
+      updates: CompanyProfileUpdate,
+      logo?: File | null,
+    ) => {
+      if (!user) throw new Error("No user logged in");
+      const supabase = createClient();
+
+      const payload: Record<string, unknown> = {
+        contact_email: updates.contactEmail,
+        contact_phone: updates.contactPhone,
+        whatsapp_number: updates.whatsappNumber,
+      };
+
+      if (updates.remittanceDetails !== undefined) {
+        payload.remittance_details = updates.remittanceDetails;
+      }
+
+      if (logo) {
+        payload.logo = await uploadUserFile(
+          "avatars",
+          user._id,
+          logo,
+          logo.name,
+          supabase,
+        );
+      }
+
+      const { error } = await supabase
+        .from("companies")
+        .update(payload)
+        .eq("id", companyId);
+      if (error) throw error;
+
+      await loadUser();
     },
     [user, loadUser],
   );
@@ -563,106 +629,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, loadUser],
   );
 
-  const createCompany = useCallback(
-    async (companyData: {
-      name: string;
-      slug: string;
-      type: "real_estate_company" | "developer" | "broker";
-      contactEmail: string;
-      contactPhone?: string;
-      whatsappNumber?: string;
-      logo?: string;
-    }) => {
-      if (!user) {
-        throw new Error("No user logged in");
-      }
-
-      setAuthLoading(true);
-      setAuthError(null);
-
-      try {
-        const row = await createCompanyForCurrentUser(companyData);
-        await loadUser();
-        return mapCompanyRow(row, [
-          { user_id: user._id, role: "admin", permissions: [] },
-        ]);
-      } catch (error) {
-        setAuthError(errorMessage(error, "Failed to create company."));
-        throw error;
-      } finally {
-        setAuthLoading(false);
-      }
-    },
-    [user, loadUser],
-  );
-
-  const completeRegistration = useCallback(
-    async (
-      userId: string,
-      updates: Partial<PopulatedUser>,
-      company?: Company,
-      files?: CompanyRegistrationSubmission,
-    ) => {
-      if (!user || user._id !== userId) {
-        throw new Error("User not found");
-      }
-
-      setAuthLoading(true);
-      setAuthError(null);
-
-      try {
-        const profileUpdates = toProfileUpdates(updates);
-        if (Object.keys(profileUpdates).length > 0) {
-          await updateCurrentProfile(userId, profileUpdates);
-        }
-
-        if (company) {
-          const logoUrl = files?.logo
-            ? await uploadUserFile(
-                "avatars",
-                userId,
-                files.logo,
-                files.logo.name,
-              )
-            : undefined;
-          const cacPath = files?.cacCertificate
-            ? await uploadUserFile(
-                "company-documents",
-                userId,
-                files.cacCertificate,
-                files.cacCertificate.name,
-              )
-            : undefined;
-
-          const created = await createCompanyForCurrentUser({
-            name: company.name,
-            slug: slugifyCompanyName(company.name),
-            type: company.type,
-            contactEmail: company.contactEmail,
-            contactPhone: company.contactPhone,
-            whatsappNumber: company.whatsappNumber,
-            logo: logoUrl,
-          });
-
-          if (cacPath) {
-            await submitCompanyOnboardingDocs(created.id, {
-              cacCertificateUrl: cacPath,
-              companyLogoUrl: logoUrl,
-            });
-          }
-        }
-
-        await loadUser();
-      } catch (error) {
-        setAuthError(errorMessage(error, "Failed to complete registration."));
-        throw error;
-      } finally {
-        setAuthLoading(false);
-      }
-    },
-    [user, loadUser],
-  );
-
   const switchRole = useCallback(
     async (newRole: Role) => {
       if (!user) throw new Error("No user logged in");
@@ -691,6 +657,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut();
       setUser(null);
       setCompanies([]);
+      setPendingRegistration(null);
       setIsSuspended(false);
       setSuspensionReason(null);
     } catch (error) {
@@ -706,7 +673,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         companies,
-        createCompany,
         isAuthenticated: !!user,
         isLoading,
         authLoading,
@@ -720,11 +686,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         switchRole,
         updateUserRole,
+        updateCompany,
         updateProfile,
         pendingRegistration,
         saveCompanyRegistrationDraft,
         submitCompanyRegistration,
-        completeRegistration,
       }}
     >
       <RegistrationGuard>{children}</RegistrationGuard>

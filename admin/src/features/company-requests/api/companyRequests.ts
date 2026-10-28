@@ -1,6 +1,8 @@
 import { createClient } from "@affilhomes/shared/supabase/client";
 import type { CompanyType } from "@affilhomes/shared/types";
 
+export type RejectionScope = "cac_document" | "details" | "other";
+
 export interface CompanyRequest {
   id: string;
   applicantId: string;
@@ -14,8 +16,15 @@ export interface CompanyRequest {
   contactPhone: string | null;
   whatsappNumber: string | null;
   logoUrl: string | null;
+  cacSha256: string | null;
   cacCertPath: string | null;
   submittedAt: string;
+}
+
+export interface CertificateMatch {
+  id: string;
+  companyName: string;
+  status: string;
 }
 
 type ProfileJoin = { name: string | null; email: string | null };
@@ -49,6 +58,7 @@ const SELECT = [
   "whatsapp_number",
   "logo_url",
   "cac_cert_path",
+  "cac_sha256",
   "applicant_name",
   "applicant_email",
   "applicant_phone",
@@ -63,7 +73,6 @@ function toError(error: { message: string }): Error {
 }
 
 function mapRow(row: RegistrationRow): CompanyRequest {
-  
   const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
 
   return {
@@ -81,6 +90,7 @@ function mapRow(row: RegistrationRow): CompanyRequest {
     logoUrl: row.logo_url,
     cacCertPath: row.cac_cert_path,
     submittedAt: row.authorised_at ?? row.updated_at,
+    cacSha256: row.cac_cert_path ?? null,
   };
 }
 
@@ -118,6 +128,7 @@ export async function approveCompanyRegistration(
 
 export async function rejectCompanyRegistration(
   registrationId: string,
+  scope: RejectionScope,
   reason: string,
 ): Promise<void> {
   const trimmed = reason.trim();
@@ -127,7 +138,34 @@ export async function rejectCompanyRegistration(
   const supabase = createClient();
   const { error } = await supabase.rpc("reject_company_registration", {
     p_registration_id: registrationId,
+    p_scope: scope,
     p_reason: trimmed,
   });
   if (error) throw toError(error);
+}
+
+export async function findMatchingCertificates(
+  hash: string,
+  applicantId: string,
+): Promise<CertificateMatch[]> {
+  const { data, error } = await createClient()
+    .from("company_registrations")
+    .select("id, company_name, status")
+    .eq("cac_sha256", hash)
+    .neq("user_id", applicantId)
+    .limit(5);
+
+  if (error) throw toError(error);
+
+  return (
+    (data ?? []) as {
+      id: string;
+      company_name: string | null;
+      status: string;
+    }[]
+  ).map((row) => ({
+    id: row.id,
+    companyName: row.company_name ?? "Unnamed company",
+    status: row.status,
+  }));
 }

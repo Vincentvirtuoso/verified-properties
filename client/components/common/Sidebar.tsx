@@ -471,7 +471,7 @@ const SidebarContent = ({
           "flex-1 space-y-6 overflow-y-auto px-3",
           collapsed && "hide-scrollbar",
         )}
-        style={{ maxHeight: `calc(100vh - ${bannerHeight + 170}px)` }}
+        style={{ maxHeight: `calc(100dvh - ${bannerHeight + 140}px)` }}
       >
         {Object.entries(groupedLinks).map(([category, items]) => (
           <div key={category} className="space-y-1">
@@ -649,7 +649,7 @@ export const Sidebar = ({
             animate={{ x: 0 }}
             exit={{ x: isLeft ? "-100%" : "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-full w-75 z-70 bg-sidebar-bg shadow-2xl border-border flex flex-col ${isLeft ? "border-r" : "border-l"}`}
+            className={`fixed top-0 ${isLeft ? "left-0" : "right-0"} h-dvh w-75 z-70 bg-sidebar-bg shadow-2xl border-border flex flex-col ${isLeft ? "border-r" : "border-l"}`}
             style={{ paddingTop: bannerHeight }}
           >
             {isLoading ? (

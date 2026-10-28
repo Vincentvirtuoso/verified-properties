@@ -26,7 +26,7 @@ import { FiZap } from "react-icons/fi";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@affilhomes/shared/ui/Button";
 import Link from "next/link";
-import UserHeaderCard from "@/components/cards/UserHeaderCard";
+import UserHeaderCard from "@/components/common/UserHeaderCard";
 import {
   BsBarChartSteps,
   BsBuildingAdd,
@@ -147,8 +147,6 @@ const AgentDashboard = ({
 
   const [agentListings, setAgentListings] = useState<PopulatedProperty[]>([]);
 
-  const { updateProfile } = useAuth();
-
   useEffect(() => {
     let cancelled = false;
     fetchMyListings(user)
@@ -161,10 +159,6 @@ const AgentDashboard = ({
       cancelled = true;
     };
   }, [user]);
-
-  const handleUpdateProfile = async (updatedData: any) => {
-    await updateProfile(updatedData);
-  };
 
   const quickActions = [
     {
@@ -239,11 +233,7 @@ const AgentDashboard = ({
 
   return (
     <div className="space-y-8">
-      <UserHeaderCard
-        user={user}
-        onProfileOpen={() => setProfileOpen(true)}
-        onUpdate={handleUpdateProfile}
-      />
+      <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard

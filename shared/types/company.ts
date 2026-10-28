@@ -20,6 +20,12 @@ export interface CompanyMember {
   permissions: CompanyPermission[];
 }
 
+export interface CompanyMemberDetails {
+  name: string | null;
+  email: string | null;
+  joinedAt: string | null;
+}
+
 export type CompanyPermission =
   | "manage_listings"
   | "manage_members"
@@ -74,7 +80,7 @@ export const companyTypeLabels: Record<CompanyType, string> = {
 
 export interface CompanyRegistration {
   id: string;
-  status: "draft" | "docs_submitted" | "rejected";
+  status: "draft" | "docs_submitted" | "rejected" | "verified";
   companyName: string;
   companyType: CompanyType | null;
   contactEmail: string;
@@ -85,7 +91,9 @@ export interface CompanyRegistration {
   applicantPhone: string;
   applicantAuthorised: boolean;
   logoUrl: string | null;
+  cacCertPath: string | null;
   rejectionReason: string | null;
+  rejectionScope: "cac_document" | "details" | "other" | null;
 }
 
 export interface CompanyRegistrationDraft {
@@ -99,7 +107,7 @@ export interface CompanyRegistrationDraft {
 }
 
 export interface CompanyRegistrationSubmission {
-  cacCertificate: File;
+  cacCertificate?: File | null;
   logo?: File | null;
   authorised: boolean;
 }

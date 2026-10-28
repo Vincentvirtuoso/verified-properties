@@ -438,11 +438,12 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
           />
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-foreground">
-              Company accounts can&apos;t switch roles
+              This is your company account
             </h3>
             <p className="text-xs leading-relaxed text-muted">
-              This account is set up as a corporate workspace. If you need to
-              use it differently, contact support and we&apos;ll sort it out.
+              It&apos;s used to manage your company&apos;s listings and team. To
+              browse or save properties for yourself, create a separate seeker
+              account with a different email address.
             </p>
           </div>
         </div>

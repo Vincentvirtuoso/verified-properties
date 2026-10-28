@@ -31,7 +31,6 @@ import { Centered } from "@affilhomes/shared/ui/Centered";
 import { AuthFormSkeleton } from "./FormSkeleton";
 import { getErrorMessage } from "@/utils";
 import { Button } from "@affilhomes/shared/ui";
-import { error } from "console";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 
@@ -76,6 +75,14 @@ function CompleteRegistrationForm() {
 
   const [authorised, setAuthorised] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const rejected =
+    pendingRegistration?.status === "rejected" ? pendingRegistration : null;
+
+  const canReuseCac =
+    !!rejected &&
+    rejected.rejectionScope !== "cac_document" &&
+    !!rejected.cacCertPath;
 
   const prefilled = useRef(false);
 
@@ -155,6 +162,12 @@ function CompleteRegistrationForm() {
       </Centered>
     );
   }
+
+  useEffect(() => {
+    if (user?.activeRole === Role.Company) router.replace("/company/dashboard");
+  }, [user?.activeRole, router]);
+
+  if (user?.activeRole === Role.Company) return null;
 
   if (pendingRegistration?.status === "docs_submitted") {
     return (
@@ -250,9 +263,9 @@ function CompleteRegistrationForm() {
       newErrors.contactEmail = "Contact email is required";
     if (!companyData.applicantName.trim())
       newErrors.applicantName = "Your full name is required";
-    if (!cacCertFile)
-      newErrors.cacCert =
-        "CAC certificate is required for partnership registration";
+    if (!cacCertFile && !canReuseCac)
+    newErrors.cacCert =
+      "CAC certificate is required for partnership registration";
     if (!authorised)
       newErrors.authorised =
         "You must confirm you are authorised to act for this company";
@@ -263,7 +276,7 @@ function CompleteRegistrationForm() {
     try {
       await saveCompanyRegistrationDraft(companyData);
       await submitCompanyRegistration({
-        cacCertificate: cacCertFile!,
+        cacCertificate: cacCertFile,
         logo: companyLogoFile,
         authorised,
       });
@@ -410,7 +423,9 @@ function CompleteRegistrationForm() {
                 </p>
               )}
               <p className="text-xs text-rose-800 dark:text-rose-300">
-                Update the details and documents below, then resubmit.
+                {canReuseCac
+                  ? "Correct the details below and resubmit. Your current CAC certificate will be reused."
+                  : "Upload a CAC certificate below, then resubmit."}
               </p>
             </div>
           )}
@@ -437,9 +452,20 @@ function CompleteRegistrationForm() {
             className="mb-2"
           />
 
+          {canReuseCac && (
+            <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted">
+              Your current CAC certificate will be used. Upload a new one only
+              if you need to replace it.
+            </div>
+          )}
+
           <FileUpload
             variant="document"
-            label="CAC Certificate"
+            label={
+              canReuseCac
+                ? "Replacement CAC certificate (optional)"
+                : "CAC Certificate *"
+            }
             description="Upload your Corporate Affairs Commission certificate. PDF, JPG or PNG."
             maxSizeInMB={5}
             maxFiles={1}
@@ -459,13 +485,18 @@ function CompleteRegistrationForm() {
             label="Registered Company Name"
             name="companyName"
             type="text"
-            placeholder="Acme Development Partners Ltd."
+            placeholder="AFFILHOMES Development Partners Ltd."
             value={companyData.companyName}
             onChange={handleCompanyChange}
             error={errors.companyName}
             icon={LuBuilding}
             required
           />
+          <p className="-mt-2 text-xs text-muted">
+            Enter the name exactly as it appears on your CAC certificate. It
+            can&apos;t be changed after approval, because it is checked against
+            that certificate.
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
@@ -552,9 +583,10 @@ function CompleteRegistrationForm() {
                   setErrors((prev) => ({ ...prev, authorised: "" }));
               }}
               label={
-                <span className="text-sm text-muted leading-relaxed">
-                  I confirm I am authorised to act for this company and to
-                  submit this application.
+                <span className="text-sm leading-relaxed text-gray-600">
+                  I confirm I am authorised to act for this company, and I
+                  understand the registered company name can&apos;t be changed
+                  after approval.
                 </span>
               }
               error={errors.authorised}

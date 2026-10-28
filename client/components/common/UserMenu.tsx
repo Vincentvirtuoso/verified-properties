@@ -90,7 +90,7 @@ function getContextActions(
   if (!user.companyId && !applicationOpen) {
     actions.push({
       label: "Apply for Partnership",
-      href: "/complete-registration?role=company",
+      href: "/onboarding/company",
       icon: LuPlus,
     });
   }

@@ -16,25 +16,20 @@ import {
   LuHeadphones,
   LuUserCheck,
   LuSettings,
-  LuPhoneCall,
-  LuSparkles,
 } from "react-icons/lu";
 import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
 import { Badge } from "@affilhomes/shared/ui/Badge";
 import { Button } from "@affilhomes/shared/ui/Button";
-import {
-  CompanyMember,
-  companyTypeLabels,
-  PopulatedUser,
-} from "@affilhomes/shared/types";
-import { VerifiedBadge } from "@affilhomes/shared/ui";
 import { useState } from "react";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
-import UserHeaderCard from "@/components/cards/UserHeaderCard";
+import UserHeaderCard from "@/components/common/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
-import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
+import { TeamMemberRow } from "@/components/company/TeamMemberRow";
+import { FeatureItem } from "@/components/company/FeatureItem";
+import { AICallingCard } from "@/components/company/AICallingCard";
+import { StatsCard } from "@/components/company/StatsCard";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -87,6 +82,11 @@ export default function CompanyDashboardPage() {
   const isVerified = company.verificationStatus === "verified";
   const isPending = company.verificationStatus === "pending";
   const isPro = company.features.tier === "pro";
+  const isCompanyAdmin = company.team.some(
+    (m) => m.userId === user._id && m.role === "admin",
+  );
+
+  console.log(company);
 
   return (
     <motion.div
@@ -164,7 +164,7 @@ export default function CompanyDashboardPage() {
                   mono
                 />
               )}
-              {company.remittanceDetails && (
+              {isCompanyAdmin && company.remittanceDetails && (
                 <>
                   <InfoRow
                     icon={LuBanknote}
@@ -231,14 +231,13 @@ export default function CompanyDashboardPage() {
                   variant="ghost"
                   size="xs"
                   href="/company/team"
-                  className="py-0 hover:bg-transparent"
                   leftIcon={<LuSettings />}
                 >
                   Manage
                 </Button>
               </div>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border list-none">
               {company.team.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted">
                   No team members yet.
@@ -248,7 +247,8 @@ export default function CompanyDashboardPage() {
                   <TeamMemberRow
                     key={member.userId}
                     member={member}
-                    user={user}
+                    currentUserId={user._id}
+                    companyId={company._id}
                   />
                 ))
               )}
@@ -304,173 +304,5 @@ export default function CompanyDashboardPage() {
       </div>
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </motion.div>
-  );
-}
-
-// Helper components
-
-function StatsCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <motion.div
-      variants={itemVariants}
-      className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm"
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm text-muted">{label}</p>
-        <p className="text-xl font-semibold tracking-tight">{value}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-function FeatureItem({
-  icon,
-  label,
-  active,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-        active
-          ? "border-primary/30 bg-primary/5 text-primary"
-          : "border-border bg-muted/20 text-muted"
-      }`}
-    >
-      <span className={`text-lg ${active ? "text-primary" : "text-muted/50"}`}>
-        {icon}
-      </span>
-      <span className="text-sm font-medium">{label}</span>
-      {active ? (
-        <VerifiedBadge
-          variant="success"
-          showText={false}
-          size="lg"
-          className="ml-auto"
-        />
-      ) : (
-        <span className="ml-auto text-xs text-muted">Off</span>
-      )}
-    </div>
-  );
-}
-
-function AICallingCard({
-  isVerified,
-  isPending,
-  isPro,
-}: {
-  isVerified: boolean;
-  isPending: boolean;
-  isPro: boolean;
-}) {
-  if (isVerified && isPro) {
-    return (
-      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <LuPhoneCall className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">AI Calling</h2>
-              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                Live
-              </Badge>
-            </div>
-            <p className="mt-1 text-sm text-muted">
-              Every new enquiry gets an automatic follow-up call. Review
-              transcripts and outcomes in Enquiries.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" href="/enquiries">
-            View Enquiries
-            <LuChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isVerified && !isPro) {
-    return <UpgradeToProCTA variant="card" />;
-  }
-
-  return (
-    <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-5">
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/30 text-muted">
-          <LuPhoneCall className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-muted">AI Calling</h2>
-          <p className="mt-1 text-sm text-muted">
-            {isPending
-              ? "You can start configuring your AI assistant now in draft mode. Activation unlocks once verification clears."
-              : "Available on the Pro tier once your company is verified."}
-          </p>
-        </div>
-        {isPending && (
-          <Button variant="outline" size="sm">
-            Configure Draft
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TeamMemberRow({
-  member,
-  user,
-}: {
-  member: CompanyMember;
-  user: PopulatedUser;
-}) {
-  const isCurrentUser = user._id === member.userId;
-  return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {member.userId.slice(0, 2).toUpperCase()}
-        </div>
-        <div>
-          <p className="text-sm font-medium">
-            {member.userId}{" "}
-            {isCurrentUser && <Badge className="ml-2 text-[10px]">YOU</Badge>}
-          </p>
-          <p className="text-xs text-muted">
-            {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-          </p>
-        </div>
-      </div>
-      <div className="flex-1">
-        <p className="mb-1 text-right text-[11px] font-bold text-muted">
-          {isCurrentUser ? "My " : ""}Role
-          {member.permissions.length > 1 ? "s" : ""}
-        </p>
-        <div className="flex flex-wrap place-content-end gap-1">
-          {member.permissions.map((perm) => (
-            <Badge key={perm} variant="secondary" className="text-[10px]">
-              {perm.replace(/_/g, " ")}
-            </Badge>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }

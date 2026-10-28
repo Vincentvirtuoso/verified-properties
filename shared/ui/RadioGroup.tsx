@@ -9,6 +9,8 @@ export interface RadioOption {
   label: string;
   description?: string;
   icon?: React.ReactNode;
+  disabled: boolean;
+  disabledHint?: string;
 }
 
 interface RadioGroupProps {
@@ -115,6 +117,11 @@ export function RadioGroup({
                     <p className="text-sm text-muted mt-1 leading-relaxed line-clamp-2">
                       {option.description}
                     </p>
+                  )}
+                  {option.disabled && option.disabledHint && (
+                    <span className="block text-xs text-muted">
+                      {option.disabledHint}
+                    </span>
                   )}
                 </div>
               </div>

@@ -67,7 +67,7 @@ export function PartnershipApprovedBanner() {
       role="status"
       className="flex w-full items-center gap-3 border-b border-success/70 bg-success text-success-foreground p-3 "
     >
-      <LuCircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+      <LuCircleCheck aria-hidden="true" className="h-6 w-6 shrink-0" />
 
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-sm">Your partnership is approved</p>
@@ -78,7 +78,7 @@ export function PartnershipApprovedBanner() {
 
       <Link
         href="/company/dashboard"
-        className="shrink-0 pt-0.5 text-xs font-semibold underline underline-offset-2"
+        className="shrink-0 pt-0.5 text-xs font-semibold underline underline-offset-2 hover:text-primary"
       >
         Open dashboard
       </Link>
