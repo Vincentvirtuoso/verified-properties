@@ -9,7 +9,7 @@ export interface RadioOption {
   label: string;
   description?: string;
   icon?: React.ReactNode;
-  disabled: boolean;
+  disabled?: boolean;
   disabledHint?: string;
 }
 
