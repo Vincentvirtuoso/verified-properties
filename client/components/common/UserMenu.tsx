@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { IconType } from "react-icons";
 import {
+  LuBuilding2,
   LuChevronDown,
   LuChevronUp,
   LuCirclePlus,
@@ -26,8 +27,9 @@ import {
 } from "@affilhomes/shared/ui/Dropdown";
 import { Spinner } from "@affilhomes/shared/ui/Spinner";
 import {
-  CompanyRegistration,
-  PopulatedUser,
+  type Company,
+  type CompanyRegistration,
+  type PopulatedUser,
   Role,
 } from "@affilhomes/shared/types";
 import RoleIcon from "@/components/ui/RoleIcon";
@@ -56,15 +58,16 @@ type MenuLink = {
 const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL;
 
 function getNavLinks(user: PopulatedUser, isAdmin: boolean): MenuLink[] {
-  const links: MenuLink[] = [
-    user.activeRole === Role.Company
-      ? {
-          label: "Company Dashboard",
-          href: "/company/dashboard",
-          icon: LuLayoutDashboard,
-        }
-      : { label: "Dashboard", href: "/dashboard", icon: LuLayoutDashboard },
-  ];
+  const links: MenuLink[] = [];
+
+  // Company accounts reach their workspace through "My companies".
+  if (user.activeRole !== Role.Company) {
+    links.push({
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: LuLayoutDashboard,
+    });
+  }
 
   if (isAdmin && ADMIN_URL) {
     links.push({
@@ -81,16 +84,18 @@ function getNavLinks(user: PopulatedUser, isAdmin: boolean): MenuLink[] {
 function getContextActions(
   user: PopulatedUser,
   registration: CompanyRegistration | null,
+  inAnyCompany: boolean,
 ): MenuLink[] {
   const actions: MenuLink[] = [];
   const applicationOpen =
     registration?.status === "draft" ||
     registration?.status === "docs_submitted";
 
-  if (!user.companyId && !applicationOpen) {
+  // Anyone who already belongs to a company (owner or team member) can't apply.
+  if (!inAnyCompany && !applicationOpen) {
     actions.push({
       label: "Apply for Partnership",
-      href: "/onboarding/company",
+      href: "/complete-registration?role=company",
       icon: LuPlus,
     });
   }
@@ -107,9 +112,20 @@ function getContextActions(
 }
 
 function getAddableRoles(user: PopulatedUser): Role[] {
+  // Company owners never add roles. Team membership changes no roles, so it doesn't block this.
+  if (user.roles.includes(Role.Company)) return [];
+
   const canAddAgent =
     user.roles.includes(Role.Viewer) && !user.roles.includes(Role.Agent);
   return canAddAgent ? [Role.Agent] : [];
+}
+
+function companyRoleLabel(company: Company, user: PopulatedUser): string {
+  const ownId =
+    typeof user.companyId === "string" ? user.companyId : user.companyId?._id;
+  if (company._id === ownId) return "Owner";
+  const membership = company.team.find((m) => m.userId === user._id);
+  return membership?.role === "admin" ? "Admin" : "Member";
 }
 
 const ProfileMenu = ({
@@ -125,11 +141,16 @@ const ProfileMenu = ({
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const navLinks = getNavLinks(user, isAdmin);
-  const { pendingRegistration } = useAuth();
-  const contextActions = getContextActions(user, pendingRegistration);
-  const addableRoles = getAddableRoles(user);
+  const { pendingRegistration, companies } = useAuth();
   const { confirm } = useConfirm();
+
+  const navLinks = getNavLinks(user, isAdmin);
+  const contextActions = getContextActions(
+    user,
+    pendingRegistration,
+    companies.length > 0,
+  );
+  const addableRoles = getAddableRoles(user);
 
   const handleLogout = async () => {
     const confirmed = await confirm({
@@ -197,26 +218,49 @@ const ProfileMenu = ({
               <span className="text-xs">View Profile</span>
             </DropdownItem>
 
-            {navLinks.map(({ href, icon: Icon, label, external }) =>
-              !external ? (
-                <a href={href} key={href} rel="noopener">
-                  <DropdownItem
-                    className="flex items-center gap-2.5 px-2 py-2 rounded-md"
-                    icon={<Icon className="w-4 h-4 text-primary/80" />}
+            {navLinks.map(({ href, icon: Icon, label, external }) => (
+              <Link
+                key={href}
+                href={href}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+              >
+                <DropdownItem
+                  className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+                  icon={<Icon className="w-4 h-4 text-primary/80" />}
+                >
+                  <span className="text-xs">{label}</span>
+                </DropdownItem>
+              </Link>
+            ))}
+
+            {companies.length > 0 && (
+              <>
+                <DropdownSeparator />
+                <p className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                  My companies
+                </p>
+                {companies.map((company) => (
+                  <Link
+                    key={company._id}
+                    href={`/company/dashboard?company=${company._id}`}
                   >
-                    <span className="text-xs">{label}</span>
-                  </DropdownItem>
-                </a>
-              ) : (
-                <Link href={href} key={href}>
-                  <DropdownItem
-                    className="flex items-center gap-2.5 px-2 py-2 rounded-md"
-                    icon={<Icon className="w-4 h-4 text-primary/80" />}
-                  >
-                    <span className="text-xs">{label}</span>
-                  </DropdownItem>
-                </Link>
-              ),
+                    <DropdownItem
+                      className="flex items-center gap-2.5 px-2 py-2 rounded-md"
+                      icon={<LuBuilding2 className="w-4 h-4 text-primary/80" />}
+                    >
+                      <div className="space-x-2">
+                        <span className="min-w-0 flex-1 truncate text-xs">
+                          {company.name}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-muted">
+                          {companyRoleLabel(company, user)}
+                        </span>
+                      </div>
+                    </DropdownItem>
+                  </Link>
+                ))}
+              </>
             )}
 
             {contextActions.length > 0 && (

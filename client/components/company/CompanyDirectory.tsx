@@ -33,12 +33,12 @@ export function CompanyDirectory({ initialCompanies }: Props) {
           placeholder="Search companies..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm flex-1"
           name="search"
           label="Search"
         />
         <Select
-          label=""
+          label="Company Type"
           value={typeFilter}
           onChange={(value) => setTypeFilter(value as CompanyType | "all")}
           options={Object.entries(companyTypeLabels).map(([value, label]) => ({
@@ -46,18 +46,6 @@ export function CompanyDirectory({ initialCompanies }: Props) {
             label,
           }))}
         />
-        {/* <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {Object.entries(companyTypeLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select> */}
       </div>
 
       <p className="text-sm text-muted">

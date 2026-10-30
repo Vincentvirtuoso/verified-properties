@@ -25,7 +25,7 @@ export type InfoRowProps = {
 };
 
 const badgeVariantClasses: Record<InfoRowBadgeVariant, string> = {
-  default: "bg-neutral-500 text-secondary-foreground ring-border",
+  default: "bg-muted/30 text-secondary-foreground ring-border",
   success: "bg-success/10 text-success ring-success/20 ",
   warning: "bg-warning/10 text-warning ring-warning/20 ",
   error: "bg-destructive/10 text-destructive ring-destructive/20 ",
@@ -45,20 +45,24 @@ export function InfoRow({
 }: InfoRowProps) {
   if (value === null || value === undefined || value === "") return null;
 
-  let displayValue: React.ReactNode = value;
-  if (typeof value === "boolean") {
-    displayValue = value ? "Yes" : "No";
-  }
+  const displayValue: React.ReactNode =
+    typeof value === "boolean" ? (value ? "Yes" : "No") : value;
 
   const isLink = Boolean(href);
+  const isBadgeable =
+    badge &&
+    (typeof displayValue === "string" || typeof displayValue === "number");
+  const isElement = !isBadgeable && React.isValidElement(displayValue);
 
   const content = (
     <div
-      className={`flex items-center justify-between py-2.5 px-3 rounded-lg transition-colors ${
-        isLink ? "hover:bg-muted/10 active:bg-muted" : ""
-      } ${className}`}
+      className={cn(
+        "flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
+        isLink && "hover:bg-muted/10 active:bg-muted",
+        className,
+      )}
     >
-      <div className="flex items-center gap-2.5 text-sm text-muted min-w-0">
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5 text-sm text-muted">
         {Icon && <Icon className="h-4 w-4 shrink-0 text-muted/70" />}
         <span
           className={cn("truncate", hideLabelOnMobile && "hidden sm:block")}
@@ -67,29 +71,31 @@ export function InfoRow({
         </span>
       </div>
 
-      <div className="flex items-center gap-2 ml-4 shrink-0">
-        {badge &&
-        (typeof displayValue === "string" ||
-          typeof displayValue === "number") ? (
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        {isBadgeable ? (
           <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${badgeVariantClasses[badgeVariant]}`}
+            className={cn(
+              "inline-flex min-w-0 max-w-full items-center truncate rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
+              badgeVariantClasses[badgeVariant],
+            )}
           >
             {displayValue}
           </span>
-        ) : React.isValidElement(displayValue) ? (
-          displayValue
+        ) : isElement ? (
+          <span className="min-w-0 truncate">{displayValue}</span>
         ) : (
           <span
-            className={`text-sm font-medium text-foreground text-right ${
-              mono ? "font-mono tracking-tight" : ""
-            }`}
+            className={cn(
+              "min-w-0 truncate text-right text-sm font-medium text-foreground",
+              mono && "font-mono tracking-tight",
+            )}
           >
             {displayValue}
           </span>
         )}
 
         {isLink && (
-          <LuChevronRight className="h-4 w-4 text-muted/40 shrink-0 group-hover:text-primary group-hover:scale-105 group-hover:translate-x-1.25 transition-all" />
+          <LuChevronRight className="h-4 w-4 shrink-0 text-muted/40 transition-all group-hover:translate-x-1.25 group-hover:scale-105 group-hover:text-primary" />
         )}
       </div>
     </div>
@@ -97,7 +103,11 @@ export function InfoRow({
 
   if (href) {
     return (
-      <Link href={href} className="block group">
+      <Link
+        href={href}
+        className="group block min-w-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         {content}
       </Link>
     );

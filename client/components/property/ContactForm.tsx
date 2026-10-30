@@ -130,6 +130,7 @@ export default function ContactForm({
               The agent has your message and number. You can follow the
               conversation in your enquiries.
             </p>
+            {/* TODO: switch user to viewer when user sends enquiry and activeRole=agent */}
             <Link
               href="/enquiries"
               className="inline-block font-semibold text-primary hover:underline"
@@ -207,7 +208,9 @@ export default function ContactForm({
                 <>
                   <RiSendPlane2Line size={16} />
                   {submitting
-                    ? "Sending..."
+                    ?
+                    
+                    "Sending..."
                     : user
                       ? "Send Message"
                       : "Sign in to send"}

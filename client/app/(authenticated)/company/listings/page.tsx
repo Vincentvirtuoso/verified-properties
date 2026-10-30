@@ -12,7 +12,7 @@ import {
 } from "@affilhomes/shared/supabase/admin";
 import { formatPrice } from "@/lib/formatters";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 
 type Status = "draft" | "active" | "inactive" | "sold" | "rented";
 
@@ -44,6 +44,40 @@ const FILTERS: { key: "all" | Status; label: string }[] = [
   { key: "draft", label: "Drafts" },
   { key: "inactive", label: "Hidden" },
 ];
+
+function CompanyListingsSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-full" />
+      </div>
+
+      <div className="flex gap-2">
+        <Skeleton className="h-7 w-16 rounded-full" />
+        <Skeleton className="h-7 w-20 rounded-full" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+      </div>
+
+      <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="flex flex-wrap items-center gap-4 p-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+            <Skeleton className="h-6 w-16 rounded-full" />
+            <Skeleton className="h-8 w-20 rounded-full" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function CompanyListingsPage() {
   const { user, companies, isLoading } = useAuth();
@@ -108,7 +142,7 @@ export default function CompanyListingsPage() {
     [rows, filter],
   );
 
-  if (isLoading) return <PageSpinner label="Loading company listings..." />;
+  if (isLoading) return <CompanyListingsSkeleton />;
   if (!user) return null;
   if (!company) {
     return (
@@ -117,8 +151,7 @@ export default function CompanyListingsPage() {
       </p>
     );
   }
-  if (!rows && !error)
-    return <PageSpinner label="Loading company listings..." />;
+  if (!rows && !error) return <CompanyListingsSkeleton />;
 
   const toggle = async (r: Row) => {
     const next = r.status === "active" ? "inactive" : "active";

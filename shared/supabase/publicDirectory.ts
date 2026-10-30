@@ -3,6 +3,14 @@ import { createClient } from "./client";
 import { fetchActivePropertiesByIds } from "./publicProperties";
 import type { Company, PopulatedProperty, PopulatedUser } from "../types";
 
+export type PublicCompanyAgent = {
+  id: string;
+  name: string;
+  avatar: string | null;
+  subRole: string | null;
+  verified: boolean;
+};
+
 /**
  * Public agents & companies directory (011_public_directory.sql).
  * Only verified agents/companies, or ones with a live listing, are
@@ -99,8 +107,12 @@ function toCompany(r: any): PublicCompany {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export async function fetchDirectoryAgents(client?: SupabaseClient): Promise<DirectoryAgent[]> {
-  const { data, error } = await (client ?? createClient()).rpc("get_public_agents");
+export async function fetchDirectoryAgents(
+  client?: SupabaseClient,
+): Promise<DirectoryAgent[]> {
+  const { data, error } = await (client ?? createClient()).rpc(
+    "get_public_agents",
+  );
   if (error) throw error;
   return (data ?? []).map(toDirectoryAgent);
 }
@@ -108,7 +120,11 @@ export async function fetchDirectoryAgents(client?: SupabaseClient): Promise<Dir
 export async function fetchPublicAgent(
   id: string,
   client?: SupabaseClient,
-): Promise<{ agent: PopulatedUser; closedDeals: number; listings: PopulatedProperty[] } | null> {
+): Promise<{
+  agent: PopulatedUser;
+  closedDeals: number;
+  listings: PopulatedProperty[];
+} | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const supabase = client ?? createClient();
   const { data, error } = await supabase.rpc("get_public_agents", { _id: id });
@@ -131,8 +147,12 @@ export async function fetchPublicAgent(
   return { agent: toUser(row), closedDeals: row.closed_deals ?? 0, listings };
 }
 
-export async function fetchPublicCompanies(client?: SupabaseClient): Promise<PublicCompany[]> {
-  const { data, error } = await (client ?? createClient()).rpc("get_public_companies");
+export async function fetchPublicCompanies(
+  client?: SupabaseClient,
+): Promise<PublicCompany[]> {
+  const { data, error } = await (client ?? createClient()).rpc(
+    "get_public_companies",
+  );
   if (error) throw error;
   return (data ?? []).map(toCompany);
 }
@@ -149,10 +169,46 @@ export async function fetchPublicCompany(
   const row = data?.[0];
   if (!row) return null;
 
-  const { data: ids, error: e2 } = await supabase.rpc("get_public_company_listing_ids", {
-    _company_id: row.id,
-  });
+  const { data: ids, error: e2 } = await supabase.rpc(
+    "get_public_company_listing_ids",
+    {
+      _company_id: row.id,
+    },
+  );
   if (e2) throw e2;
-  const listings = await fetchActivePropertiesByIds((ids ?? []) as string[], supabase);
+  const listings = await fetchActivePropertiesByIds(
+    (ids ?? []) as string[],
+    supabase,
+  );
   return { company: toCompany(row), listings };
+}
+
+/** Active agent members of a company, public fields only. */
+export async function fetchPublicCompanyAgents(
+  companyId: string,
+  client?: SupabaseClient,
+): Promise<PublicCompanyAgent[]> {
+  if (!/^[0-9a-f-]{36}$/i.test(companyId)) return [];
+
+  const { data, error } = await (client ?? createClient()).rpc(
+    "get_public_company_agents",
+    { _company_id: companyId },
+  );
+  if (error) throw error;
+
+  return (data ?? []).map(
+    (r: {
+      id: string;
+      name: string;
+      avatar: string | null;
+      sub_role: string | null;
+      verified: boolean;
+    }) => ({
+      id: r.id,
+      name: r.name,
+      avatar: r.avatar ?? null,
+      subRole: r.sub_role ?? null,
+      verified: !!r.verified,
+    }),
+  );
 }

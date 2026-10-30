@@ -2,7 +2,7 @@ import { createClient } from "@affilhomes/shared/supabase/client";
 import { fetchPublicCompanies } from "@affilhomes/shared/supabase";
 import { Company } from "@affilhomes/shared/types";
 import { Metadata } from "next";
-import { CompanyDirectory } from "./_components/CompanyDirectory";
+import { CompanyDirectory } from "@/components/company/CompanyDirectory";
 
 export const metadata: Metadata = {
   title: "Real Estate Companies & Agencies â€“ Find Top Professionals",
@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     title: "Real Estate Companies & Agencies",
     description:
       "Browse verified real estate companies, developers, and brokers. View active listings, team info, and get in touch directly.",
-    url: "https://yourdomain.com/companies",
+    url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/companies`,
     siteName: "Your Platform Name",
     images: [
       {
-        url: "https://yourdomain.com/og-companies.jpg",
+        url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/og-companies.jpg`,
         width: 1200,
         height: 630,
         alt: "Real Estate Companies Directory",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     title: "Real Estate Companies & Agencies",
     description:
       "Browse verified real estate companies, developers, and brokers.",
-    images: ["https://yourdomain.com/og-companies.jpg"],
+    images: [`${process.env.NEXT_PUBLIC_CLIENT_URL}/og-companies.jpg`],
   },
   alternates: {
     canonical: "/companies",
@@ -43,7 +43,7 @@ function CompaniesStructuredData({ companies }: { companies: Company[] }) {
     item: {
       "@type": "RealEstateAgent",
       name: company.name,
-      url: `https://yourdomain.com/companies/${company.slug}`,
+      url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/companies/${company.slug}`,
       logo: company.logo,
       contactPoint: {
         "@type": "ContactPoint",
@@ -69,9 +69,7 @@ function CompaniesStructuredData({ companies }: { companies: Company[] }) {
 }
 
 export default async function CompaniesPage() {
-  const companies = await fetchPublicCompanies( createClient()).catch(
-    () => [],
-  );
+  const companies = await fetchPublicCompanies(createClient()).catch(() => []);
 
   return (
     <>

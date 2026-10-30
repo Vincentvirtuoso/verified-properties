@@ -15,7 +15,6 @@ import { LuBuilding, LuBriefcase, LuUsers } from "react-icons/lu";
 import { BsBookmarkStar, BsBuildings } from "react-icons/bs";
 import { IconType } from "react-icons";
 
-
 export interface NavLink {
   href: string;
   label: string;
@@ -109,16 +108,12 @@ export function Navbar() {
   return (
     <nav
       className={`
-        sticky z-40 w-full transition-all duration-500 ease-in-out border-b
-        ${
-          isScrolled
-            ? "bg-navbar-bg/85 backdrop-blur-md shadow-md border-border/50"
-            : "bg-navbar-bg border-transparent"
-        }
+        sticky z-40 w-full transition-all duration-500 ease-in-out border-b bg-navbar-bg
+        ${isScrolled ? "shadow-md border-border/50" : "border-transparent"}
       `}
       style={{
         top: bannerHeight,
-        transitionProperty: "top, background-color, border-color, box-shadow",
+        transitionProperty: "top, border-color, box-shadow",
       }}
     >
       <div className="px-4 sm:px-6 lg:px-8">

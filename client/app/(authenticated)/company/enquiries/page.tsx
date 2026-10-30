@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
 import { EnquiryList } from "@/components/enquiries/EnquiryList";
@@ -11,11 +11,13 @@ import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { LuChevronDown } from "react-icons/lu";
 import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
+import { useEnquiryListRealtime } from "@/components/enquiries/useEnquiryListRealtime";
 
 export default function CompanyEnquiriesPage() {
   const { user, companies, isLoading } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [listLoading, setListLoading] = useState(true);
 
   const { bannerHeight } = useBannerHeightContext();
 
@@ -46,6 +48,18 @@ export default function CompanyEnquiriesPage() {
   const [companyEnquiries, setCompanyEnquiries] = useState<Enquiry[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const loadEnquiries = useCallback(async () => {
+    if (!company?._id) return;
+    try {
+      setCompanyEnquiries(await fetchCompanyEnquiries(company._id));
+      setLoadError(null);
+    } catch {
+      setLoadError("Couldn't load your enquiries. Please refresh.");
+    } finally {
+      setListLoading(false);
+    }
+  }, [company?._id]);
+
   useEffect(() => {
     if (!company?._id) return;
     let cancelled = false;
@@ -66,6 +80,15 @@ export default function CompanyEnquiriesPage() {
     });
     return Array.from(seen, ([id, name]) => ({ id, name }));
   }, [companyEnquiries]);
+
+  useEnquiryListRealtime({
+    viewerId: user?._id,
+    selectedId,
+    enquiries: companyEnquiries,
+    setEnquiries: setCompanyEnquiries,
+    onUnknownEnquiry: loadEnquiries,
+    // enabled: !isTeammate,
+  });
 
   const enquiries = useMemo(() => {
     if (agentFilter === "all") return companyEnquiries;
@@ -151,7 +174,7 @@ export default function CompanyEnquiriesPage() {
       </div>
 
       <div
-        className={`flex-1 flex-col ${selected ? "flex" : "hidden md:flex"}`}
+        className={`flex-1 flex-col ${selected ? "flex" : "hidden md:flex"} min-w-0`}
       >
         {selected ? (
           <EnquiryThread

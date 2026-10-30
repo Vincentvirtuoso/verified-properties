@@ -4,9 +4,11 @@ import { cn } from "../utils";
 export function Centered({
   children,
   className,
+  subClassName,
 }: {
   children: ReactNode;
   className?: string;
+  subClassName?: string;
 }) {
   return (
     <section
@@ -15,7 +17,12 @@ export function Centered({
         className,
       )}
     >
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8 text-center">
+      <div
+        className={cn(
+          "w-full max-w-xl rounded-2xl border border-border bg-card p-8 text-center",
+          subClassName,
+        )}
+      >
         {children}
       </div>
     </section>

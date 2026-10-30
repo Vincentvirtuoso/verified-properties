@@ -114,6 +114,18 @@ export async function fetchEnquiryMessages(
   return (data ?? []).map(mapMessage);
 }
 
+export async function markEnquiryRead(enquiryId: string, userId: string) {
+  const { error } = await createClient().from("enquiry_read_state").upsert(
+    {
+      enquiry_id: enquiryId,
+      user_id: userId,
+      last_read_at: new Date().toISOString(),
+    },
+    { onConflict: "enquiry_id,user_id" },
+  );
+  if (error) throw error;
+}
+
 export async function fetchTeamEnquiryMessages(
   enquiryId: string,
   client?: SupabaseClient,

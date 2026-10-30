@@ -7,6 +7,7 @@ import {
   LuPhone,
   LuPhoneMissed,
   LuSend,
+  LuShieldAlert,
 } from "react-icons/lu";
 
 import type { Enquiry, ThreadEvent } from "@affilhomes/shared/types/enquiry";
@@ -17,11 +18,13 @@ import { createClient } from "@affilhomes/shared/supabase/client";
 import {
   fetchEnquiryMessages,
   fetchTeamEnquiryMessages,
+  markEnquiryRead,
   sendEnquiryMessage,
   updateEnquiryStage,
   type EnquiryStage,
 } from "@affilhomes/shared/supabase";
 import Select from "@affilhomes/shared/ui/Select";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 
 const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -85,6 +88,49 @@ function groupEvents(events: ThreadEvent[]): EventGroup[] {
   return Array.from(groups.values());
 }
 
+function MessageSkeleton({
+  mine = false,
+  width,
+}: {
+  mine?: boolean;
+  width: string;
+}) {
+  return (
+    <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
+      <div className="max-w-[78%] sm:max-w-[65%]" style={{ width }}>
+        <Skeleton
+          className={cn(
+            "h-14 rounded-2xl",
+            mine ? "rounded-br-xs" : "rounded-bl-xs",
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MessageListSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Loading messages">
+      <section>
+        <div className="mb-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <div className="space-y-3">
+          <MessageSkeleton mine={false} width="58%" />
+          <MessageSkeleton mine={true} width="42%" />
+          <MessageSkeleton mine={false} width="66%" />
+          <MessageSkeleton mine={true} width="38%" />
+          <MessageSkeleton mine={false} width="52%" />
+          <MessageSkeleton mine={true} width="45%" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function EnquiryThread({
   enquiry,
   isAgentSide,
@@ -99,6 +145,7 @@ export function EnquiryThread({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<EnquiryStage>(enquiry.stage);
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
 
   const isClosed =
     enquiry.status === "cancelled" || enquiry.status === "deal_closed";
@@ -147,9 +194,12 @@ export function EnquiryThread({
           filter: `inquiry_id=eq.${enquiry.id}`,
         },
         () => {
-          loadThread()
-            .then((rows) => !cancelled && setEvents(rows))
-            .catch(() => {});
+          loadThread().then((rows) => {
+            if (cancelled) return;
+            setEvents(rows);
+            if (user && !isTeammate)
+              markEnquiryRead(enquiry.id, user._id).catch(() => {});
+          });
         },
       )
       .subscribe();
@@ -160,7 +210,16 @@ export function EnquiryThread({
     };
   }, [loadThread, isTeammate]);
 
+  useEffect(() => {
+    if (!user) return;
+    markEnquiryRead(enquiry.id, user._id).catch(() => {});
+  }, [enquiry.id, user]);
+
   const groupedEvents = useMemo(() => groupEvents(events), [events]);
+
+  useEffect(() => {
+    scrollAnchorRef.current?.scrollIntoView({ block: "end" });
+  }, [events]);
 
   const handleSend = async (text: string): Promise<boolean> => {
     if (!text || !user || sending) return false;
@@ -201,6 +260,7 @@ export function EnquiryThread({
   };
 
   const closedLabel = enquiry.status?.replaceAll("_", " ");
+  const showSkeleton = loading && events.length === 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -208,7 +268,7 @@ export function EnquiryThread({
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="md:hidden -ml-1 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-muted/30 hover:text-foreground"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-muted/30 hover:text-foreground md:hidden"
             aria-label="Back to enquiries"
           >
             <LuArrowLeft className="h-5 w-5" />
@@ -219,10 +279,10 @@ export function EnquiryThread({
               {isAgentSide ? enquiry.buyerName : enquiry.agentName}
             </p>
 
-            <p className="mt-0.5 truncate text-xs text-muted">
-              {enquiry.propertyTitle}
+            <p className="mt-0.5 flex min-w-0 items-center text-xs text-muted">
+              <span className="min-w-0 truncate">{enquiry.propertyTitle}</span>
               {isAgentSide && enquiry.buyerPhone && (
-                <>
+                <span className="shrink-0 whitespace-nowrap">
                   {" · "}
                   <a
                     href={`tel:${enquiry.buyerPhone}`}
@@ -230,7 +290,7 @@ export function EnquiryThread({
                   >
                     {enquiry.buyerPhone}
                   </a>
-                </>
+                </span>
               )}
             </p>
           </div>
@@ -241,7 +301,7 @@ export function EnquiryThread({
               value={stage}
               onChange={(value) => handleStage(value as EnquiryStage)}
               aria-label="Enquiry stage"
-              className="shrink-0 rounded-full border-0 px-2.5 py-1 text-[11px] font-medium capitalize text-primary min-w-25"
+              className="min-w-25 shrink-0 rounded-full border-0 px-2.5 py-1 text-[11px] font-medium capitalize text-primary"
             />
           ) : (
             <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium capitalize text-primary">
@@ -253,37 +313,47 @@ export function EnquiryThread({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-3xl space-y-6">
-          {loading && events.length === 0 && (
-            <p className="text-center text-sm text-muted">
-              Loading messages...
+          <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/10 px-3.5 py-2.5">
+            <LuShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <p className="text-xs leading-relaxed text-warning">
+              For your safety, only make payments through Affilhomes. Never send
+              money directly to an agent or buyer outside the platform.
             </p>
+          </div>
+
+          {showSkeleton ? (
+            <MessageListSkeleton />
+          ) : (
+            <>
+              {groupedEvents.map((group) => (
+                <section key={group.key}>
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[10px] font-medium text-muted shadow-sm">
+                      {group.label}
+                    </span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+
+                  <div className="space-y-3">
+                    {group.events.map((event) =>
+                      event.type === "message" ? (
+                        <MessageBubble
+                          key={event.id}
+                          event={event}
+                          isAgentSide={isAgentSide}
+                        />
+                      ) : (
+                        <CallCard key={event.id} event={event} />
+                      ),
+                    )}
+                  </div>
+                </section>
+              ))}
+
+              <div ref={scrollAnchorRef} />
+            </>
           )}
-
-          {groupedEvents.map((group) => (
-            <section key={group.key}>
-              <div className="mb-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[10px] font-medium text-muted shadow-sm">
-                  {group.label}
-                </span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <div className="space-y-3">
-                {group.events.map((event) =>
-                  event.type === "message" ? (
-                    <MessageBubble
-                      key={event.id}
-                      event={event}
-                      isAgentSide={isAgentSide}
-                    />
-                  ) : (
-                    <CallCard key={event.id} event={event} />
-                  ),
-                )}
-              </div>
-            </section>
-          ))}
         </div>
       </div>
 
@@ -296,7 +366,11 @@ export function EnquiryThread({
           </p>
         </div>
       ) : (
-        <ChatComposer onSend={handleSend} disabled={sending} error={error} />
+        <ChatComposer
+          onSend={handleSend}
+          disabled={sending || showSkeleton}
+          error={error}
+        />
       )}
     </div>
   );

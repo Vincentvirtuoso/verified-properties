@@ -154,7 +154,7 @@ export function Textarea({
         />
       </div>
 
-      <div className="flex items-start justify-between gap-2 min-h-5">
+      <div className="flex items-start justify-between gap-2 min-h-5 mt-2">
         <div>
           {error && (
             <p className="text-destructive text-xs font-medium flex items-center gap-1">
@@ -177,9 +177,7 @@ export function Textarea({
           <p
             className={cn(
               "text-xs tabular-nums shrink-0",
-              isOverLimit
-                ? "text-destructive font-medium"
-                : "text-muted",
+              isOverLimit ? "text-destructive font-medium" : "text-muted",
             )}
           >
             {characterCount}

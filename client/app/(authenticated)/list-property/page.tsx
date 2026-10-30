@@ -452,51 +452,51 @@ export default function ListPropertyPage() {
     );
   }
 
-  if (user?.activeRole === Role.Viewer) {
-    return (
-      <Centered>
-          <div
-            aria-hidden="true"
-            className="mx-auto flex size-12 items-center justify-center rounded-full border border-border bg-muted/30 text-muted"
-          >
-            <LuBuilding2 size={22} strokeWidth={1.8} />
-          </div>
+  // if (user?.activeRole === Role.Viewer) {
+  //   return (
+  //     <Centered>
+  //         <div
+  //           aria-hidden="true"
+  //           className="mx-auto flex size-12 items-center justify-center rounded-full border border-border bg-muted/30 text-muted"
+  //         >
+  //           <LuBuilding2 size={22} strokeWidth={1.8} />
+  //         </div>
 
-          <h2 className="mt-4 text-base font-semibold text-foreground">
-            You need a listing account to publish properties
-          </h2>
+  //         <h2 className="mt-4 text-base font-semibold text-foreground">
+  //           You need a listing account to publish properties
+  //         </h2>
 
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            You're currently signed in as a{" "}
-            <strong className="font-medium text-foreground">viewer</strong>.
-            Listing a property requires an{" "}
-            <strong className="font-medium text-foreground">agent</strong> or{" "}
-            <strong className="font-medium text-foreground">company</strong>{" "}
-            account.
-          </p>
+  //         <p className="mt-2 text-sm leading-relaxed text-muted">
+  //           You're currently signed in as a{" "}
+  //           <strong className="font-medium text-foreground">viewer</strong>.
+  //           Listing a property requires an{" "}
+  //           <strong className="font-medium text-foreground">agent</strong> or{" "}
+  //           <strong className="font-medium text-foreground">company</strong>{" "}
+  //           account.
+  //         </p>
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button asChild size="sm">
-              <a href="/account/upgrade">Upgrade account</a>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <a href="/help/roles">Learn about roles</a>
-            </Button>
-          </div>
+  //         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+  //           <Button asChild size="sm">
+  //             <a href="/account/upgrade">Upgrade account</a>
+  //           </Button>
+  //           <Button asChild size="sm" variant="outline">
+  //             <a href="/help/roles">Learn about roles</a>
+  //           </Button>
+  //         </div>
 
-          <p className="mt-4 text-xs text-muted">
-            Already an agent?{" "}
-            <button
-              type="button"
-              onClick={() => switchRole(Role.Agent)}
-              className="font-medium text-foreground underline-offset-2 hover:underline"
-            >
-              Switch role
-            </button>
-          </p>
-      </Centered>
-    );
-  }
+  //         <p className="mt-4 text-xs text-muted">
+  //           Already an agent?{" "}
+  //           <button
+  //             type="button"
+  //             onClick={() => switchRole(Role.Agent)}
+  //             className="font-medium text-foreground underline-offset-2 hover:underline"
+  //           >
+  //             Switch role
+  //           </button>
+  //         </p>
+  //     </Centered>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen">

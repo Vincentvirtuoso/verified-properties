@@ -9,6 +9,7 @@ import { fetchMyEnquiries } from "@affilhomes/shared/supabase";
 import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { EnquiriesSkeleton } from "@/components/enquiries/EnquirySkeleton";
+import { useEnquiryListRealtime } from "@/components/enquiries/useEnquiryListRealtime";
 
 export default function EnquiriesPage() {
   const { user, isLoading } = useAuth();
@@ -76,6 +77,22 @@ export default function EnquiriesPage() {
 
   const selected = enquiries.find((e) => e.id === selectedId) ?? null;
 
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    setEnquiries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, unreadCount: 0 } : e)),
+    );
+  };
+
+  useEnquiryListRealtime({
+    viewerId: user?._id,
+    selectedId,
+    enquiries,
+    setEnquiries,
+    onUnknownEnquiry: loadEnquiries, 
+    // enabled: !isTeammate,
+  });
+
   if (isLoading || (user && listLoading)) {
     return <EnquiriesSkeleton />;
   }
@@ -105,13 +122,13 @@ export default function EnquiriesPage() {
         <EnquiryList
           enquiries={enquiries}
           selectedId={selected?.id}
-          onSelect={setSelectedId}
+          onSelect={handleSelect}
           isAgentSide={isAgentSide}
         />
       </div>
 
       <div
-        className={`flex-1 flex-col ${selected ? "flex" : "hidden md:flex"}`}
+        className={`flex-1 flex-col ${selected ? "flex" : "hidden md:flex"} min-w-0`}
       >
         {selected ? (
           <EnquiryThread
