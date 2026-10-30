@@ -20,7 +20,8 @@ import {
 import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
 import { Badge } from "@affilhomes/shared/ui/Badge";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { FaWhatsapp } from "react-icons/fa";
 import UserHeaderCard from "@/components/common/UserHeaderCard";
@@ -45,10 +46,22 @@ export default function CompanyDashboardPage() {
   const { user, companies, isLoading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const companyId =
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedId = searchParams.get("company");
+  const ownId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
-  const company = companies.find((c) => c._id === companyId);
+  const company =
+    companies.find((c) => c._id === requestedId) ??
+    companies.find((c) => c._id === ownId) ??
+    companies[0];
+
+  useEffect(() => {
+    if (!isLoading && user && companies.length === 0) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, user, companies.length, router]);
 
   if (isLoading) {
     return <PageSpinner label="Loading company dashboard" />;
@@ -85,8 +98,6 @@ export default function CompanyDashboardPage() {
   const isCompanyAdmin = company.team.some(
     (m) => m.userId === user._id && m.role === "admin",
   );
-
-  console.log(company);
 
   return (
     <motion.div
