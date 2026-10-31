@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { Role } from "@affilhomes/shared/types";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasAgentRole, hasCompanyAccess, isInAgentView } from "@/lib/access";
 import { Button } from "@affilhomes/shared/ui";
@@ -13,6 +12,31 @@ const PRIMARY =
   "inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
 const SECONDARY =
   "inline-flex h-11 w-full items-center justify-center rounded-lg border border-border text-sm font-medium text-foreground transition-colors hover:bg-secondary";
+
+/* -------------------------------------------------------------------------- */
+/*                                   Loader                                   */
+/* -------------------------------------------------------------------------- */
+
+function Loading({ label = "Loading" }: { label?: string }) {
+  return (
+    <div
+      className="flex min-h-[70vh] flex-col items-center justify-center gap-4 p-4"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-1.5" aria-hidden>
+        <span className="h-2 w-2 animate-pulse rounded-full bg-primary [animation-delay:-0.4s]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-primary [animation-delay:-0.2s]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+      </div>
+      <p className="text-sm text-muted">{label}…</p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Access helpers                                */
+/* -------------------------------------------------------------------------- */
 
 function Denied({
   title,
@@ -77,11 +101,15 @@ function SwitchView({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                  Guards                                    */
+/* -------------------------------------------------------------------------- */
+
 export function RequireAgent({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   useRedirectWhenSignedOut();
 
-  if (isLoading || !user) return <PageSpinner label="Checking access" />;
+  if (isLoading || !user) return <Loading label="Checking access" />;
 
   if (!hasAgentRole(user)) {
     const canBecomeAgent =
@@ -104,15 +132,16 @@ export function RequireAgent({ children }: { children: ReactNode }) {
     );
   }
 
-if (!isInAgentView(user)) {
-  return (
-    <SwitchView
-      target={Role.Agent}
-      title="Switch to your agent view"
-      body="Your account is set to a different view right now."
-    />
-  );
-}
+  if (!isInAgentView(user)) {
+    return (
+      <SwitchView
+        target={Role.Agent}
+        title="Switch to your agent view"
+        body="Your account is set to a different view right now."
+      />
+    );
+  }
+
   return <>{children}</>;
 }
 
@@ -120,7 +149,7 @@ export function RequireAgentOrCompany({ children }: { children: ReactNode }) {
   const { user, companies, isLoading } = useAuth();
   useRedirectWhenSignedOut();
 
-  if (isLoading || !user) return <PageSpinner label="Checking access" />;
+  if (isLoading || !user) return <Loading label="Checking access" />;
 
   const isAgent = hasAgentRole(user);
   const isOwner = user.roles.includes(Role.Company);
@@ -210,7 +239,7 @@ export function RequireCompany({ children }: { children: ReactNode }) {
   const { user, companies, isLoading, pendingRegistration } = useAuth();
   useRedirectWhenSignedOut();
 
-  if (isLoading || !user) return <PageSpinner label="Checking access" />;
+  if (isLoading || !user) return <Loading label="Checking access" />;
 
   if (!hasCompanyAccess(user, companies)) {
     const applicationOpen =

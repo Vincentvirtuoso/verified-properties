@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY")!;
+const PLAN_CODE = Deno.env.get("PAYSTACK_PRO_PLAN_CODE")!;
 const APP_URL = Deno.env.get("APP_URL")!;
 const admin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -24,13 +25,14 @@ Deno.serve(async (req) => {
 
   const { companyId } = await req.json();
 
-  // Owner-only
-  const { data: company } = await admin
-    .from("companies")
-    .select("id, owner_id")
-    .eq("id", companyId)
-    .single();
-  if (!company || company.owner_id !== user.id) {
+  // Owner-only: the owner's profile is the one that carries companyId
+  const { data: profile } = await admin
+    .from("profiles") // your table that stores User
+    .select("company_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile || profile.company_id !== companyId) {
     return json({ error: "Only the company owner can manage billing" }, 403);
   }
 
@@ -44,7 +46,14 @@ Deno.serve(async (req) => {
     return json({ error: "Pro is already active" }, 409);
   }
 
-  // Card verification charge. The webhook creates the subscription on success.
+  // First time: ₦50 card check, and the trial starts when the webhook runs.
+  // Trial already used: charge the full Pro plan now.
+  const trial = !sub?.trial_used;
+
+  const payload = trial
+    ? { amount: 5_000 } // ₦50 in kobo
+    : { plan: PLAN_CODE }; // Paystack uses the plan's price, ₦300,000
+
   const res = await fetch("https://api.paystack.co/transaction/initialize", {
     method: "POST",
     headers: {
@@ -53,15 +62,16 @@ Deno.serve(async (req) => {
     },
     body: JSON.stringify({
       email: user.email,
-      amount: 5_000,
+      ...payload,
       callback_url: `${APP_URL}/company/pro?verify=1`,
       metadata: {
         purpose: "pro_start",
         company_id: companyId,
-        trial: !sub?.trial_used,
+        trial,
       },
     }),
   });
+
   const body = await res.json();
   if (!body.status) return json({ error: "Could not start payment" }, 502);
 

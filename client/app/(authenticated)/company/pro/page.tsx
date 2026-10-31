@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LuCheck, LuCrown, LuSparkles } from "react-icons/lu";
 
 import { createClient } from "@affilhomes/shared/supabase/client";
@@ -14,8 +14,9 @@ import {
 } from "@/lib/entitlements";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button, Spinner } from "@affilhomes/shared/ui";
+import { Button } from "@affilhomes/shared/ui";
 import { Alert } from "@affilhomes/shared/ui/Alert";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 
 const naira = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -34,19 +35,31 @@ const PRO_EXTRA_FEATURES = [
   "Joint venture access",
 ];
 
+const PRO_PRICE_LABEL = `${naira.format(PRO_PRICE_KOBO / 100)} / month`;
+const VERIFY_POLL_MS = 3000;
+const VERIFY_MAX_TRIES = 10;
+
 export default function CompanyProPage() {
   const { user, authLoading } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const companyId = user?.companyId?._id;
+  const isOwner = Boolean(companyId);
 
   const [row, setRow] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
 
-  const companyId = user?.companyId?._id;
-  const isOwner = companyId;
+  const verifying = searchParams.get("verify") === "1";
+  const paymentRef =
+    searchParams.get("reference") ?? searchParams.get("trxref");
 
-  const load = useCallback(async () => {
+  const loadRow = useCallback(async () => {
+    if (!companyId) return null;
     const { data } = await createClient()
       .from("company_subscriptions")
       .select(
@@ -54,24 +67,48 @@ export default function CompanyProPage() {
       )
       .eq("company_id", companyId)
       .maybeSingle();
-    setRow((data as SubscriptionRow) ?? null);
-    setLoading(false);
+    const next = (data as SubscriptionRow) ?? null;
+    setRow(next);
+    return next;
   }, [companyId]);
 
+  // Initial load, once auth has finished
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (authLoading) return;
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
+    loadRow().finally(() => setLoading(false));
+  }, [authLoading, companyId, loadRow]);
 
-  // Returning from Paystack: webhooks may land a few seconds later, so poll briefly
+  // Returning from Paystack: poll until Pro appears, then stop
   useEffect(() => {
-    if (searchParams.get("verify") !== "1") return;
-    const timer = setInterval(load, 3000);
-    const stop = setTimeout(() => clearInterval(timer), 30_000);
-    return () => {
-      clearInterval(timer);
-      clearTimeout(stop);
-    };
-  }, [searchParams, load]);
+    if (!verifying || !companyId) return;
+
+    setConfirming(true);
+    setTimedOut(false);
+    let tries = 0;
+
+    const timer = setInterval(async () => {
+      tries += 1;
+      const next = await loadRow();
+      const isPro = getEntitlements(next).tier === "pro";
+
+      if (isPro) {
+        clearInterval(timer);
+        setConfirming(false);
+        // Drop the query string so a refresh doesn't re-poll
+        router.replace("/company/pro");
+      } else if (tries >= VERIFY_MAX_TRIES) {
+        clearInterval(timer);
+        setConfirming(false);
+        setTimedOut(true);
+      }
+    }, VERIFY_POLL_MS);
+
+    return () => clearInterval(timer);
+  }, [verifying, companyId, loadRow, router]);
 
   const call = async (fn: "paystack-start-pro" | "paystack-cancel-pro") => {
     setBusy(true);
@@ -81,8 +118,11 @@ export default function CompanyProPage() {
         body: { companyId },
       });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-      else await load();
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      await loadRow();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -90,9 +130,7 @@ export default function CompanyProPage() {
     }
   };
 
-  if (loading) {
-    return <div className="p-6 text-sm text-muted">Loading…</div>;
-  }
+  if (authLoading || loading) return <BillingSkeleton />;
 
   const ent = getEntitlements(row);
   const periodLabel = ent.periodEnd
@@ -105,14 +143,25 @@ export default function CompanyProPage() {
     <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
       <header>
         <h1 className="text-xl font-semibold text-foreground">
-          Plan & billing
+          Plan &amp; billing
         </h1>
         <p className="mt-1 text-sm text-muted">
           Your current plan and what it includes.
         </p>
       </header>
 
-      {/* Status */}
+      {confirming && (
+        <Alert>Confirming your payment. This can take up to 30 seconds.</Alert>
+      )}
+
+      {timedOut && (
+        <div className="rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+          We haven&apos;t received your payment confirmation yet. Refresh this
+          page in a minute. If Pro still doesn&apos;t show, contact support
+          {paymentRef ? ` with reference ${paymentRef}` : ""}.
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center gap-2">
           <LuCrown className="h-4 w-4 text-primary" />
@@ -156,7 +205,6 @@ export default function CompanyProPage() {
         )}
       </div>
 
-      {/* Comparison */}
       <div className="grid gap-4 md:grid-cols-2">
         <PlanCard
           name="Standard"
@@ -166,7 +214,7 @@ export default function CompanyProPage() {
         />
         <PlanCard
           name="Pro"
-          price={`${naira.format(PRO_PRICE_KOBO / 100)} / month`}
+          price={PRO_PRICE_LABEL}
           current={ent.tier === "pro"}
           highlighted
           features={[...STANDARD_FEATURES, ...PRO_EXTRA_FEATURES]}
@@ -174,16 +222,12 @@ export default function CompanyProPage() {
         />
       </div>
 
-      {error && <Alert>{error}</Alert>}
-
-      {/* Owner actions */}
       {isOwner && (
         <div className="flex flex-wrap gap-3">
           {ent.canStartPro && (
             <Button
               onClick={() => call("paystack-start-pro")}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               isLoading={busy}
               leftIcon={<LuSparkles className="h-4 w-4" />}
             >
@@ -207,7 +251,60 @@ export default function CompanyProPage() {
 
       <p className="text-xs text-muted">
         Payments are processed by Paystack. Pro continues until the end of the
-        period you've paid for.
+        period you&apos;ve paid for.
+      </p>
+    </div>
+  );
+}
+
+function BillingSkeleton() {
+  return (
+    <div
+      className="mx-auto max-w-4xl space-y-6 p-4 md:p-6"
+      aria-busy="true"
+      aria-label="Loading plan and billing"
+    >
+      <header>
+        <h1 className="text-xl font-semibold text-foreground">
+          Plan &amp; billing
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Your current plan and what it includes.
+        </p>
+      </header>
+
+      <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <Skeleton className="h-3 w-2/3" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <PlanCard
+          name="Standard"
+          price="Free"
+          current={false}
+          features={STANDARD_FEATURES}
+        />
+        <PlanCard
+          name="Pro"
+          price={PRO_PRICE_LABEL}
+          current={false}
+          highlighted
+          features={[...STANDARD_FEATURES, ...PRO_EXTRA_FEATURES]}
+          footnote={`Includes a ${TRIAL_DAYS}-day free trial. AI calls during the trial are capped at ${TRIAL_CALL_CAP}.`}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <Skeleton className="h-10 w-44 rounded-full" />
+      </div>
+
+      <p className="text-xs text-muted">
+        Payments are processed by Paystack. Pro continues until the end of the
+        period you&apos;ve paid for.
       </p>
     </div>
   );
