@@ -1,46 +1,216 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   LuBuilding2,
   LuUsers,
   LuBanknote,
-  LuClock,
-  LuShield,
+  LuCalendarDays,
+  LuShieldCheck,
   LuPhone,
   LuMail,
   LuMessageCircle,
-  LuChevronRight,
   LuCrown,
-  LuHeadphones,
-  LuUserCheck,
-  LuSettings,
+  LuSparkles,
+  LuUserPlus,
+  LuClock3,
+  LuClipboardList,
 } from "react-icons/lu";
+import { FaWhatsapp } from "react-icons/fa";
+
+import { useAuth } from "@/contexts/AuthContext";
 import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
 import { Badge } from "@affilhomes/shared/ui/Badge";
 import { Button } from "@affilhomes/shared/ui/Button";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { formatPhoneNumber } from "@/lib/formatters";
-import { FaWhatsapp } from "react-icons/fa";
+import { cn } from "@/lib/utils";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import UserHeaderCard from "@/components/common/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
-import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { TeamMemberRow } from "@/components/company/TeamMemberRow";
-import { FeatureItem } from "@/components/company/FeatureItem";
 import { AICallingCard } from "@/components/company/AICallingCard";
 import { StatsCard } from "@/components/company/StatsCard";
+import { VerifiedBadge } from "@affilhomes/shared/ui";
+import { CompanyFaqs } from "@/components/company/CompanyFaqs";
 
-const containerVariants = {
+const naira = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
+
+const DAY_MS = 86_400_000;
+
+const pageVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
+  },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+const sectionVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28 } },
 };
+
+function InfoRowSkeleton() {
+  return (
+    <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+        <Skeleton className="h-4 w-4 rounded" />
+        <Skeleton className="h-3.5 w-24" />
+      </div>
+      <Skeleton className="h-3.5 w-32 max-w-[45%]" />
+    </div>
+  );
+}
+
+function SectionHeadingSkeleton() {
+  return (
+    <div className="mb-4 flex items-start gap-2.5">
+      <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-full max-w-72" />
+      </div>
+    </div>
+  );
+}
+
+function FeatureRowSkeleton() {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border px-3.5 py-3">
+      <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+      <Skeleton className="h-4 min-w-0 flex-1" />
+      <Skeleton className="h-5 w-12 shrink-0 rounded-full" />
+    </div>
+  );
+}
+
+function TeamRowSkeleton() {
+  return (
+    <li className="flex items-center gap-3 py-3">
+      <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <Skeleton className="h-5 w-14 shrink-0 rounded-full" />
+    </li>
+  );
+}
+
+function CompanyDashboardSkeleton() {
+  return (
+    <div
+      className="mx-auto w-full max-w-7xl space-y-6 pb-8 sm:space-y-8"
+      aria-busy="true"
+      aria-label="Loading company dashboard"
+    >
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-56 max-w-full" />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 border-b border-border pb-6">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-28" />
+          <span className="text-muted/50">/</span>
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <Skeleton className="h-8 w-64 max-w-full sm:h-9" />
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-6 w-32 rounded-full" />
+        </div>
+      </div>
+
+      <section aria-label="Company statistics" className="space-y-3">
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-3 w-56 max-w-full" />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+            >
+              <Skeleton className="h-9 w-9 rounded-lg" />
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-5 w-28" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <Skeleton className="h-48 rounded-2xl" />
+
+          <div className={SECTION_CLASS}>
+            <SectionHeadingSkeleton />
+            <div className="divide-y divide-border/70">
+              <InfoRowSkeleton />
+              <InfoRowSkeleton />
+              <InfoRowSkeleton />
+              <InfoRowSkeleton />
+            </div>
+          </div>
+
+          <div className={SECTION_CLASS}>
+            <SectionHeadingSkeleton />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FeatureRowSkeleton />
+              <FeatureRowSkeleton />
+            </div>
+          </div>
+        </div>
+
+        <aside className="min-w-0 space-y-6">
+          <div className={SECTION_CLASS}>
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <SectionHeadingSkeleton />
+              <Skeleton className="mt-1 h-5 w-8 shrink-0 rounded-full" />
+            </div>
+            <ul className="divide-y divide-border/70">
+              <TeamRowSkeleton />
+              <TeamRowSkeleton />
+              <TeamRowSkeleton />
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-9 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+              <Skeleton className="h-5 w-14 shrink-0 rounded-full" />
+            </div>
+            <Skeleton className="mt-4 h-3 w-full" />
+            <Skeleton className="mt-1.5 h-3 w-4/5" />
+            <Skeleton className="mt-4 h-8 w-full rounded-full" />
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
 
 export default function CompanyDashboardPage() {
   const { user, companies, isLoading } = useAuth();
@@ -49,13 +219,20 @@ export default function CompanyDashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedId = searchParams.get("company");
+
   const ownId =
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
 
   const company =
-    companies.find((c) => c._id === requestedId) ??
-    companies.find((c) => c._id === ownId) ??
+    companies.find((item) => item._id === requestedId) ??
+    companies.find((item) => item._id === ownId) ??
     companies[0];
+
+  const { tier, features, isTrial, periodEnd, ready } = useEntitlements(
+    company?._id,
+  );
+
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!isLoading && user && companies.length === 0) {
@@ -63,8 +240,8 @@ export default function CompanyDashboardPage() {
     }
   }, [isLoading, user, companies.length, router]);
 
-  if (isLoading) {
-    return <PageSpinner label="Loading company dashboard" />;
+  if (isLoading || !ready) {
+    return <CompanyDashboardSkeleton />;
   }
 
   if (!user) {
@@ -78,68 +255,150 @@ export default function CompanyDashboardPage() {
   if (!company) {
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center min-h-[60vh] space-y-4"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 px-4 text-center"
       >
-        <LuBuilding2 className="h-16 w-16 text-muted/40" />
-        <h2 className="text-xl font-semibold">No Company Found</h2>
-        <p className="max-w-md text-center text-muted">
-          You are not associated with any company. Create one to get started.
-        </p>
-        <Button>Create Company</Button>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/10">
+          <LuBuilding2 className="h-8 w-8 text-muted" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold text-foreground">
+            No company yet
+          </h2>
+          <p className="max-w-md text-sm leading-6 text-muted">
+            You aren&apos;t linked to a company. Register your company to start
+            listing properties and managing a team.
+          </p>
+        </div>
+        <Button href="/register-company">Register a company</Button>
       </motion.div>
     );
   }
 
   const isVerified = company.verificationStatus === "verified";
   const isPending = company.verificationStatus === "pending";
-  const isPro = company.features.tier === "pro";
+  const isPro = tier === "pro";
+  const isOwner = ownId === company._id;
   const isCompanyAdmin = company.team.some(
-    (m) => m.userId === user._id && m.role === "admin",
+    (member) => member.userId === user._id && member.role === "admin",
   );
+
+  const daysLeft =
+    isTrial && periodEnd
+      ? Math.max(
+          0,
+          Math.ceil((new Date(periodEnd).getTime() - Date.now()) / DAY_MS),
+        )
+      : null;
+
+  const memberSince = new Date(company.createdAt).toLocaleDateString("en-NG", {
+    year: "numeric",
+    month: "short",
+  });
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-6 lg:px-8"
+      variants={shouldReduceMotion ? undefined : pageVariants}
+      initial={shouldReduceMotion ? false : "hidden"}
+      animate={shouldReduceMotion ? undefined : "show"}
+      className="mx-auto w-full max-w-7xl space-y-6 pb-8 sm:space-y-8"
     >
-      <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
-
-      <motion.div
-        variants={itemVariants}
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <StatsCard
-          icon={<LuBanknote className="h-5 w-5" />}
-          label="Total Remitted"
-          value={`₦${company.totalRemitted.toLocaleString()}`}
-        />
-        <StatsCard
-          icon={<LuBuilding2 className="h-5 w-5" />}
-          label="Active Listings"
-          value={company.activeListings}
-        />
-        <StatsCard
-          icon={<LuUsers className="h-5 w-5" />}
-          label="Team Members"
-          value={company.team.length}
-        />
-        <StatsCard
-          icon={<LuClock className="h-5 w-5" />}
-          label="Member Since"
-          value={new Date(company.createdAt).toLocaleDateString("en-NG", {
-            year: "numeric",
-            month: "short",
-          })}
+      <motion.div variants={shouldReduceMotion ? undefined : sectionVariants}>
+        <UserHeaderCard
+          user={user}
+          onProfileOpen={() => setProfileOpen(true)}
         />
       </motion.div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <motion.section variants={itemVariants}>
+      <motion.header
+        variants={shouldReduceMotion ? undefined : sectionVariants}
+        className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div className="min-w-0 space-y-3">
+          <div className="space-y-2">
+            <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {company.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              {isVerified ? (
+                <VerifiedBadge size="lg" />
+              ) : (
+                <Badge variant="secondary">
+                  {isPending ? "Verification pending" : "Unverified"}
+                </Badge>
+              )}
+              <Badge variant={isPro ? "default" : "secondary"}>
+                {isPro ? "Pro plan" : "Standard plan"}
+                {isTrial && daysLeft !== null ? ` · ${daysLeft}d trial` : ""}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {!isVerified && !isPending && (
+            <Button
+              href="/company/verify"
+              size="sm"
+              leftIcon={<LuShieldCheck className="h-4 w-4" />}
+            >
+              Complete verification
+            </Button>
+          )}
+          <Button
+            href="/company/team"
+            size="sm"
+            variant="outline"
+            leftIcon={<LuUsers className="h-4 w-4" />}
+          >
+            Manage team
+          </Button>
+        </div>
+      </motion.header>
+
+      <motion.section
+        variants={shouldReduceMotion ? undefined : sectionVariants}
+        aria-label="Company statistics"
+        className="space-y-3"
+      >
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">At a glance</h2>
+          <p className="mt-0.5 text-xs text-muted">
+            A quick overview of your company&apos;s activity.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatsCard
+            icon={<LuBanknote className="h-5 w-5" />}
+            label="Total remitted"
+            value={naira.format(company.totalRemitted)}
+          />
+          <StatsCard
+            icon={<LuBuilding2 className="h-5 w-5" />}
+            label="Active listings"
+            value={company.activeListings}
+          />
+          <StatsCard
+            icon={<LuUsers className="h-5 w-5" />}
+            label="Team members"
+            value={company.team.length}
+          />
+          <StatsCard
+            icon={<LuCalendarDays className="h-5 w-5" />}
+            label="Member since"
+            value={memberSince}
+          />
+        </div>
+      </motion.section>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <motion.section
+            variants={shouldReduceMotion ? undefined : sectionVariants}
+            aria-label="AI calling"
+          >
             <AICallingCard
               isVerified={isVerified}
               isPending={isPending}
@@ -148,21 +407,26 @@ export default function CompanyDashboardPage() {
           </motion.section>
 
           <motion.section
-            variants={itemVariants}
-            className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+            variants={shouldReduceMotion ? undefined : sectionVariants}
+            className={SECTION_CLASS}
           >
-            <h2 className="mb-4 text-lg font-semibold">Company Details</h2>
-            <div className="space-y-1">
+            <SectionHeading
+              title="Company details"
+              description="Contact information and remittance details for your business."
+              icon={<LuBuilding2 className="h-4 w-4" />}
+            />
+
+            <div className="divide-y divide-border/70">
               <InfoRow
                 icon={LuMail}
-                label="Contact Email"
+                label="Contact email"
                 value={company.contactEmail}
                 mono
               />
               {company.contactPhone && (
                 <InfoRow
                   icon={LuPhone}
-                  label="Contact Phone"
+                  label="Contact phone"
                   value={formatPhoneNumber(company.contactPhone)}
                   mono
                 />
@@ -175,22 +439,23 @@ export default function CompanyDashboardPage() {
                   mono
                 />
               )}
+
               {isCompanyAdmin && company.remittanceDetails && (
                 <>
                   <InfoRow
                     icon={LuBanknote}
-                    label="Bank Name"
+                    label="Bank name"
                     value={company.remittanceDetails.bankName}
                   />
                   <InfoRow
                     icon={LuBanknote}
-                    label="Account Number"
+                    label="Account number"
                     value={company.remittanceDetails.accountNumber}
                     mono
                   />
                   <InfoRow
                     icon={LuBanknote}
-                    label="Account Name"
+                    label="Account name"
                     value={company.remittanceDetails.accountName}
                   />
                 </>
@@ -199,121 +464,251 @@ export default function CompanyDashboardPage() {
           </motion.section>
 
           <motion.section
-            variants={itemVariants}
-            className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+            variants={shouldReduceMotion ? undefined : sectionVariants}
+            className={SECTION_CLASS}
           >
-            <h2 className="mb-4 text-lg font-semibold">Enabled Features</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <FeatureItem
-                icon={<LuMessageCircle />}
-                label="WhatsApp Notifications"
-                active={company.features.whatsappNotifications}
+            <SectionHeading
+              title="Plan features"
+              description={
+                isPro
+                  ? "Features currently available on your plan."
+                  : "See what is included and what becomes available with Pro."
+              }
+              icon={<LuSparkles className="h-4 w-4" />}
+            />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FeatureRow
+                icon={<LuMessageCircle className="h-4 w-4" />}
+                label="WhatsApp notifications"
+                active={features.whatsappNotifications}
               />
-              <FeatureItem
-                icon={<LuCrown />}
-                label="Priority Support"
-                active={company.features.prioritySupport}
-              />
-              <FeatureItem
-                icon={<LuUserCheck />}
-                label="Dedicated Account Manager"
-                active={company.features.dedicatedAccountManager}
-              />
-              <FeatureItem
-                icon={<LuShield />}
-                label="White Label"
-                active={company.features.whiteLabel}
+              <FeatureRow
+                icon={<LuCrown className="h-4 w-4" />}
+                label="Priority support"
+                active={features.prioritySupport}
               />
             </div>
+          </motion.section>
+          <CompanyFaqs companyId={company._id} />
+        </div>
+
+        <aside className="min-w-0 space-y-6">
+          <motion.section
+            variants={shouldReduceMotion ? undefined : sectionVariants}
+            className={SECTION_CLASS}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <SectionHeading
+                title="Team members"
+                description="People who help manage your company."
+                icon={<LuUsers className="h-4 w-4" />}
+              />
+              <Badge variant="secondary">{company.team.length}</Badge>
+            </div>
+
+            {company.team.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border px-4 py-8 text-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/10">
+                  <LuUserPlus className="h-5 w-5 text-muted" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">
+                    Build your team
+                  </p>
+                  <p className="text-xs leading-5 text-muted">
+                    Invite agents to help handle enquiries and manage your
+                    listings.
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" href="/company/team">
+                  Invite a member
+                </Button>
+              </div>
+            ) : (
+              <>
+                <ul className="divide-y divide-border/70">
+                  {company.team.map((member) => (
+                    <TeamMemberRow
+                      key={member.userId}
+                      member={member}
+                      currentUserId={user._id}
+                      companyId={company._id}
+                    />
+                  ))}
+                </ul>
+                <Button
+                  href="/company/team"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 w-full"
+                >
+                  Manage team
+                </Button>
+              </>
+            )}
           </motion.section>
 
           <motion.section
-            variants={itemVariants}
-            className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+            variants={shouldReduceMotion ? undefined : sectionVariants}
+            className={cn(
+              "rounded-2xl border p-5",
+              isPro
+                ? "border-primary/20 bg-card"
+                : "border-primary/25 bg-primary/4",
+            )}
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Team Members</h2>
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">
-                  {company.team.length} member
-                  {company.team.length !== 1 ? "s" : ""}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  href="/company/team"
-                  leftIcon={<LuSettings />}
-                >
-                  Manage
-                </Button>
-              </div>
-            </div>
-            <div className="divide-y divide-border list-none">
-              {company.team.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted">
-                  No team members yet.
-                </p>
-              ) : (
-                company.team.map((member) => (
-                  <TeamMemberRow
-                    key={member.userId}
-                    member={member}
-                    currentUserId={user._id}
-                    companyId={company._id}
-                  />
-                ))
-              )}
-            </div>
-          </motion.section>
-        </div>
-
-        <motion.div variants={itemVariants} className="space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
-            <div className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
-                <LuBuilding2 className="mr-2 h-4 w-4" />
-                Manage Listings
-                <LuChevronRight className="ml-auto h-4 w-4" />
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <LuUsers className="mr-2 h-4 w-4" />
-                Manage Team
-                <LuChevronRight className="ml-auto h-4 w-4" />
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <LuHeadphones className="mr-2 h-4 w-4" />
-                Contact Support
-                <LuChevronRight className="ml-auto h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {!isVerified && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-900/20">
-              <div className="flex items-center gap-3">
-                <LuShield className="h-8 w-8 shrink-0 text-amber-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <LuSparkles className="h-4 w-4" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-amber-800 dark:text-amber-400">
-                    {isPending ? "Verification Pending" : "Verification Needed"}
-                  </h3>
-                  <p className="text-sm text-amber-700 dark:text-amber-500">
-                    {isPending
-                      ? "Under review (2-5 business days). You can configure your AI assistant in draft mode while you wait."
-                      : "Complete verification to unlock Partnership features, including AI Calling on Pro."}
+                  <p className="text-sm font-semibold text-foreground">
+                    {isPro ? "Pro subscription" : "Explore Pro"}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {isPro ? "Your current plan" : "Unlock more capabilities"}
                   </p>
                 </div>
               </div>
-              {!isPending && (
-                <Button size="sm" className="mt-4 w-full">
-                  Verify Now
-                </Button>
-              )}
+              <Badge variant={isPro ? "success" : "secondary"}>
+                {isPro ? "Active" : "Standard"}
+              </Badge>
             </div>
+
+            <p className="mt-4 text-sm leading-6 text-muted">
+              {isPro
+                ? isTrial && daysLeft !== null
+                  ? `Your free trial ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`
+                  : "AI calling, AI chat and JV access are active on your subscription."
+                : `Upgrade to Pro for ${naira.format(30_000_000 / 100)}/month and unlock AI calling, AI chat and JV access.`}
+            </p>
+
+            {isOwner ? (
+              <Button
+                href="/company/pro"
+                className="mt-4 w-full"
+                size="sm"
+                leftIcon={<LuSparkles className="h-4 w-4" />}
+              >
+                {isPro ? "Manage subscription" : "Try Pro free for 7 days"}
+              </Button>
+            ) : (
+              <p className="mt-4 rounded-lg bg-muted/10 px-3 py-2 text-xs leading-5 text-muted">
+                Only the company owner can manage billing.
+              </p>
+            )}
+          </motion.section>
+
+          {!isVerified && (
+            <motion.section
+              variants={shouldReduceMotion ? undefined : sectionVariants}
+              className={cn(
+                "rounded-2xl border p-5",
+                isPending
+                  ? "border-warning/25 bg-warning/4"
+                  : "border-warning/30 bg-warning/6",
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning">
+                  {isPending ? (
+                    <LuClock3 className="h-4 w-4" />
+                  ) : (
+                    <LuShieldCheck className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {isPending
+                      ? "Verification in progress"
+                      : "Verify your company"}
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    {isPending
+                      ? "Your company is under review, usually within 2–5 business days. You can prepare your AI assistant in draft mode while you wait."
+                      : "Complete company verification to unlock partnership features, including AI calling on Pro."}
+                  </p>
+                  {!isPending && (
+                    <Button
+                      size="sm"
+                      className="mt-3"
+                      href="/company/verify"
+                      variant="outline"
+                    >
+                      Start verification
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </motion.section>
           )}
-        </motion.div>
+        </aside>
       </div>
+
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </motion.div>
+  );
+}
+
+const SECTION_CLASS =
+  "rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5";
+
+function SectionHeading({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex min-w-0 items-start gap-2.5">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/10 text-muted">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <p className="mt-0.5 text-xs leading-5 text-muted">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function FeatureRow({
+  icon,
+  label,
+  active,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-3 rounded-xl border px-3.5 py-3",
+        active
+          ? "border-border bg-background"
+          : "border-dashed border-border bg-muted/3",
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+          active ? "bg-primary/10 text-primary" : "bg-muted/10 text-muted",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
+        {label}
+      </span>
+      <Badge variant={active ? "success" : "secondary"}>
+        {active ? "Active" : "Pro"}
+      </Badge>
+    </div>
   );
 }

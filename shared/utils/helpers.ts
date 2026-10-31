@@ -77,3 +77,13 @@ export async function sha256Hex(file: File): Promise<string> {
     b.toString(16).padStart(2, "0"),
   ).join("");
 }
+
+export function normalizeNigerianPhone(raw: string | undefined): string | null {
+  if (!raw) return null;
+
+  const digits = raw.replace(/[\s()-]/g, "");
+  if (/^\+234\d{10}$/.test(digits)) return digits;
+  if (/^234\d{10}$/.test(digits)) return `+${digits}`;
+  if (/^0\d{10}$/.test(digits)) return `+234${digits.slice(1)}`;
+  return null;
+}

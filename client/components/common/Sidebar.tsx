@@ -233,8 +233,8 @@ function getRoleLinks(
           ),
         },
         {
-          href: "/company/jobs",
-          label: "Open Roles",
+          href: "/company/pro",
+          label: "Manage Pro",
           icon: <LuBriefcase />,
           category: "Management",
           ...withSlot(

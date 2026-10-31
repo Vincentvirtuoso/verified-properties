@@ -13,6 +13,7 @@ import {
   LuBatteryFull,
   LuBot,
 } from "react-icons/lu";
+import { useEntitlements } from "@/hooks/useEntitlements";
 
 type SpotlightVariant = "guest" | "agent" | "company-locked" | "company-live";
 
@@ -33,10 +34,18 @@ function useSpotlightVariant(): {
   content: SpotlightContent;
 } | null {
   const { user, isAuthenticated } = useAuth();
+  const role = user?.activeRole;
+
+  const company = user?.companyId;
+  const companyId = typeof company === "object" ? company?._id : undefined;
+  const isVerified =
+    typeof company === "object" && company?.verificationStatus === "verified";
+
+  const { tier, ready } = useEntitlements(
+    role === Role.Company ? companyId : undefined,
+  );
 
   return useMemo(() => {
-    const role = user?.activeRole;
-
     if (!isAuthenticated || role === Role.Viewer) {
       return {
         variant: "guest" as const,
@@ -64,13 +73,9 @@ function useSpotlightVariant(): {
     }
 
     if (role === Role.Company) {
-      const company = user?.companyId;
-      const isVerified =
-        typeof company === "object" &&
-        company?.verificationStatus === "verified";
-      const hasAICalling = isVerified && company?.features?.tier === "pro";
+      if (!ready) return null;
 
-      if (hasAICalling) {
+      if (isVerified && tier === "pro") {
         return {
           variant: "company-live" as const,
           content: {
@@ -94,9 +99,7 @@ function useSpotlightVariant(): {
             ? "Pro unlocks an assistant that calls every new enquiry back automatically, logs the conversation, and tracks the buyer through to close."
             : "You can train your assistant now in draft mode — it activates the moment your CAC verification clears.",
           ctaLabel: isVerified ? "Upgrade to Pro" : "Set up your assistant",
-          ctaHref: isVerified
-            ? "/company/upgrade"
-            : "/company/ai-calling/setup",
+          ctaHref: isVerified ? "/company/pro" : "/company/ai-calling/setup",
           secondaryLabel: "See how it works",
           secondaryHref: HOW_IT_WORKS_HREF,
         },
@@ -104,20 +107,19 @@ function useSpotlightVariant(): {
     }
 
     return null;
-  }, [user, isAuthenticated]);
+  }, [isAuthenticated, role, isVerified, tier, ready]);
 }
 
 const ASSISTANT_NAME = "Ada — AI Assistant";
 
 function CallDemo() {
   return (
-    <div className="w-full max-w-[220px]">
+    <div className="w-full max-w-55">
       <div
         role="img"
         aria-label={`Illustration: a phone screen showing an incoming call from ${ASSISTANT_NAME}, calling moments after a buyer's property enquiry.`}
-        className="relative overflow-hidden rounded-[40px] border-[6px] border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-2xl ring-1 ring-black/5"
+        className="relative overflow-hidden rounded-[40px] border-[6px] border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 shadow-2xl ring-1 ring-black/5"
       >
-        {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-3 text-[11px] font-medium text-zinc-400">
           <span>9:41</span>
           <div className="flex items-center gap-1">
@@ -127,12 +129,10 @@ function CallDemo() {
           </div>
         </div>
 
-        {/* Notch */}
         <div className="flex justify-center">
           <div className="-mt-4 h-5 w-15 rounded-full bg-black" />
         </div>
 
-        {/* Call content */}
         <div className="px-6 pb-10 pt-10">
           <div className="flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-2xl text-white/90">
@@ -165,7 +165,6 @@ function CallDemo() {
           </div>
         </div>
 
-        {/* Home indicator */}
         <div className="flex justify-center pb-2">
           <div className="h-1 w-28 rounded-full bg-white/30" />
         </div>

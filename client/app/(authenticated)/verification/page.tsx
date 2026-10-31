@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Role } from "@affilhomes/shared/types";
+import { PopulatedUser, Role } from "@affilhomes/shared/types";
 import {
   errorText,
   requestAgentVerification,
@@ -25,7 +25,13 @@ import { Button } from "@affilhomes/shared/ui/Button";
 import FileUpload from "@affilhomes/shared/ui/FileUpload";
 import Select from "@affilhomes/shared/ui/Select";
 import { LuFileText, LuMessageSquare, LuShieldAlert } from "react-icons/lu";
-import { Skeleton, Textarea } from "@affilhomes/shared/ui";
+import { PhoneField, Skeleton, Textarea } from "@affilhomes/shared/ui";
+import { normalizeNigerianPhone } from "@/utils";
+import {
+  confirmPhoneVerification,
+  requestEmailVerification,
+  requestPhoneVerification,
+} from "@affilhomes/shared/supabase/verification";
 
 type Tone = "neutral" | "pending" | "success" | "danger";
 type AppealType = "verification" | "identity_document" | "suspension";
@@ -369,6 +375,8 @@ export default function VerificationPage() {
               />
             )}
           </Card>
+
+          <ContactVerification user={user} refreshUser={refreshUser} />
         </>
       )}
 
@@ -600,6 +608,180 @@ function AppealSection({
         </Link>
       </p>
     </div>
+  );
+}
+
+function ContactVerification({
+  user,
+  refreshUser,
+}: {
+  user: PopulatedUser;
+  refreshUser: () => Promise<void>;
+}) {
+  const [phone, setPhone] = useState(user.phone ?? "");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedPhone = normalizeNigerianPhone(phone);
+
+  const sendEmail = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await requestEmailVerification();
+      setEmailSent(true);
+    } catch (e) {
+      setError(errorText(e, "Couldn't send the verification email."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendCode = async () => {
+    if (!normalizedPhone) {
+      setError("Enter a Nigerian number, for example +234 800 000 0000.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await requestPhoneVerification(normalizedPhone);
+      setCodeSent(true);
+    } catch (e) {
+      setError(errorText(e, "Couldn't send the code. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmCode = async () => {
+    if (!normalizedPhone) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await confirmPhoneVerification(normalizedPhone, code.trim());
+      await refreshUser();
+      setCodeSent(false);
+      setCode("");
+    } catch (e) {
+      setError(errorText(e, "That code didn't work. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const emailBadge = user.isEmailVerified ? (
+    <Badge tone="success">Verified</Badge>
+  ) : (
+    <Badge tone="pending">Not verified</Badge>
+  );
+
+  const phoneBadge = user.isPhoneVerified ? (
+    <Badge tone="success">Verified</Badge>
+  ) : (
+    <Badge tone="pending">Not verified</Badge>
+  );
+
+  return (
+    <>
+      <Card title="Email address" badge={emailBadge}>
+        {user.isEmailVerified ? (
+          <p className="text-sm text-muted">{user.email} is verified.</p>
+        ) : (
+          <>
+            <p className="text-sm text-muted">
+              Verify {user.email} to send enquiries on listings.
+            </p>
+            {emailSent ? (
+              <p className="text-sm text-muted">
+                We sent a verification email to {user.email}. Open it and follow
+                the link, then refresh this page.
+              </p>
+            ) : (
+              <div>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  isLoading={busy}
+                  onClick={sendEmail}
+                >
+                  Send verification email
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+
+      <Card title="Phone number" badge={phoneBadge}>
+        {user.isPhoneVerified ? (
+          <p className="text-sm text-muted">
+            {user.phone} is verified. Assistant calls can reach you on this
+            number.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-muted">
+              Verify a Nigerian number (+234). Assistant calls only go to
+              Nigerian numbers.
+            </p>
+            <div className="space-y-3">
+              <PhoneField
+                value={phone}
+                onChange={(value) => setPhone(value)}
+                disabled={codeSent}
+                placeholder="800 000 0000"
+              />
+              {!codeSent ? (
+                <Button
+                  size="sm"
+                  disabled={!normalizedPhone || busy}
+                  isLoading={busy}
+                  onClick={sendCode}
+                >
+                  Send code
+                </Button>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="6-digit code"
+                    className="w-40 px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={code.trim().length < 4 || busy}
+                    isLoading={busy}
+                    onClick={confirmCode}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      setCodeSent(false);
+                      setCode("");
+                    }}
+                  >
+                    Change number
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </Card>
+    </>
   );
 }
 

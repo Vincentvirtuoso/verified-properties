@@ -9,12 +9,15 @@ import { createEnquiry } from "@affilhomes/shared/supabase";
 import { motion } from "framer-motion";
 import { RiSendPlane2Line, RiCheckLine } from "react-icons/ri";
 import { LuPhoneCall } from "react-icons/lu";
+import { normalizeNigerianPhone } from "@/utils";
 
 interface ContactFormProps {
   propertyId: string;
   propertyTitle: string;
   /** Listing owner; owners can't enquire on their own listing. */
   ownerId?: string;
+  /** Company that owns the listing, if any. Members of that company can't enquire. */
+  listingCompanyId?: string;
 }
 
 const enquirySchema = z.object({
@@ -34,15 +37,18 @@ const enquirySchema = z.object({
     .max(2000, "Message is too long"),
 });
 
+
 export default function ContactForm({
   propertyId,
   propertyTitle,
   ownerId,
+  listingCompanyId,
 }: ContactFormProps) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sent, setSent] = useState(false);
+  const [sentWithCall, setSentWithCall] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<{
@@ -75,7 +81,18 @@ export default function ContactForm({
     message: form.message,
   };
 
-  const isOwnListing = !!user && !!ownerId && user._id === ownerId;
+  const emailVerified = !!user?.isEmailVerified;
+  const phoneVerifiedAsEntered =
+    !!user?.isPhoneVerified &&
+    normalizeNigerianPhone(values.phone) !== null &&
+    normalizeNigerianPhone(values.phone) === normalizeNigerianPhone(user.phone);
+
+  const isOwnListing =
+    !!user &&
+    (user._id === ownerId ||
+      (!!listingCompanyId && user.companyId?._id === listingCompanyId));
+
+  const willCall = emailVerified && phoneVerifiedAsEntered && !isOwnListing;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +100,11 @@ export default function ContactForm({
 
     if (!user) {
       router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
+    if (!emailVerified) {
+      setError("Please verify your email before sending an enquiry.");
       return;
     }
 
@@ -95,6 +117,7 @@ export default function ContactForm({
     setSubmitting(true);
     try {
       await createEnquiry({ propertyId, ...parsed.data });
+      setSentWithCall(willCall);
       setSent(true);
     } catch {
       setError("We couldn't send your enquiry. Please try again.");
@@ -102,6 +125,12 @@ export default function ContactForm({
       setSubmitting(false);
     }
   };
+
+  const subtitle = !emailVerified
+    ? "Verify your email to send an enquiry"
+    : willCall
+      ? "An assistant calls you back moments after you submit"
+      : "The agent will follow up by email";
 
   return (
     <motion.div
@@ -115,20 +144,23 @@ export default function ContactForm({
           <p className="text-sm font-bold text-foreground">Send Enquiry</p>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
             <LuPhoneCall className="h-3.5 w-3.5 text-primary shrink-0" />
-            An assistant calls you back moments after you submit
+            {subtitle}
           </p>
         </div>
 
         {isOwnListing ? (
-          <p className="text-sm text-muted">This is your listing.</p>
+          <p className="text-sm text-muted">
+            This is your listing, so you can't enquire about it.
+          </p>
         ) : sent ? (
           <div className="space-y-3 text-sm">
             <p className="flex items-center gap-2 font-semibold text-foreground">
               <RiCheckLine className="h-4 w-4 text-success" /> Enquiry sent
             </p>
             <p className="text-muted">
-              The agent has your message and number. You can follow the
-              conversation in your enquiries.
+              {sentWithCall
+                ? "An assistant will call you shortly. The agent has your message and number."
+                : "The agent has your message and will follow up by email."}
             </p>
             {/* TODO: switch user to viewer when user sends enquiry and activeRole=agent */}
             <Link
@@ -136,6 +168,18 @@ export default function ContactForm({
               className="inline-block font-semibold text-primary hover:underline"
             >
               View my enquiries
+            </Link>
+          </div>
+        ) : !emailVerified && user ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-muted">
+              Your email needs to be verified before you can send an enquiry.
+            </p>
+            <Link
+              href="/verification"
+              className="inline-block font-semibold text-primary hover:underline"
+            >
+              Verify my email
             </Link>
           </div>
         ) : (
@@ -171,6 +215,18 @@ export default function ContactForm({
                 placeholder="+234 800 000 0000"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
               />
+              {user && emailVerified && !phoneVerifiedAsEntered && (
+                <p className="mt-1.5 text-xs text-muted">
+                  The agent will follow up by email.{" "}
+                  <Link
+                    href="/verification"
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Verify this phone
+                  </Link>{" "}
+                  to get an assistant call. Calls go to Nigerian numbers only.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted mb-1.5">
@@ -208,9 +264,7 @@ export default function ContactForm({
                 <>
                   <RiSendPlane2Line size={16} />
                   {submitting
-                    ?
-                    
-                    "Sending..."
+                    ? "Sending..."
                     : user
                       ? "Send Message"
                       : "Sign in to send"}

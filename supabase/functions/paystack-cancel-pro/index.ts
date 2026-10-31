@@ -62,8 +62,6 @@ Deno.serve(async (req) => {
     return text("Could not cancel", 502);
   }
 
-  // Pro stays until current_period_end, then drops to Standard.
-  // getEntitlements handles that, so only mark the status here.
   await admin
     .from("company_subscriptions")
     .update({ status: "canceled", updated_at: new Date().toISOString() })

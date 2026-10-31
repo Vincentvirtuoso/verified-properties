@@ -69,6 +69,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  refreshCompanies: () => Promise<void>;
   switchRole: (newRole: Role) => Promise<void>;
   updateUserRole: (
     userId: string,
@@ -186,6 +187,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
   }, []);
 
+  const fetchCompaniesForUser = useCallback(
+    async (
+      userId: string,
+      primaryCompanyId?: string | null,
+    ): Promise<Company[]> => {
+      const supabase = createClient();
+
+      const { data: memberships } = await supabase
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", userId);
+
+      const companyIds = new Set<string>(
+        (memberships ?? []).map((m) => m.company_id as string),
+      );
+      if (primaryCompanyId) companyIds.add(primaryCompanyId);
+
+      const loaded = await Promise.all(
+        [...companyIds].map((id) => getCompanyWithTeam(id).catch(() => null)),
+      );
+      return loaded.filter((c): c is Company => !!c);
+    },
+    [],
+  );
+
   const loadUser = useCallback(async (): Promise<PopulatedUser | null> => {
     const supabase = createClient();
     try {
@@ -208,20 +234,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to load company:", error);
         }
       }
-      const { data: memberships } = await supabase
-        .from("company_members")
-        .select("company_id")
-        .eq("user_id", profile.id);
 
-      const companyIds = new Set<string>(
-        (memberships ?? []).map((m) => m.company_id as string),
+      const companyList = await fetchCompaniesForUser(
+        profile.id,
+        profile.company_id,
       );
-      if (profile.company_id) companyIds.add(profile.company_id);
-
-      const loaded = await Promise.all(
-        [...companyIds].map((id) => getCompanyWithTeam(id).catch(() => null)),
-      );
-      const companyList = loaded.filter((c): c is Company => !!c);
       const ownCompany = companyList.find((c) => c._id === profile.company_id);
 
       const { data: suspended, error: suspendedError } = await supabase.rpc(
@@ -270,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPendingRegistration(null);
       return null;
     }
-  }, []);
+  }, [fetchCompaniesForUser]);
 
   useEffect(() => {
     let mounted = true;
@@ -370,6 +387,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = useCallback(async () => {
     await loadUser();
   }, [loadUser]);
+
+  const refreshCompanies = useCallback(async () => {
+    if (!user) return;
+
+    const primaryCompanyId =
+      typeof user.companyId === "string" ? user.companyId : user.companyId?._id;
+
+    const companyList = await fetchCompaniesForUser(user._id, primaryCompanyId);
+    setCompanies(companyList);
+
+    if (primaryCompanyId) {
+      const refreshed = companyList.find((c) => c._id === primaryCompanyId);
+      if (refreshed) {
+        setUser((prev) =>
+          prev && typeof prev.companyId !== "string"
+            ? { ...prev, companyId: refreshed }
+            : prev,
+        );
+      }
+    }
+  }, [user, fetchCompaniesForUser]);
 
   const login = useCallback(
     async ({ email, password }: { email: string; password: string }) => {
@@ -684,6 +722,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         clearError,
         refreshUser,
+        refreshCompanies,
         switchRole,
         updateUserRole,
         updateCompany,

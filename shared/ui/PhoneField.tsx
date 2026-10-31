@@ -15,6 +15,8 @@ interface PhoneFieldProps {
   required?: boolean;
   defaultCountry?: string;
   className?: string;
+  disabled?: boolean;
+  placeholder?: string;
 }
 
 export function PhoneField({
@@ -26,6 +28,8 @@ export function PhoneField({
   required = true,
   defaultCountry = "ng",
   className,
+  disabled,
+  placeholder,
 }: PhoneFieldProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country>(
     countries.find((c) => c.iso === defaultCountry.toLowerCase()) ||
@@ -177,7 +181,8 @@ export function PhoneField({
             name={name}
             value={localNumber}
             onChange={handleLocalNumberChange}
-            placeholder={selectedCountry.placeholder}
+            disabled={disabled}
+            placeholder={placeholder ?? selectedCountry.placeholder}
             required={required}
             className="flex-1 bg-background px-4 py-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none"
           />

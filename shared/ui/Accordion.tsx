@@ -133,7 +133,7 @@ export function AccordionContent({
           className="overflow-hidden"
         >
           <div className={cn("px-4 pb-4 pt-2", className)}>
-            <div className="pt-2 border-t border-gray-100 dark:border-neutral-800">
+            <div className="pt-2 border-t border-border">
               {children}
             </div>
           </div>

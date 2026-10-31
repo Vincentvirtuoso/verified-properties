@@ -1,10 +1,11 @@
 "use client";
 
 import { Button } from "@affilhomes/shared/ui/Button";
-import { Skeleton } from "@affilhomes/shared/ui/Skeleton"; 
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
+import { useEntitlements } from "@/hooks/useEntitlements";
 
 type Step = {
   title: string;
@@ -74,7 +75,7 @@ const OPERATOR_STEPS: Step[] = [
   },
 ];
 
-function usePageVariant(): {
+function usePageVariant(isPro: boolean): {
   variant: PageVariant;
   content: PageContent;
   isLoading: boolean;
@@ -110,7 +111,7 @@ function usePageVariant(): {
       const isVerified =
         typeof company === "object" &&
         company?.verificationStatus === "verified";
-      const hasAICalling = isVerified && company?.features?.tier === "pro";
+      const hasAICalling = isPro;
 
       if (hasAICalling) {
         return {
@@ -161,7 +162,6 @@ function usePageVariant(): {
       };
     }
 
-    
     return {
       variant: "guest" as const,
       content: {
@@ -240,9 +240,12 @@ function PageSkeleton() {
 }
 
 export default function AICallingPageClient() {
-  const { content, isLoading } = usePageVariant();
+  const { user } = useAuth();
+  const { tier, ready } = useEntitlements(user?.companyId?._id);
+  const isPro = tier === "pro";
+  const { content, isLoading } = usePageVariant(isPro);
 
-  if (isLoading) {
+  if (isLoading || !ready) {
     return <PageSkeleton />;
   }
 

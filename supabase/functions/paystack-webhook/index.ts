@@ -1,7 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const TRIAL_DAYS = 7;
-const PAST_DUE_GRACE_DAYS = 3;
+import { PAST_DUE_GRACE_DAYS, TRIAL_DAYS } from "../_shared/entitlements";
 
 const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY")!;
 const PLAN_CODE = Deno.env.get("PAYSTACK_PRO_PLAN_CODE")!;
@@ -41,7 +39,24 @@ Deno.serve(async (req) => {
 
   switch (event.event) {
     case "charge.success":
-      if (d.metadata?.purpose === "pro_start") await startPro(d);
+      if (d.metadata?.purpose !== "pro_start") break;
+      if (d.metadata.trial) {
+        await startPro(d); // ₦50 card check, starts the day-7 subscription
+      } else {
+        await activatePaid(d); // full ₦300,000 paid now
+      }
+      break;
+
+    case "subscription.create":
+      // Link the Paystack subscription to the company row by customer
+      await admin
+        .from("company_subscriptions")
+        .update({
+          paystack_subscription_code: d.subscription_code,
+          paystack_email_token: d.email_token,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("paystack_customer_code", d.customer.customer_code);
       break;
 
     case "invoice.update": // successful renewal or first charge
@@ -122,6 +137,27 @@ async function startPro(charge: any) {
       paystack_subscription_code: sub.data.subscription_code,
       paystack_email_token: sub.data.email_token,
       paystack_authorization_code: auth.authorization_code,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "company_id" },
+  );
+}
+
+async function activatePaid(charge: any) {
+  const companyId = charge.metadata.company_id;
+  const periodEnd = new Date(Date.now() + 30 * 86_400_000).toISOString();
+
+  await admin.from("company_subscriptions").upsert(
+    {
+      company_id: companyId,
+      status: "active",
+      trial_used: true,
+      trial_ends_at: null,
+      current_period_end: periodEnd,
+      grace_until: null,
+      paystack_customer_code: charge.customer.customer_code,
+      paystack_authorization_code:
+        charge.authorization?.authorization_code ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "company_id" },

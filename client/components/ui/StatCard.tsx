@@ -41,18 +41,22 @@ export function StatCard({
   action = null,
 }: StatCardProps) {
   const accentClasses: Record<StatCardAccent, string> = {
-    primary: "bg-primary-50 text-primary ring-primary-500/20",
+    primary: "bg-primary/20 text-primary ring-primary-500/20",
     secondary: "bg-secondary text-secondary-foreground ring-border",
     success: "bg-success/10 text-success ring-success/20",
     warning: "bg-warning/10 text-warning ring-warning/20",
     info: "bg-info/10 text-info ring-info/20",
     destructive: "bg-destructive/10 text-destructive ring-destructive/20",
-    neutral: "bg-neutral-100 text-neutral-700 ring-neutral-500/20",
-    emerald: "bg-emerald-50 text-emerald-600 ring-emerald-500/20",
-    amber: "bg-amber-50 text-amber-600 ring-amber-500/20",
-    blue: "bg-blue-50 text-blue-600 ring-blue-500/20",
-    violet: "bg-violet-50 text-violet-600 ring-violet-500/20",
-    rose: "bg-rose-50 text-rose-600 ring-rose-500/20",
+    neutral:
+      "bg-neutral-100 text-neutral-700 ring-neutral-500/20 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-500/30",
+    emerald:
+      "bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30",
+    amber:
+      "bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-500/30",
+    blue: "bg-blue-50 text-blue-600 ring-blue-500/20 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-500/30",
+    violet:
+      "bg-violet-50 text-violet-600 ring-violet-500/20 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-500/30",
+    rose: "bg-rose-50 text-rose-600 ring-rose-500/20 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-500/30",
   };
 
   return (

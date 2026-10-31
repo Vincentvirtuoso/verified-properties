@@ -11,9 +11,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: true,
       prioritySupport: true,
-      dedicatedAccountManager: true,
-      whiteLabel: false,
-      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
     team: [
@@ -45,9 +42,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: false,
       prioritySupport: false,
-      dedicatedAccountManager: false,
-      whiteLabel: false,
-      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -75,9 +69,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: true,
       prioritySupport: true,
-      dedicatedAccountManager: true,
-      whiteLabel: true,
-      tier: "pro",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -116,9 +107,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: true,
       prioritySupport: false,
-      dedicatedAccountManager: true,
-      whiteLabel: false,
-      tier: "pro",
     },
 
     onboardingDocs: { cacCertificateUrl: "" },
@@ -157,9 +145,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: true,
       prioritySupport: false,
-      dedicatedAccountManager: false,
-      whiteLabel: false,
-      tier: "pro",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -186,9 +171,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: false,
       prioritySupport: true,
-      dedicatedAccountManager: false,
-      whiteLabel: false,
-      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
@@ -220,9 +202,6 @@ export const mockCompanies: Company[] = [
     features: {
       whatsappNotifications: false,
       prioritySupport: false,
-      dedicatedAccountManager: false,
-      whiteLabel: false,
-      tier: "standard",
     },
     onboardingDocs: { cacCertificateUrl: "" },
     team: [

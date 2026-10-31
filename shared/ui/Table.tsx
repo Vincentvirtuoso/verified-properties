@@ -15,6 +15,7 @@ interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   striped?: boolean;
   hoverable?: boolean;
   compact?: boolean;
+  unstyled?: boolean;
 }
 
 export function Table({
@@ -23,11 +24,17 @@ export function Table({
   compact = false,
   className,
   children,
+  unstyled = false,
   ...props
 }: TableProps) {
   return (
     <TableContext.Provider value={{ striped, hoverable, compact }}>
-      <div className="w-full overflow-auto rounded-lg border border-border">
+      <div
+        className={cn(
+          "w-full overflow-auto",
+          !unstyled && "rounded-lg border border-border",
+        )}
+      >
         <table
           className={cn("w-full caption-bottom text-sm", className)}
           {...props}
@@ -122,11 +129,7 @@ export function TableCaption({
   );
 }
 
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownContent,
-} from "./Dropdown";
+import { Dropdown, DropdownTrigger, DropdownContent } from "./Dropdown";
 import { Spinner } from "./Spinner";
 import { FiMoreHorizontal } from "react-icons/fi";
 

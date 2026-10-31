@@ -188,7 +188,7 @@ function getExtraInfo(
   if (activeRole === Role.Company) {
     const company = user.companyId;
     const status = company?.verificationStatus;
-    const hasAiCalling = company?.features?.tier === "pro";
+    // const hasAiCalling = company?.features?.tier === "pro";
 
     if (status !== "verified") {
       return {
@@ -203,13 +203,13 @@ function getExtraInfo(
       };
     }
 
-    if (!hasAiCalling) {
-      return {
-        label: "Upgrade to Pro",
-        content:
-          "You're verified — upgrade to Pro to activate AI Calling and get automatic follow-up on every enquiry.",
-      };
-    }
+    // if (!hasAiCalling) {
+    //   return {
+    //     label: "Upgrade to Pro",
+    //     content:
+    //       "You're verified — upgrade to Pro to activate AI Calling and get automatic follow-up on every enquiry.",
+    //   };
+    // }
 
     return {
       label: "AI Calling is live",
