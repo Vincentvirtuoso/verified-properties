@@ -2,14 +2,10 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LuBuilding2, LuMail, LuPhone } from "react-icons/lu";
-import { FaWhatsapp } from "react-icons/fa";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useEntitlements } from "@/hooks/useEntitlements";
-import { formatPhoneNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 import { AICallingSettings } from "@/components/company/AICallingSettings";
@@ -17,6 +13,8 @@ import { FaqEditor } from "@/components/company/FaqEditor";
 import { DocumentsPanel } from "@/components/company/DocumentsPanel";
 import { CompanyDetailsCard } from "@/components/company/CompanyDetailsCard";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
+import { CompanyFeaturesSection } from "@/components/company/CompanyFeaturesSection";
+import { setWhatsappNotifications } from "@affilhomes/shared/supabase";
 
 const TABS = [
   { id: "general", label: "General" },
@@ -194,19 +192,30 @@ function SettingsContent() {
         aria-labelledby={`tab-${activeTab}`}
       >
         {activeTab === "general" && (
-          <CompanyDetailsCard
-            companyId={company._id}
-            companyName={company.name}
-            details={{
-              contactEmail: company.contactEmail,
-              contactPhone: company.contactPhone,
-              whatsappNumber: company.whatsappNumber,
-            }}
-            canEdit={canEdit}
-            onSaved={() => refreshCompanies()}
-          />
-        )}
+          <div className="space-y-6">
+            <CompanyDetailsCard
+              companyId={company._id}
+              companyName={company.name}
+              details={{
+                contactEmail: company.contactEmail,
+                contactPhone: company.contactPhone,
+                whatsappNumber: company.whatsappNumber,
+              }}
+              canEdit={canEdit}
+              onSaved={() => refreshCompanies()}
+            />
 
+            <CompanyFeaturesSection
+              features={company.features}
+              isPro={isPro}
+              isOwner={isOwner}
+              onWhatsappChange={async (enabled) => {
+                await setWhatsappNotifications(company._id, enabled);
+                await refreshCompanies();
+              }}
+            />
+          </div>
+        )}
         {activeTab === "ai-calling" && (
           <div className="space-y-6">
             {(isVerified || isPending) && (

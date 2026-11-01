@@ -272,6 +272,25 @@ export async function getCompanyMemberDetails(
   };
 }
 
+export async function setWhatsappNotifications(
+  companyId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await createClient().functions.invoke(
+    "set-whatsapp-notifications",
+    { body: { companyId, enabled } },
+  );
+
+  if (error) {
+    let message = "Couldn't update WhatsApp notifications. Please try again.";
+    try {
+      const body = await error.context.json();
+      if (body?.error) message = body.detail ?? body.error;
+    } catch {}
+    throw new Error(message);
+  }
+}
+
 /* ---------- company dashboard (012_company_dashboard.sql) ---------- */
 
 export interface CompanyDashboardStats {

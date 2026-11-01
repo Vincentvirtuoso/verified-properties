@@ -9,7 +9,6 @@ export type CompanyVerificationStatus =
 export interface CompanyFeatures {
   whatsappNotifications: boolean;
   prioritySupport: boolean;
-  // tier: "standard" | "pro";
 }
 
 export interface CompanyMember {

@@ -24,6 +24,7 @@ export interface FieldProps extends NativeInputProps {
   label?: string;
   name?: string;
   type?: "text" | "email" | "password" | "tel" | "number";
+  hint?: string | ReactNode;
   /** Decorative element rendered inside the input. */
   icon?: IconType;
   iconElement?: ReactNode;
@@ -59,6 +60,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
     inputClassName,
     id,
     disabled,
+    hint,
     scrollOnError = false,
     focusOnError = false,
     ...inputProps
@@ -109,7 +111,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   return (
     <div ref={wrapperRef} className={cn("space-y-1", className)}>
       {label && (
-        <FieldLabel htmlFor={inputId} required={required}>
+        <FieldLabel htmlFor={inputId} required={required} hint={hint}>
           {label}
         </FieldLabel>
       )}

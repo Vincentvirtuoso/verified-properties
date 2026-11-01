@@ -38,6 +38,7 @@ export function isAuthServiceError(
 export function getErrorMessage(
   err: unknown,
   fallback = "Something went wrong. Please try again.",
+  read: string = "message",
 ): string {
   if (err instanceof Error) {
     const msg = err.message?.trim();
@@ -51,8 +52,8 @@ export function getErrorMessage(
 
   if (typeof err === "object" && err !== null) {
     const candidate =
-      readString((err as { error?: unknown }).error, "message") ??
-      readString(err, "message");
+      readString((err as { error?: unknown }).error, read) ??
+      readString(err, read);
 
     if (candidate) return candidate;
   }

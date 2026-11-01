@@ -22,3 +22,4 @@ export * from "./TagOverflow";
 export * from "./Textarea";
 export * from "./VerifiedBadge";
 export * from "./Skeleton";
+export { Toggle } from "./Toggle";

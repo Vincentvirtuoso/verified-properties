@@ -5,6 +5,7 @@ interface FieldLabelProps {
   children: React.ReactNode;
   required?: boolean;
   className?: string;
+  hint?: string | React.ReactNode;
 }
 
 export function FieldLabel({
@@ -12,17 +13,26 @@ export function FieldLabel({
   children,
   required = false,
   className,
+  hint,
 }: FieldLabelProps) {
   return (
     <label
       htmlFor={htmlFor}
       className={cn(
-        "block text-sm font-medium text-foreground mb-1.5",
+        "flex text-sm font-medium text-foreground mb-1.5 justify-between",
         className,
       )}
     >
-      {children}
-      {required && <span className="text-destructive ml-0.5">*</span>}
+      <span className="block">
+        {children}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+      </span>
+      {hint &&
+        (typeof hint === "string" ? (
+          <span className="text-muted text-xs font-normal">{hint}</span>
+        ) : (
+          hint
+        ))}
     </label>
   );
 }

@@ -57,7 +57,7 @@ export function AccordionItem({
     <ItemContext.Provider value={value}>
       <div
         className={cn(
-          "border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden",
+          "border border-border rounded-xl overflow-hidden",
           className,
         )}
       >
@@ -84,23 +84,23 @@ export function AccordionTrigger({
     <button
       onClick={() => onToggle(value)}
       className={cn(
-        "w-full flex items-start gap-4 p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors",
+        "w-full flex items-start gap-4 p-4 text-left hover:bg-muted/10 transition-colors",
         className,
       )}
     >
       {icon && (
-        <div className="shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <div className="shrink-0 w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400">
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+          <h3 className="font-semibold text-foreground text-sm sm:text-base">
             {children}
           </h3>
           <LuChevronDown
             className={cn(
-              "w-4 h-4 text-gray-400 transition-transform duration-200",
+              "w-4 h-4 text-muted transition-transform duration-200",
               isExpanded && "rotate-180",
             )}
           />
@@ -133,9 +133,7 @@ export function AccordionContent({
           className="overflow-hidden"
         >
           <div className={cn("px-4 pb-4 pt-2", className)}>
-            <div className="pt-2 border-t border-border">
-              {children}
-            </div>
+            <div className="pt-2 border-t border-border">{children}</div>
           </div>
         </motion.div>
       )}

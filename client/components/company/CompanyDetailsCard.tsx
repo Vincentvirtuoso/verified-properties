@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { LuBuilding2, LuMail, LuPencil, LuPhone } from "react-icons/lu";
+import {
+  LuArrowRight,
+  LuBuilding2,
+  LuMail,
+  LuPencil,
+  LuPhone,
+  LuUsers,
+} from "react-icons/lu";
 import { FaWhatsapp } from "react-icons/fa";
 
 import { createClient } from "@affilhomes/shared/supabase/client";
-import { Button, Field } from "@affilhomes/shared/ui";
+import { Badge, Button, Field } from "@affilhomes/shared/ui";
 import { InfoRow } from "@affilhomes/shared/ui/InfoRow";
 import { formatPhoneNumber } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 
 type Details = {
   contactEmail: string;
@@ -108,7 +114,6 @@ export function CompanyDetailsCard({
     setSaving(true);
     setError(null);
 
-    // Column names are assumed to be snake_case. Match them to your schema.
     const { error: updateError } = await createClient()
       .from("companies")
       .update({
@@ -227,7 +232,6 @@ export function CompanyDetailsCard({
           <Field
             id="contactPhone"
             label="Contact phone"
-            // hint="Optional"
             error={touched.contactPhone ? errors.contactPhone : undefined}
             type="tel"
             autoComplete="tel"
@@ -285,19 +289,57 @@ export function CompanyDetailsCard({
   );
 }
 
+export function CompanyTeamCard({ memberCount }: { memberCount: number }) {
+  const label =
+    memberCount === 0
+      ? "No team members yet"
+      : memberCount === 1
+        ? "1 team member"
+        : `${memberCount} team members`;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <LuUsers className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Team</h2>
+            <p className="mt-1 text-sm text-muted">
+              Agents and admins who help manage listings and handle enquiries
+              for your company.
+            </p>
+          </div>
+        </div>
+        <Badge variant="secondary">{label}</Badge>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-xs text-muted">
+          {memberCount === 0
+            ? "Invite agents to start handling enquiries."
+            : "Add, remove, and set permissions for team members."}
+        </p>
+        <Button
+          href="/company/team"
+          size="sm"
+          variant="outline"
+          rightIcon={<LuArrowRight className="h-3.5 w-3.5" />}
+        >
+          Manage team
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function toDraft(d: Details): Draft {
   return {
     contactEmail: d.contactEmail ?? "",
     contactPhone: d.contactPhone ?? "",
     whatsappNumber: d.whatsappNumber ?? "",
   };
-}
-
-function inputClass(invalid: boolean) {
-  return cn(
-    "w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring",
-    invalid ? "border-destructive" : "border-border",
-  );
 }
 
 function ReadOnlyField({

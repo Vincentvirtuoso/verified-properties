@@ -1,21 +1,27 @@
 import { type ReactNode } from "react";
 import { LuCircleAlert } from "react-icons/lu";
+import { cn } from "../utils";
 
 export function Alert({
   children,
   onRetry,
   onDismiss,
+  className,
 }: {
   children: ReactNode;
+  className?: string;
   onRetry?: () => void;
   onDismiss?: () => void;
 }) {
   return (
     <div
       role="alert"
-      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive",
+        className,
+      )}
     >
-      <span className="flex items-start gap-2">
+      <span className="flex items-center gap-2">
         <LuCircleAlert
           size={16}
           aria-hidden="true"

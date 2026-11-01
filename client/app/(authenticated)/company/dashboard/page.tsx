@@ -17,6 +17,7 @@ import {
   LuUserPlus,
   LuClock3,
   LuClipboardList,
+  LuSettings,
 } from "react-icons/lu";
 import { FaWhatsapp } from "react-icons/fa";
 
@@ -354,6 +355,16 @@ export default function CompanyDashboardPage() {
           >
             Manage team
           </Button>
+          {isCompanyAdmin && (
+            <Button
+              size="sm"
+              leftIcon={<LuSettings className="h-4 w-4" />}
+              variant="outline"
+              href="/company/settings?tab=general"
+            >
+              Company Settings
+            </Button>
+          )}
         </div>
       </motion.header>
 

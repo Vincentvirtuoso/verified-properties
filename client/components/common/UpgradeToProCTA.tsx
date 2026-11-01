@@ -12,9 +12,9 @@ interface UpgradeToProCTAProps {
 }
 
 export function UpgradeToProCTA({ variant = "card" }: UpgradeToProCTAProps) {
-  const { eligible } = useProUpgradeEligibility();
+  const { eligible, isLoadingUserInfo } = useProUpgradeEligibility();
 
-  if (!eligible) return null;
+  if (!eligible || isLoadingUserInfo) return null;
 
   if (variant === "compact") {
     return (

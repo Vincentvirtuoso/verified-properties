@@ -122,9 +122,9 @@ export default function CompanyEnquiriesPage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-var(--banner-navbar-height,80px)-70px)] flex">
+    <div className="h-[calc(100dvh-var(--banner-navbar-height,80px)-70px)]">
       <div
-        className={`w-full md:w-90 md:shrink-0 border-r border-border flex flex-col ${
+        className={`w-full md:w-90 md:shrink-0 border-r md:border-border flex flex-col border-transparent ${
           selected ? "hidden md:flex" : "flex"
         }`}
       >

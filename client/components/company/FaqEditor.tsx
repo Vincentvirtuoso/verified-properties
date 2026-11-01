@@ -14,11 +14,14 @@ import {
   Button,
   Checkbox,
   Field,
+  IconButton,
   Spinner,
   Textarea,
 } from "@affilhomes/shared/ui";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { FAQ_LIMIT } from "@/lib/entitlements";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/contexts/ConfirmDialog";
 
 type Faq = {
   id: string;
@@ -31,9 +34,80 @@ type Faq = {
 type Patch = Partial<Pick<Faq, "question" | "answer" | "enabled" | "position">>;
 
 const Q_MAX = 200;
+const Q_PREVIEW_MAX = 50;
 const A_MAX = 1000;
 const DEFAULT_QUESTION = "New question";
 const SAVED_FLASH_MS = 1500;
+
+function FaqRowSkeleton() {
+  return (
+    <li className="rounded-xl border border-border bg-background p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-3" />
+          <Skeleton className="h-5 w-12 rounded-full" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <Skeleton className="h-9 w-full rounded-lg" />
+      </div>
+
+      <div className="mt-4">
+        <Skeleton className="mb-1.5 h-4 w-16" />
+        <Skeleton className="h-18.5 w-full rounded-lg" />
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-3 w-56 max-w-full" />
+        </div>
+      </div>
+      <span className="sr-only">Loading FAQ</span>
+    </li>
+  );
+}
+
+function FaqEditorSkeleton() {
+  return (
+    <div
+      className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+      aria-busy="true"
+      aria-label="Loading FAQs"
+    >
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-3.5 w-full max-w-md" />
+          <Skeleton className="h-3 w-56 max-w-full" />
+        </div>
+        <Skeleton className="h-6 w-16 shrink-0 rounded-full" />
+      </div>
+
+      <ul className="space-y-3">
+        <FaqRowSkeleton />
+        <FaqRowSkeleton />
+      </ul>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </div>
+  );
+}
 
 export function FaqEditor({
   companyId,
@@ -50,15 +124,16 @@ export function FaqEditor({
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedId, setSavedId] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [newId, setNewId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
-  // Last saved text per FAQ. Used to skip requests when nothing changed.
   const saved = useRef<Record<string, { question: string; answer: string }>>(
     {},
   );
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     let cancelled = false;
@@ -145,7 +220,7 @@ export function FaqEditor({
 
   const commitQuestion = (faq: Faq, raw: string) => {
     const question = raw.trim();
-    // Empty questions aren't saved. The field shows an inline message instead.
+
     if (!question) return;
     if (question === saved.current[faq.id]?.question) return;
 
@@ -157,7 +232,6 @@ export function FaqEditor({
     const answer = raw.trim();
     if (answer === saved.current[faq.id]?.answer) return;
 
-    // A FAQ without an answer can't stay live, so clearing it switches it off too
     const patch: Patch = answer ? { answer } : { answer, enabled: false };
 
     patchLocal(faq.id, patch);
@@ -199,11 +273,10 @@ export function FaqEditor({
     const row = data as Faq;
     saved.current[row.id] = { question: row.question, answer: row.answer };
     setFaqs((prev) => [...prev, row]);
-    setNewId(row.id); // the new question field focuses itself
+    setNewId(row.id);
   };
 
   const remove = async (id: string) => {
-    setConfirmDeleteId(null);
     setSaving(id, true);
 
     const { error } = await supabase.from("ai_faqs").delete().eq("id", id);
@@ -250,14 +323,30 @@ export function FaqEditor({
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-5 text-sm text-muted">
-        <Spinner variant="muted" />
-        Loading FAQs…
-      </div>
-    );
+  function quoteQuestion(question: string): string {
+    const cleaned = question.replace(/\s+/g, " ").trim();
+    if (!cleaned || cleaned === DEFAULT_QUESTION) return "this FAQ";
+    const preview =
+      cleaned.length > Q_PREVIEW_MAX
+        ? `${cleaned.slice(0, Q_PREVIEW_MAX).trimEnd()}…`
+        : cleaned;
+    return `“${preview}”`;
   }
+
+  const handleDelete = async (id: string, question: string) => {
+    const confirmed = await confirm({
+      title: "Delete this FAQ?",
+      message: `You're about to delete ${quoteQuestion(question)}. It'll be removed from your company page and the assistant will stop using it in replies. This can't be undone.`,
+      cancelLabel: "Keep FAQ",
+      confirmLabel: "Delete FAQ",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+    remove(id);
+  };
+
+  if (loading) return <FaqEditorSkeleton />;
 
   const atLimit = faqs.length >= FAQ_LIMIT;
 
@@ -344,23 +433,24 @@ export function FaqEditor({
                           label="Move up"
                           disabled={i === 0 || isSaving}
                           onClick={() => move(i, -1)}
-                        >
-                          <LuArrowUp className="h-3.5 w-3.5" />
-                        </IconButton>
+                          icon={<LuArrowUp className="h-3.5 w-3.5" />}
+                        />
                         <IconButton
                           label="Move down"
                           disabled={i === faqs.length - 1 || isSaving}
+                          icon={<LuArrowDown className="h-3.5 w-3.5" />}
                           onClick={() => move(i, 1)}
-                        >
-                          <LuArrowDown className="h-3.5 w-3.5" />
-                        </IconButton>
+                        />
                         <IconButton
                           label="Delete FAQ"
                           disabled={isSaving}
-                          onClick={() => setConfirmDeleteId(faq.id)}
-                        >
-                          <LuTrash2 className="h-3.5 w-3.5 text-destructive" />
-                        </IconButton>
+                          onClick={() => {
+                            handleDelete(faq.id, faq.question);
+                          }}
+                          icon={
+                            <LuTrash2 className="h-3.5 w-3.5 text-destructive" />
+                          }
+                        />
                       </div>
                     )}
                   </div>
@@ -420,26 +510,6 @@ export function FaqEditor({
                     {rowErrors[faq.id]}
                   </p>
                 )}
-
-                {confirmDeleteId === faq.id && (
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-destructive/10 px-3 py-2">
-                    <p className="text-xs text-destructive">
-                      Delete this FAQ? The assistant will stop using it.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setConfirmDeleteId(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="sm" onClick={() => remove(faq.id)}>
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </li>
             );
           })}
@@ -460,7 +530,7 @@ export function FaqEditor({
           </Button>
           {atLimit && (
             <p className="text-xs text-muted">
-              You've reached the limit of {FAQ_LIMIT} FAQs.
+              You&apos;ve reached the limit of {FAQ_LIMIT} FAQs.
             </p>
           )}
         </div>
@@ -492,7 +562,7 @@ function SaveIndicator({ saving, saved }: { saving: boolean; saved: boolean }) {
         className="flex items-center gap-1 text-xs text-muted"
         role="status"
       >
-        <Spinner variant="muted" />
+        <Spinner variant="muted" size="sm" />
         Saving
       </span>
     );
@@ -509,29 +579,4 @@ function SaveIndicator({ saving, saved }: { saving: boolean; saved: boolean }) {
     );
   }
   return null;
-}
-
-function IconButton({
-  label,
-  onClick,
-  disabled,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-muted/30 hover:text-foreground disabled:opacity-40"
-    >
-      {children}
-    </button>
-  );
 }

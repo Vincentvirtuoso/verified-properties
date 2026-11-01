@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { LuBot } from "react-icons/lu";
 
 import { createClient } from "@affilhomes/shared/supabase/client";
-import { Badge, Button, Spinner } from "@affilhomes/shared/ui";
+import { Badge, Button, Textarea } from "@affilhomes/shared/ui";
+import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { cn } from "@/lib/utils";
+import { Toggle, Field as Input } from "@affilhomes/shared/ui";
 
 type AssistantConfig = {
   assistant_name: string;
@@ -21,6 +23,68 @@ const DEFAULTS: AssistantConfig = {
 
 const NAME_MAX = 40;
 const GREETING_MAX = 280;
+
+function FieldSkeleton({
+  label,
+  height = "h-9",
+  multiline = false,
+}: {
+  label: string;
+  height?: string;
+  multiline?: boolean;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+      <Skeleton
+        className={cn(height, "w-full rounded-lg", multiline && "h-18.5")}
+      />
+      <span className="sr-only">Loading {label}</span>
+    </div>
+  );
+}
+
+function AssistantSettingsSkeleton() {
+  return (
+    <div
+      className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+      aria-busy="true"
+      aria-label="Loading assistant settings"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-3.5 w-64 max-w-full" />
+          </div>
+        </div>
+        <Skeleton className="h-5 w-12 shrink-0 rounded-full" />
+      </div>
+
+      <div className="mt-6 space-y-5">
+        <FieldSkeleton label="assistant name" />
+        <FieldSkeleton label="opening line" multiline />
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3">
+          <div className="min-w-0 space-y-1.5">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-52 max-w-full" />
+          </div>
+          <Skeleton className="h-6 w-11 shrink-0 rounded-full" />
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-9 w-32 rounded-full" />
+      </div>
+    </div>
+  );
+}
 
 export function AICallingSettings({
   companyId,
@@ -79,7 +143,6 @@ export function AICallingSettings({
       company_id: companyId,
       assistant_name: config.assistant_name.trim(),
       greeting: config.greeting.trim(),
-      // Only store auto_call on if the company can actually use it
       auto_call: canActivate ? config.auto_call : false,
       updated_at: new Date().toISOString(),
     };
@@ -100,14 +163,7 @@ export function AICallingSettings({
     setStatus({ type: "ok", text: "Saved." });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-5 text-sm text-muted">
-        <Spinner />
-        Loading assistant…
-      </div>
-    );
-  }
+  if (loading) return <AssistantSettingsSkeleton />;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -129,8 +185,9 @@ export function AICallingSettings({
       </div>
 
       <div className="mt-6 space-y-5">
-        <Field label="Assistant name" hint={`${NAME_MAX} characters max`}>
-          <input
+          <Input
+            label="Assistant name"
+            hint={`${NAME_MAX} characters max`}
             value={config.assistant_name}
             onChange={(e) =>
               setConfig({
@@ -139,31 +196,25 @@ export function AICallingSettings({
               })
             }
             disabled={!canEdit}
-            className={inputClass}
           />
           {!nameValid && (
             <p className="mt-1 text-xs text-destructive">Name is required.</p>
           )}
-        </Field>
 
-        <Field
+        <Textarea
           label="Opening line"
-          hint={`${config.greeting.length}/${GREETING_MAX}`}
-        >
-          <textarea
-            value={config.greeting}
-            onChange={(e) =>
-              setConfig({
-                ...config,
-                greeting: e.target.value.slice(0, GREETING_MAX),
-              })
-            }
-            disabled={!canEdit}
-            rows={3}
-            placeholder="Hi, this is Ada calling about the property you enquired about…"
-            className={cn(inputClass, "resize-none")}
-          />
-        </Field>
+          value={config.greeting}
+          onChange={(value) =>
+            setConfig({
+              ...config,
+              greeting: value.slice(0, GREETING_MAX),
+            })
+          }
+          maxLength={GREETING_MAX}
+          disabled={!canEdit}
+          rows={3}
+          placeholder="Hi, this is Ada calling about the property you enquired about…"
+        />
 
         <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3">
           <div>
@@ -215,59 +266,3 @@ export function AICallingSettings({
   );
 }
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60";
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 flex items-center justify-between text-sm font-medium text-foreground">
-        {label}
-        {hint && <span className="text-xs font-normal text-muted">{hint}</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function Toggle({
-  checked,
-  disabled,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  disabled: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-primary" : "bg-muted/40",
-      )}
-    >
-      <span
-        className={cn(
-          "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
-          checked ? "translate-x-5" : "translate-x-0.5",
-        )}
-      />
-    </button>
-  );
-}
