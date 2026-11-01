@@ -137,29 +137,6 @@ export function slugifyCompanyName(name: string) {
   return `${base || "company"}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export async function createCompanyForCurrentUser(input: CreateCompanyInput) {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.rpc(
-    "create_company_for_current_user",
-    {
-      p_name: input.name,
-      p_slug: input.slug,
-      p_type: input.type,
-      p_contact_email: input.contactEmail,
-      p_contact_phone: input.contactPhone ?? null,
-      p_whatsapp_number: input.whatsappNumber ?? null,
-      p_logo: input.logo ?? null,
-    },
-  );
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-}
-
 export async function submitCompanyOnboardingDocs(
   companyId: string,
   docs: { cacCertificateUrl: string; companyLogoUrl?: string },
@@ -184,9 +161,9 @@ export async function getCompanyWithTeam(
 ): Promise<Company | null> {
   const supabase = createClient();
 
-  const [{ data: company, error }, { data: members, error: membersError }] =
+  const [{ data: companies, error }, { data: members, error: membersError }] =
     await Promise.all([
-      supabase.from("companies").select("*").eq("id", companyId).maybeSingle(),
+      supabase.rpc("get_company_for_member", { p_company_id: companyId }),
       supabase
         .from("company_members")
         .select("user_id, role, permissions")
@@ -195,6 +172,7 @@ export async function getCompanyWithTeam(
 
   if (error) throw error;
   if (membersError) throw membersError;
+  const company = companies?.[0];
   if (!company) return null;
 
   return mapCompanyRow(company, members ?? []);

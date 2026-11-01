@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Lato } from "next/font/google";
+import "@fontsource-variable/inter";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SavedPropertiesProvider } from "@/contexts/SavedPropertiesContext";
@@ -7,17 +7,6 @@ import { ConfirmationProvider } from "@/contexts/ConfirmDialog";
 import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/utils";
 import { CSSProperties } from "react";
 import "leaflet/dist/leaflet.css";
-
-const lato = Lato({
-  variable: "--font-lato-sans",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Verified Properties",
@@ -32,9 +21,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${lato.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
       style={
         {
+          "--font-lato-sans": '"Inter Variable", Inter, Arial, sans-serif',
+          "--font-geist-mono":
+            "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
           "--sidebar-width-expanded": `${SIDEBAR_EXPANDED_WIDTH}px`,
           "--sidebar-width-collapsed": `${SIDEBAR_COLLAPSED_WIDTH}px`,
         } as CSSProperties

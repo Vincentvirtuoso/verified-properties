@@ -86,8 +86,6 @@ export default function CompanyDashboardPage() {
     (m) => m.userId === user._id && m.role === "admin",
   );
 
-  console.log(company);
-
   return (
     <motion.div
       variants={containerVariants}

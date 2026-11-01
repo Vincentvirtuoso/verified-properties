@@ -1,0 +1,2 @@
+[functions.submit-company-registration]
+verify_jwt = true

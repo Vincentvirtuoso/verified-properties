@@ -35,7 +35,7 @@ export interface FileWithMeta {
   name: string;
   size: string;
   type: string;
-  status: "idle" | "uploading" | "success" | "error";
+  status: "idle" | "selected" | "uploading" | "success" | "error";
   progress: number;
   previewUrl?: string;
   errorMessage?: string;
@@ -54,6 +54,8 @@ interface FileUploadProps {
   accept?: string;
   currentImageUrl?: string;
   required?: boolean;
+  /** Select a file for a later upload instead of showing simulated progress. */
+  selectionOnly?: boolean;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -84,12 +86,11 @@ export default function FileUpload({
   accept,
   required,
   currentImageUrl,
+  selectionOnly = false,
 }: FileUploadProps) {
   const [files, setFiles] = useState<FileWithMeta[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [reportedCompleteIds, setReportedCompleteIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const reportedCompleteIds = useRef(new Set<string>());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getVariantConfig = () => {
@@ -172,6 +173,8 @@ export default function FileUpload({
       } else if (!isSizeAllowed) {
         newFile.status = "error";
         newFile.errorMessage = `File exceeds ${maxSizeInMB}MB limit.`;
+      } else if (selectionOnly) {
+        newFile.status = "selected";
       } else {
         newFile.status = "uploading";
         simulateUpload(id);
@@ -206,20 +209,17 @@ export default function FileUpload({
   useEffect(() => {
     if (!onUploadComplete) return;
 
-    const successfullyUploadedFiles = files.filter(
-      (f) => f.status === "success" && !reportedCompleteIds.has(f.id),
+    const completedFiles = files.filter(
+      (f) =>
+        (f.status === "success" || (selectionOnly && f.status === "selected")) &&
+        !reportedCompleteIds.current.has(f.id),
     );
 
-    if (successfullyUploadedFiles.length > 0) {
-      onUploadComplete(successfullyUploadedFiles.map((f) => f.file));
-
-      setReportedCompleteIds((prev) => {
-        const newSet = new Set(prev);
-        successfullyUploadedFiles.forEach((f) => newSet.add(f.id));
-        return newSet;
-      });
+    if (completedFiles.length > 0) {
+      onUploadComplete(completedFiles.map((f) => f.file));
+      completedFiles.forEach((f) => reportedCompleteIds.current.add(f.id));
     }
-  }, [files, onUploadComplete, reportedCompleteIds]);
+  }, [files, onUploadComplete, selectionOnly]);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -249,11 +249,7 @@ export default function FileUpload({
       return prev.filter((f) => f.id !== id);
     });
 
-    setReportedCompleteIds((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
+    reportedCompleteIds.current.delete(id);
     onFileRemove?.(id);
   };
 
@@ -331,10 +327,13 @@ export default function FileUpload({
         {currentFile && currentFile.status === "uploading" && (
           <p className="text-xs text-primary">Uploading...</p>
         )}
-        {currentFile && currentFile.status === "success" && (
+        {currentFile &&
+          (currentFile.status === "success" || currentFile.status === "selected") && (
           <div className="flex items-center gap-2">
             <FiCheckCircle className="w-4 h-4 text-emerald-500" />
-            <span className="text-xs text-emerald-600">Logo uploaded</span>
+            <span className="text-xs text-emerald-600">
+              {currentFile.status === "selected" ? "Logo selected" : "Logo uploaded"}
+            </span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -431,7 +430,7 @@ export default function FileUpload({
                   {fileMeta.status === "uploading" && (
                     <FiLoader className="w-4 h-4 text-primary-500 animate-spin" />
                   )}
-                  {fileMeta.status === "success" && (
+                  {(fileMeta.status === "success" || fileMeta.status === "selected") && (
                     <FiCheckCircle className="w-4 h-4 text-emerald-500" />
                   )}
                   <button
@@ -505,7 +504,7 @@ export default function FileUpload({
         <div className="mt-6 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Uploaded Files ({files.length}/{effectiveMaxFiles})
+              {selectionOnly ? "Selected Files" : "Uploaded Files"} ({files.length}/{effectiveMaxFiles})
             </h4>
           </div>
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
@@ -557,7 +556,7 @@ export default function FileUpload({
                     {fileMeta.status === "uploading" && (
                       <FiLoader className="w-4 h-4 text-primary-500 animate-spin" />
                     )}
-                    {fileMeta.status === "success" && (
+                    {(fileMeta.status === "success" || fileMeta.status === "selected") && (
                       <FiCheckCircle className="w-4 h-4 text-emerald-500" />
                     )}
                     <button
