@@ -2,7 +2,6 @@
 
 import { useState, Suspense, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { Field } from "@affilhomes/shared/ui/Field";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +30,7 @@ import { Centered } from "@affilhomes/shared/ui/Centered";
 import { AuthFormSkeleton } from "./FormSkeleton";
 import { getErrorMessage } from "@/utils";
 import { Button } from "@affilhomes/shared/ui";
+import { createClient } from "@affilhomes/shared/supabase/client";
 
 const VALID_ROLES = [Role.Agent, Role.Company];
 
@@ -38,6 +38,8 @@ function CompleteRegistrationForm() {
   const {
     user,
     pendingRegistration,
+    lastRejectedRegistration,
+    registrationHashError,
     saveCompanyRegistrationDraft,
     submitCompanyRegistration,
     updateUserRole,
@@ -52,6 +54,12 @@ function CompleteRegistrationForm() {
   else if (roleParam === Role.Company) initialRole = Role.Company;
 
   const [submitting, setSubmitting] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [documentLink, setDocumentLink] = useState<{
+    path: string;
+    url?: string;
+    error?: boolean;
+  } | null>(null);
   const [agentSubRole, setAgentSubRole] = useState<AgentSubRole>("realtor");
   const [agentData, setAgentData] = useState({
     licenseNumber: "",
@@ -77,43 +85,95 @@ function CompleteRegistrationForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const rejected =
-    pendingRegistration?.status === "rejected" ? pendingRegistration : null;
+    pendingRegistration?.status === "rejected"
+      ? pendingRegistration
+      : pendingRegistration?.status === "draft"
+        ? lastRejectedRegistration
+        : null;
 
   const canReuseCac =
     !!rejected &&
-    rejected.rejectionScope !== "cac_document" &&
+    rejected.rejectionScope === "details" &&
     !!rejected.cacCertPath;
 
   const prefilled = useRef(false);
 
   useEffect(() => {
-    if (prefilled.current || pendingRegistration?.status !== "draft") return;
+    const registration = pendingRegistration;
+    if (
+      prefilled.current ||
+      !registration ||
+      (registration.status !== "draft" && registration.status !== "rejected")
+    )
+      return;
     prefilled.current = true;
     setCompanyData((prev) => ({
       ...prev,
-      companyName: pendingRegistration.companyName,
-      companyType: pendingRegistration.companyType ?? prev.companyType,
-      contactEmail: pendingRegistration.contactEmail || prev.contactEmail,
-      contactPhone: pendingRegistration.contactPhone || prev.contactPhone,
-      whatsappNumber: pendingRegistration.whatsappNumber || prev.whatsappNumber,
-      applicantName: pendingRegistration.applicantName || prev.applicantName,
-      applicantPhone: pendingRegistration.applicantPhone || prev.applicantPhone,
+      companyName: registration.companyName,
+      companyType: registration.companyType ?? prev.companyType,
+      contactEmail: registration.contactEmail || prev.contactEmail,
+      contactPhone: registration.contactPhone || prev.contactPhone,
+      whatsappNumber: registration.whatsappNumber || prev.whatsappNumber,
+      applicantName: registration.applicantName || prev.applicantName,
+      applicantPhone: registration.applicantPhone || prev.applicantPhone,
     }));
   }, [pendingRegistration]);
 
   useEffect(() => {
     const status = pendingRegistration?.status;
     if (initialRole !== Role.Company || !user) return;
-    if (status === "docs_submitted" || status === "rejected") return;
+    if (submitting) return;
+    if (status === "docs_submitted" || status === "verified") return;
     if (!companyData.companyName.trim()) return;
 
+    let active = true;
     const t = setTimeout(() => {
-      saveCompanyRegistrationDraft(companyData).catch((err) =>
-        console.error("Draft autosave failed:", err),
-      );
+      setDraftSaveState("saving");
+      saveCompanyRegistrationDraft(companyData)
+        .then(() => active && setDraftSaveState("saved"))
+        .catch(() => active && setDraftSaveState("error"));
     }, 800);
-    return () => clearTimeout(t);
-  }, [companyData]);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [companyData, initialRole, pendingRegistration?.status, saveCompanyRegistrationDraft, submitting, user]);
+
+  useEffect(() => {
+    const path =
+      pendingRegistration?.cacCertPath ??
+      (pendingRegistration?.status === "draft"
+        ? lastRejectedRegistration?.cacCertPath
+        : null);
+    if (!user || !path) return;
+    let active = true;
+    createClient()
+      .storage.from("company-documents")
+      .createSignedUrl(path, 300)
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) setDocumentLink({ path, error: true });
+        else setDocumentLink({ path, url: data.signedUrl });
+      })
+      .catch(() => active && setDocumentLink({ path, error: true }));
+    return () => {
+      active = false;
+    };
+  }, [pendingRegistration?.cacCertPath, pendingRegistration?.status, lastRejectedRegistration?.cacCertPath, user]);
+
+  const registrationDocumentPath =
+    pendingRegistration?.cacCertPath ??
+    (pendingRegistration?.status === "draft"
+      ? lastRejectedRegistration?.cacCertPath
+      : null);
+  const currentDocumentLink =
+    documentLink?.path === registrationDocumentPath
+      ? documentLink
+      : null;
+
+  useEffect(() => {
+    if (user?.activeRole === Role.Company) router.replace("/company/dashboard");
+  }, [user?.activeRole, router]);
 
   if (!initialRole || !VALID_ROLES.includes(initialRole)) {
     return (
@@ -163,10 +223,6 @@ function CompleteRegistrationForm() {
     );
   }
 
-  useEffect(() => {
-    if (user?.activeRole === Role.Company) router.replace("/company/dashboard");
-  }, [user?.activeRole, router]);
-
   if (user?.activeRole === Role.Company) return null;
 
   if (pendingRegistration?.status === "docs_submitted") {
@@ -181,6 +237,26 @@ function CompleteRegistrationForm() {
             takes 2 to 5 business days. Your account stays a viewer until
             approval.
           </p>
+          {!pendingRegistration.cacSha256VerifiedAt && (
+            <p
+              role={registrationHashError ? "alert" : "status"}
+              className="text-xs text-muted"
+            >
+              {registrationHashError ??
+                "We&apos;re securely verifying your CAC file before it can be reviewed."}
+            </p>
+          )}
+          {currentDocumentLink?.url ? (
+            <a className="text-sm text-primary underline" href={currentDocumentLink.url} target="_blank" rel="noreferrer">
+              View submitted CAC certificate
+            </a>
+          ) : currentDocumentLink?.error ? (
+            <p role="status" className="text-xs text-muted">
+              The private document link could not be prepared. Refresh to try again.
+            </p>
+          ) : pendingRegistration.cacCertPath ? (
+            <p role="status" className="text-xs text-muted">Preparing secure document link…</p>
+          ) : null}
         </div>
       </Centered>
     );
@@ -196,6 +272,25 @@ function CompleteRegistrationForm() {
     setCompanyData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (errors[e.target.name])
       setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+  };
+
+  const handleSaveDraft = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!companyData.companyName.trim()) newErrors.companyName = "Company name is required";
+    if (!companyData.contactEmail.trim()) newErrors.contactEmail = "Contact email is required";
+    if (!companyData.applicantName.trim()) newErrors.applicantName = "Your full name is required";
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      return;
+    }
+    setDraftSaveState("saving");
+    try {
+      await saveCompanyRegistrationDraft(companyData);
+      setDraftSaveState("saved");
+    } catch (err) {
+      setDraftSaveState("error");
+      setErrors({ submit: getErrorMessage(err, "Could not save your draft. Please retry.") });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,9 +358,10 @@ function CompleteRegistrationForm() {
       newErrors.contactEmail = "Contact email is required";
     if (!companyData.applicantName.trim())
       newErrors.applicantName = "Your full name is required";
-    if (!cacCertFile && !canReuseCac)
-    newErrors.cacCert =
-      "CAC certificate is required for partnership registration";
+    if (!cacCertFile && !canReuseCac) {
+      newErrors.cacCert =
+        "CAC certificate is required for partnership registration";
+    }
     if (!authorised)
       newErrors.authorised =
         "You must confirm you are authorised to act for this company";
@@ -275,6 +371,7 @@ function CompleteRegistrationForm() {
     setSubmitting(true);
     try {
       await saveCompanyRegistrationDraft(companyData);
+      setDraftSaveState("saved");
       await submitCompanyRegistration({
         cacCertificate: cacCertFile,
         logo: companyLogoFile,
@@ -409,7 +506,7 @@ function CompleteRegistrationForm() {
 
       {initialRole === Role.Company && (
         <div className="space-y-4">
-          {pendingRegistration?.status === "rejected" && (
+          {rejected && (
             <div
               role="alert"
               className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800 rounded-xl p-4 space-y-1"
@@ -417,9 +514,9 @@ function CompleteRegistrationForm() {
               <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
                 Your last application wasn&apos;t approved
               </p>
-              {pendingRegistration.rejectionReason && (
+              {rejected.rejectionReason && (
                 <p className="text-xs text-rose-800 dark:text-rose-300">
-                  {pendingRegistration.rejectionReason}
+                  {rejected.rejectionReason}
                 </p>
               )}
               <p className="text-xs text-rose-800 dark:text-rose-300">
@@ -427,6 +524,16 @@ function CompleteRegistrationForm() {
                   ? "Correct the details below and resubmit. Your current CAC certificate will be reused."
                   : "Upload a CAC certificate below, then resubmit."}
               </p>
+              {currentDocumentLink?.url && (
+                <a
+                  className="inline-block text-xs text-rose-800 underline dark:text-rose-300"
+                  href={currentDocumentLink.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View previously submitted CAC certificate
+                </a>
+              )}
             </div>
           )}
 
@@ -443,6 +550,7 @@ function CompleteRegistrationForm() {
 
           <FileUpload
             variant="avatar"
+            selectionOnly
             label="Company Logo (Optional)"
             description="High-resolution square asset, min 200×200px. PNG, JPG or WEBP."
             maxSizeInMB={2}
@@ -461,6 +569,7 @@ function CompleteRegistrationForm() {
 
           <FileUpload
             variant="document"
+            selectionOnly
             label={
               canReuseCac
                 ? "Replacement CAC certificate (optional)"
@@ -593,6 +702,30 @@ function CompleteRegistrationForm() {
             />
           </div>
         </div>
+      )}
+
+      {initialRole === Role.Company && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border pt-4">
+          <p role="status" className="text-xs text-muted" aria-live="polite">
+            {draftSaveState === "saving" && "Saving your draft…"}
+            {draftSaveState === "saved" && "Draft saved. You can return and continue later."}
+            {draftSaveState === "error" && "Draft could not be saved. Check the error and retry."}
+          </p>
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={submitting || draftSaveState === "saving"}
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground disabled:opacity-50"
+          >
+            Save draft
+          </button>
+        </div>
+      )}
+
+      {submitting && initialRole === Role.Company && (
+        <p role="status" aria-live="polite" className="text-sm text-muted">
+          Uploading selected documents securely and submitting your application…
+        </p>
       )}
 
       {errors.submit && (

@@ -17,6 +17,7 @@ export interface CompanyRequest {
   whatsappNumber: string | null;
   logoUrl: string | null;
   cacSha256: string | null;
+  cacSha256VerifiedAt: string | null;
   cacCertPath: string | null;
   submittedAt: string;
 }
@@ -39,6 +40,8 @@ interface RegistrationRow {
   whatsapp_number: string | null;
   logo_url: string | null;
   cac_cert_path: string | null;
+  cac_sha256: string | null;
+  cac_sha256_verified_at: string | null;
   applicant_name: string | null;
   applicant_email: string | null;
   applicant_phone: string | null;
@@ -59,6 +62,7 @@ const SELECT = [
   "logo_url",
   "cac_cert_path",
   "cac_sha256",
+  "cac_sha256_verified_at",
   "applicant_name",
   "applicant_email",
   "applicant_phone",
@@ -90,7 +94,8 @@ function mapRow(row: RegistrationRow): CompanyRequest {
     logoUrl: row.logo_url,
     cacCertPath: row.cac_cert_path,
     submittedAt: row.authorised_at ?? row.updated_at,
-    cacSha256: row.cac_cert_path ?? null,
+    cacSha256: row.cac_sha256 ?? null,
+    cacSha256VerifiedAt: row.cac_sha256_verified_at ?? null,
   };
 }
 
@@ -152,6 +157,7 @@ export async function findMatchingCertificates(
     .from("company_registrations")
     .select("id, company_name, status")
     .eq("cac_sha256", hash)
+    .not("cac_sha256_verified_at", "is", null)
     .neq("user_id", applicantId)
     .limit(5);
 

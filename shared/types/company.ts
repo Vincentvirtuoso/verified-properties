@@ -90,6 +90,7 @@ export interface CompanyRegistration {
   applicantAuthorised: boolean;
   logoUrl: string | null;
   cacCertPath: string | null;
+  cacSha256VerifiedAt: string | null;
   rejectionReason: string | null;
   rejectionScope: "cac_document" | "details" | "other" | null;
 }

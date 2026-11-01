@@ -1,2 +1,4 @@
 [functions.paystack-webhook]
 verify_jwt = false
+[functions.submit-company-registration]
+verify_jwt = true

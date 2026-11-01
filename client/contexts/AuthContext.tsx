@@ -32,7 +32,6 @@ import {
   switchActiveRole,
 } from "@affilhomes/shared/supabase/roles";
 import { RegistrationGuard } from "@/components/common/RegistrationGuard";
-import { sha256Hex } from "@/utils";
 
 export interface ProfileUpdateFiles {
   avatar?: File | null;
@@ -85,6 +84,8 @@ interface AuthContextType {
     logo?: File | null,
   ) => Promise<void>;
   pendingRegistration: CompanyRegistration | null;
+  lastRejectedRegistration: CompanyRegistration | null;
+  registrationHashError: string | null;
   saveCompanyRegistrationDraft: (
     fields: CompanyRegistrationDraft,
   ) => Promise<void>;
@@ -141,6 +142,7 @@ function mapRegistration(row: any): CompanyRegistration {
     applicantAuthorised: row.applicant_authorised ?? false,
     logoUrl: row.logo_url ?? null,
     cacCertPath: row.cac_cert_path ?? null,
+    cacSha256VerifiedAt: row.cac_sha256_verified_at ?? null,
     rejectionReason: row.rejection_reason ?? null,
     rejectionScope: row.rejection_scope ?? null,
   };
@@ -170,6 +172,40 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+async function invokeRegistrationFunction(
+  supabase: ReturnType<typeof createClient>,
+  body: Record<string, unknown>,
+) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!sessionData.session?.access_token) {
+    throw new Error("Your session has expired. Sign in again and retry.");
+  }
+
+  const { data, error } = await supabase.functions.invoke<{
+    error?: string;
+    ok?: boolean;
+    registrationId?: string;
+  }>("submit-company-registration", {
+    body,
+    headers: {
+      Authorization: `Bearer ${sessionData.session.access_token}`,
+    },
+  });
+
+  if (error) {
+    let responseError: string | undefined;
+    if (error.context instanceof Response) {
+      const responseBody = await error.context.clone().json().catch(() => null);
+      responseError = responseBody?.error;
+    }
+    throw new Error(responseError ?? error.message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PopulatedUser | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -180,6 +216,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
   const [pendingRegistration, setPendingRegistration] =
     useState<CompanyRegistration | null>(null);
+  const [lastRejectedRegistration, setLastRejectedRegistration] =
+    useState<CompanyRegistration | null>(null);
+  const [registrationHashError, setRegistrationHashError] =
+    useState<string | null>(null);
 
   const userId = user?._id;
 
@@ -221,6 +261,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setCompanies([]);
         setPendingRegistration(null);
+        setLastRejectedRegistration(null);
+        setRegistrationHashError(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         return null;
@@ -268,16 +310,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mapped = mapProfileToUser(profile, ownCompany);
       setUser(mapped);
       setCompanies(companyList);
-      const { data: regRow } = await supabase
-        .from("company_registrations")
-        .select("*")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [{ data: initialRegRow }, { data: rejectedRow }] = await Promise.all([
+        supabase
+          .from("company_registrations")
+          .select("*")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("company_registrations")
+          .select("*")
+          .eq("user_id", profile.id)
+          .eq("status", "rejected")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      let regRow = initialRegRow;
+      setRegistrationHashError(null);
+      if (
+        regRow?.status === "docs_submitted" &&
+        !regRow.cac_sha256_verified_at
+      ) {
+        try {
+          await invokeRegistrationFunction(supabase, {
+            action: "verify_submitted",
+          });
+          const { data: refreshed } = await supabase
+            .from("company_registrations")
+            .select("*")
+            .eq("id", regRow.id)
+            .maybeSingle();
+          if (refreshed) regRow = refreshed;
+        } catch (error) {
+          setRegistrationHashError(
+            errorMessage(
+              error,
+              "We could not securely verify the submitted CAC file. Refresh and retry, or contact support.",
+            ),
+          );
+        }
+      }
 
       setPendingRegistration(
         regRow && regRow.status !== "verified" ? mapRegistration(regRow) : null,
+      );
+      setLastRejectedRegistration(
+        rejectedRow ? mapRegistration(rejectedRow) : null,
       );
       return mapped;
     } catch (error) {
@@ -285,6 +366,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setCompanies([]);
       setPendingRegistration(null);
+      setLastRejectedRegistration(null);
+      setRegistrationHashError(null);
       return null;
     }
   }, [fetchCompaniesForUser]);
@@ -308,6 +391,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setCompanies([]);
         setPendingRegistration(null);
+        setLastRejectedRegistration(null);
+        setRegistrationHashError(null);
         return;
       }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
@@ -505,28 +590,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         : null;
 
       let cacPath: string | null = null;
-      let cacHash: string | null = null;
-
       if (files.cacCertificate) {
-        [cacHash, cacPath] = await Promise.all([
-          sha256Hex(files.cacCertificate),
-          uploadUserFile(
+        cacPath = await uploadUserFile(
             "company-documents",
             user._id,
             files.cacCertificate,
             files.cacCertificate.name,
             supabase,
-          ),
-        ]);
+          );
       }
 
-      const { error } = await supabase.rpc("submit_company_registration", {
-        p_cac_path: cacPath,
-        p_logo_url: logoUrl,
-        p_authorised: files.authorised,
-        p_cac_hash: cacHash,
+      await invokeRegistrationFunction(supabase, {
+        action: "submit",
+        cacPath,
+        logoUrl,
+        authorised: files.authorised,
       });
-      if (error) throw error;
 
       await loadUser();
     },
@@ -696,6 +775,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setCompanies([]);
       setPendingRegistration(null);
+      setLastRejectedRegistration(null);
+      setRegistrationHashError(null);
       setIsSuspended(false);
       setSuspensionReason(null);
     } catch (error) {
@@ -728,6 +809,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateCompany,
         updateProfile,
         pendingRegistration,
+        lastRejectedRegistration,
+        registrationHashError,
         saveCompanyRegistrationDraft,
         submitCompanyRegistration,
       }}

@@ -86,7 +86,7 @@ export function CompanyRequestCard({
   const [scope, setScope] = useState<RejectionScope | "">("");
 
   useEffect(() => {
-    if (!r.cacSha256) return;
+    if (!r.cacSha256 || !r.cacSha256VerifiedAt) return;
     let cancelled = false;
 
     findMatchingCertificates(r.cacSha256, r.applicantId)
@@ -100,7 +100,7 @@ export function CompanyRequestCard({
     return () => {
       cancelled = true;
     };
-  }, [r.cacSha256, r.applicantId]);
+  }, [r.cacSha256, r.cacSha256VerifiedAt, r.applicantId]);
 
   const selectedScope = REJECTION_SCOPES.find((s) => s.value === scope);
 
@@ -155,7 +155,7 @@ export function CompanyRequestCard({
                 ` · WhatsApp ${r.whatsappNumber}`}
             </p>
 
-            {matches.length > 0 && (
+            {r.cacSha256VerifiedAt && matches.length > 0 && (
               <div
                 role="note"
                 className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/10 dark:text-amber-200"
