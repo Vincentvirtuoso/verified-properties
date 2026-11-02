@@ -21,6 +21,8 @@ import {
   LuInbox,
   LuPlus,
   LuCreditCard,
+  LuCircleAlert,
+  LuRotateCw,
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +32,7 @@ import { FiBarChart2 } from "react-icons/fi";
 import { ListingsIcon } from "@affilhomes/shared/icons";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 import { cn } from "@/utils";
-import { Spinner } from "@affilhomes/shared/ui";
+import { Button, IconButton, Spinner } from "@affilhomes/shared/ui";
 
 type SidebarSlot =
   | { kind: "count"; value: number; max?: number }
@@ -516,6 +518,62 @@ const SidebarContent = ({
   );
 };
 
+function SidebarError({
+  message,
+  collapsed = false,
+}: {
+  message: string;
+  collapsed?: boolean;
+}) {
+  const { clearError, refreshUser, isLoading } = useAuth();
+  const handleRetry = async () => {
+    clearError();
+    await refreshUser();
+  };
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-2 p-2">
+        <IconButton
+          onClick={handleRetry}
+          title={`Couldn't load your account — click to reload\n${message}`}
+          aria-label="Reload page to retry"
+          label="Reload page to retry"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20"
+          icon={<LuRotateCw className="h-4 w-4" />}
+          isLoading={isLoading}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 p-4">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+        <div className="flex items-start gap-2">
+          <LuCircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-destructive">
+              Couldn&apos;t load your account
+            </p>
+            <p className="mt-1 wrap-break-word text-xs text-muted">{message}</p>
+          </div>
+        </div>
+      </div>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={handleRetry}
+        fullWidth
+        isLoading={isLoading}
+      >
+        <LuRotateCw className="h-4 w-4" />
+        Reload
+      </Button>
+    </div>
+  );
+}
+
 interface SidebarProps {
   links?: SidebarLink[];
   isOpen?: boolean;
@@ -538,7 +596,7 @@ export const Sidebar = ({
   const pathname = usePathname();
   const router = useRouter();
   const { bannerHeight } = useBannerHeightContext();
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, authError } = useAuth();
   const [summary, setSummary] = useState<RoleLinkData>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
 
@@ -619,13 +677,17 @@ export const Sidebar = ({
               </button>
             </div>
 
-            <SidebarContent
-              userRole={user?.activeRole}
-              links={activeLinks}
-              pathname={pathname}
-              collapsed={collapsed}
-              onLogout={handleLogout}
-            />
+            {authError ? (
+              <SidebarError message={authError} collapsed={collapsed} />
+            ) : (
+              <SidebarContent
+                userRole={user?.activeRole}
+                links={activeLinks}
+                pathname={pathname}
+                collapsed={collapsed}
+                onLogout={handleLogout}
+              />
+            )}
           </>
         )}
       </aside>
@@ -666,13 +728,17 @@ export const Sidebar = ({
                   </button>
                 </div>
 
-                <SidebarContent
-                  links={activeLinks}
-                  pathname={pathname}
-                  onClose={onClose}
-                  onLogout={handleLogout}
-                  userRole={user?.activeRole}
-                />
+                {authError ? (
+                  <SidebarError message={authError} />
+                ) : (
+                  <SidebarContent
+                    links={activeLinks}
+                    pathname={pathname}
+                    onClose={onClose}
+                    onLogout={handleLogout}
+                    userRole={user?.activeRole}
+                  />
+                )}
               </>
             )}
           </motion.aside>

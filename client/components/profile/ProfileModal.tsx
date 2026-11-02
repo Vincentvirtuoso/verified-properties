@@ -21,7 +21,7 @@ import { FiAlertCircle } from "react-icons/fi";
 import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
-import { SectionHeader, InfoRow } from "@affilhomes/shared/ui";
+import { SectionHeader, InfoRow, Button } from "@affilhomes/shared/ui";
 import { Role, Company, agentSubRoleLabels } from "@affilhomes/shared/types";
 import { formatCompactPrice } from "@/lib/formatters";
 import {
@@ -32,6 +32,7 @@ import {
   format,
 } from "@/utils";
 import { StatCard } from "../ui";
+import { DeleteAccountPanel } from "./DeleteAccountPanel";
 
 const ROLE_HOME: Record<ProfileRole, string> = {
   [Role.Viewer]: "/dashboard",
@@ -90,12 +91,28 @@ interface ProfileModalProps {
 export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const { user, switchRole, pendingRegistration } = useAuth();
   const { savedCount } = useSavedProperties();
+
   const [switchingTo, setSwitchingTo] = useState<Role | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
+  const [view, setView] = useState<"profile" | "delete">("profile");
+
   const router = useRouter();
   const pathname = usePathname();
 
   if (!user) return null;
+
+  const handleClose = () => {
+    setView("profile");
+    onClose();
+  };
+
+  if (view === "delete") {
+    return (
+      <Modal open={open} onClose={handleClose} className="p-6 space-y-8">
+        <DeleteAccountPanel onBack={() => setView("profile")} />
+      </Modal>
+    );
+  }
 
   const isCompany = user.activeRole === Role.Company;
   const isAgent = user.activeRole === Role.Agent;
@@ -150,7 +167,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
     : null;
 
   return (
-    <Modal open={open} onClose={onClose} className="p-6 space-y-8">
+    <Modal open={open} onClose={handleClose} className="p-6 space-y-8">
       <h2 className="text-xl font-bold text-foreground">Your profile</h2>
 
       {canSwitchRoles && (
@@ -448,6 +465,16 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
           </div>
         </div>
       )}
+      <div className="border-t border-border pt-4">
+        <Button
+          type="button"
+          onClick={() => setView("delete")}
+          size="xs"
+          variant="danger"
+        >
+          Delete my account
+        </Button>
+      </div>
     </Modal>
   );
 }

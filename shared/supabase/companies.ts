@@ -55,8 +55,18 @@ export type InviteErrorCode =
   | "wrong_email"
   | "profile_missing"
   | "already_in_company"
+  | "agent"
   | "pending_application"
   | "unknown";
+
+export type InviteEligibility =
+  | "invalid_email"
+  | "already_on_team"
+  | "no_account"
+  | "agent"
+  | "already_in_company"
+  | "pending_application"
+  | "ok";
 
 const INVITE_CODES = new Set<string>([
   "signed_out",
@@ -68,6 +78,7 @@ const INVITE_CODES = new Set<string>([
   "wrong_email",
   "profile_missing",
   "already_in_company",
+  "agent",
   "pending_application",
 ]);
 
@@ -217,6 +228,18 @@ export async function listPendingInvitations(
     expiresAt: row.expires_at,
     createdAt: row.created_at,
   }));
+}
+
+export async function checkCompanyInviteEligibility(
+  companyId: string,
+  email: string,
+): Promise<InviteEligibility> {
+  const { data, error } = await createClient().rpc(
+    "check_company_invite_eligibility",
+    { p_company_id: companyId, p_email: email },
+  );
+  if (error) throw toError(error);
+  return data as InviteEligibility;
 }
 
 export async function inviteCompanyMember(input: InviteInput): Promise<void> {

@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/utils";
@@ -14,6 +13,9 @@ import { Button } from "@affilhomes/shared/ui";
 
 const linkClass =
   "flex-1 inline-flex items-center justify-center h-10 rounded-lg text-sm font-medium transition-colors";
+
+const GENERIC_TITLE = "We couldn't accept this invitation";
+const GENERIC_BODY = "Try again. If it keeps happening, contact support.";
 
 type FailureAction = "retry" | "switch" | "dashboard";
 
@@ -64,18 +66,23 @@ function describeFailure(
         body: "An account can belong to one company at a time. To accept this invitation, sign in with a different account.",
         action: "switch",
       };
-    case "pending_application":
+    case "agent":
       return {
-        title: "Finish your partnership application first",
-        body: "Your account has a partnership application in progress. Finish or cancel it, then accept this invitation.",
-        action: "dashboard",
+        title: "Agent accounts can't join company teams",
+        body: "Company teams are only open to non-agent accounts. Sign in with a different account to accept this invitation.",
+        action: "switch",
       };
-    default:
+    default: {
+      const msg = error.message?.trim();
       return {
-        title: "We couldn't accept this invitation",
-        body: "Try again. If it keeps happening, contact support.",
+        title: GENERIC_TITLE,
+        body:
+          msg && msg !== GENERIC_TITLE && msg !== GENERIC_BODY
+            ? msg
+            : GENERIC_BODY,
         action: "retry",
       };
+    }
   }
 }
 
@@ -96,19 +103,19 @@ function InviteContent() {
     if (isLoading || !user || !token || started.current) return;
     started.current = true;
 
-    const wasAgent = !!user?.agentProfile;
     acceptCompanyInvitation(token)
       .then(async () => {
         await refreshUser();
-        router.replace(
-          wasAgent ? "/dashboard?joined=team" : "/company/dashboard",
-        );
+        router.replace("/company/dashboard");
       })
       .catch((err) => {
         setFailure(
           err instanceof InviteError
             ? err
-            : new InviteError("unknown", "We couldn't accept this invitation."),
+            : new InviteError(
+                "unknown",
+                getErrorMessage(err, "We couldn't accept this invitation."),
+              ),
         );
       });
   }, [isLoading, user, token, refreshUser, router, attempt]);

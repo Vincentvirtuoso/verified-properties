@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@affilhomes/shared/ui/Button";
 import { Field } from "@affilhomes/shared/ui/Field";
 import { Checkbox } from "@affilhomes/shared/ui/Checkbox";
@@ -9,7 +9,9 @@ import type { CompanyPermission } from "@affilhomes/shared/types";
 import { getErrorMessage } from "@/utils";
 import {
   ALL_PERMISSIONS,
+  checkCompanyInviteEligibility,
   inviteCompanyMember,
+  InviteEligibility,
   type InvitableRole,
 } from "@affilhomes/shared/supabase";
 import { RadioGroup } from "@affilhomes/shared/ui";
@@ -37,6 +39,14 @@ const PERMISSION_OPTIONS: {
     hint: "See listing performance and enquiries.",
   },
 ];
+
+const ELIGIBILITY_MESSAGES: Partial<Record<InviteEligibility, string>> = {
+  agent: "Agent accounts can't join company teams.",
+  already_in_company: "This person already belongs to a company.",
+  pending_application:
+    "This person has a partnership application under review.",
+  already_on_team: "This person is already on the team.",
+};
 
 export interface InviteDraft {
   email: string;
@@ -70,6 +80,9 @@ export function InviteMemberModal({
   const [draft, setDraft] = useState<InviteDraft>(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [eligibilityHint, setEligibilityHint] = useState<string | null>(null);
+
+  const checkedEmail = useRef<string>("");
 
   useEffect(() => {
     if (open) {
@@ -121,6 +134,19 @@ export function InviteMemberModal({
     }
   }
 
+  async function checkEligibility() {
+    const email = draft.email.trim().toLowerCase();
+    checkedEmail.current = email;
+    setEligibilityHint(null);
+    if (!EMAIL_RE.test(email)) return;
+
+    try {
+      const result = await checkCompanyInviteEligibility(companyId, email);
+      if (checkedEmail.current !== email) return;
+      setEligibilityHint(ELIGIBILITY_MESSAGES[result] ?? null);
+    } catch {}
+  }
+
   const roleOptions: {
     value: InvitableRole;
     label: string;
@@ -164,6 +190,10 @@ export function InviteMemberModal({
           value={draft.email}
           onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
           required
+          onBlur={checkEligibility}
+          hint={
+            eligibilityHint ?? "They'll need to sign in or create an account."
+          }
         />
 
         <RadioGroup

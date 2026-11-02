@@ -204,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return inFlightRef.current;
   }, [supabase]);
 
-  // Lenient refresh: on failure, keep whatever we already know.
   const refresh = useCallback(async () => {
     try {
       commit(await load());
