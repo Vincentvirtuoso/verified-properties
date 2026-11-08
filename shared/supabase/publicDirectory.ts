@@ -89,9 +89,6 @@ function toCompany(r: any): PublicCompany {
     features: {
       whatsappNotifications: false,
       prioritySupport: false,
-      dedicatedAccountManager: false,
-      whiteLabel: false,
-      tier: "standard",
     },
     team: [],
     teamSize: r.team_size ?? 0,
