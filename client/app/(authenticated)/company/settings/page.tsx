@@ -15,6 +15,7 @@ import { CompanyDetailsCard } from "@/components/company/CompanyDetailsCard";
 import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { CompanyFeaturesSection } from "@/components/company/CompanyFeaturesSection";
 import { setWhatsappNotifications } from "@affilhomes/shared/supabase";
+import { DeleteCompanyCard } from "@/components/company/DeleteCompanyCard";
 
 const TABS = [
   { id: "general", label: "General" },
@@ -214,6 +215,12 @@ function SettingsContent() {
                 await refreshCompanies();
               }}
             />
+            {isOwner && (
+              <DeleteCompanyCard
+                companyId={company._id}
+                companyName={company.name}
+              />
+            )}
           </div>
         )}
         {activeTab === "ai-calling" && (

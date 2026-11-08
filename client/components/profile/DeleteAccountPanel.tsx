@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LuArrowLeft, LuLoader } from "react-icons/lu";
+import { LuArrowLeft } from "react-icons/lu";
 import { FiAlertCircle } from "react-icons/fi";
 import { format } from "@/utils";
 import { createClient } from "@affilhomes/shared/supabase/client";
-import { Button, Field } from "@affilhomes/shared/ui";
+import { Button, Field, Spinner } from "@affilhomes/shared/ui";
 
 interface Blocker {
   code: string;
@@ -101,7 +101,7 @@ export function DeleteAccountPanel({ onBack }: { onBack: () => void }) {
       <h2 className="text-xl font-bold text-foreground">Delete my account</h2>
 
       {loading ? (
-        <LuLoader className="h-5 w-5 animate-spin text-muted motion-reduce:animate-none" />
+        <Spinner variant="muted" />
       ) : scheduledFor ? (
         <div className="space-y-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/10 dark:text-amber-200">

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
+import "@fontsource/lato/400.css";
+import "@fontsource/lato/700.css";
+import "@fontsource-variable/geist-mono";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SavedPropertiesProvider } from "@/contexts/SavedPropertiesContext";
 import { ConfirmationProvider } from "@/contexts/ConfirmDialog";
@@ -24,9 +27,9 @@ export default function RootLayout({
       className="h-full antialiased"
       style={
         {
-          "--font-lato-sans": '"Inter Variable", Inter, Arial, sans-serif',
+          "--font-lato-sans": '"Lato", Arial, sans-serif',
           "--font-geist-mono":
-            "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            '"Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
           "--sidebar-width-expanded": `${SIDEBAR_EXPANDED_WIDTH}px`,
           "--sidebar-width-collapsed": `${SIDEBAR_COLLAPSED_WIDTH}px`,
         } as CSSProperties

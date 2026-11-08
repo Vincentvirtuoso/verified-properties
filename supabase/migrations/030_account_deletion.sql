@@ -1,3 +1,14 @@
+-- 025_account_deletion.sql
+-- Account deletion framework: soft delete, grace period, blockers, cleanup registry.
+-- Renumber if 025 is already taken.
+--
+-- Schema notes (from the live database):
+--   profiles(id, email, name, phone, whatsapp_number, avatar, company_id, ...)
+--   companies(id, ...)            -- owner_id is added below
+--   company_members(company_id, user_id, role, permissions)
+-- Only the owner's profile carries company_id, so it identifies owners.
+-- Enum labels are compared as text so a wrong label returns no rows instead of erroring;
+-- confirm 'admin' is a real company_members.role label (see the check query after running).
 
 begin;
 
@@ -6,6 +17,22 @@ alter table public.profiles
   add column if not exists deletion_requested_at timestamptz,
   add column if not exists deletion_scheduled_for timestamptz,
   add column if not exists deleted_at timestamptz;
+
+-- 1b. Explicit company owner -------------------------------------------------
+alter table public.companies
+  add column if not exists owner_id uuid references public.profiles (id) on delete set null;
+
+alter table public.companies disable trigger guard_whatsapp_toggle;
+
+update public.companies c
+   set owner_id = p.id
+  from public.profiles p
+ where p.company_id = c.id
+   and c.owner_id is null;
+
+alter table public.companies enable trigger guard_whatsapp_toggle;
+
+create index if not exists companies_owner_id_idx on public.companies (owner_id);
 
 -- 2. Request / audit table ---------------------------------------------------
 -- No FK to auth.users: the row must survive as the audit record.
@@ -49,23 +76,24 @@ alter table public.account_deletion_handlers enable row level security;
 create or replace function public.account_deletion_blockers(p_user_id uuid)
 returns table (code text, message text)
 language sql stable security definer set search_path = public as $$
-  -- ASSUMED: companies.owner_id
+  -- Owner: explicit owner_id, or the profile that carries company_id.
+  -- The profile check also covers companies approved before owner_id is set by the approval flow.
   select 'owns_company'::text,
          'Transfer ownership or close your company before deleting your account.'::text
   where exists (select 1 from public.companies c where c.owner_id = p_user_id)
+     or exists (select 1 from public.profiles p where p.id = p_user_id and p.company_id is not null)
   union all
-  -- ASSUMED: company_members.role = 'admin'
   select 'last_admin'::text,
          'Add another admin to your team before deleting your account.'::text
   where exists (
     select 1
     from public.company_members m
     where m.user_id = p_user_id
-      and m.role = 'admin'
+      and m.role::text = 'admin'
       and not exists (
         select 1 from public.company_members o
         where o.company_id = m.company_id
-          and o.role = 'admin'
+          and o.role::text = 'admin'
           and o.user_id <> p_user_id
       )
   );
@@ -213,15 +241,21 @@ grant execute on function public.anonymise_account(uuid)          to service_rol
 grant execute on function public.complete_account_deletion(uuid)  to service_role;
 
 -- 7. First handler: the profile itself ---------------------------------------
--- ASSUMED columns: full_name, phone, avatar_url. Adjust to your profiles table.
+-- agent_profile / viewer_profile (licence numbers, budget) are left for the later
+-- agent-licence handler. The email is replaced with a unique placeholder so any
+-- NOT NULL / UNIQUE constraint on it still holds.
 create or replace function public.account_deletion_profile(p_user_id uuid)
 returns void
 language sql security definer set search_path = public as $$
   update public.profiles
-     set full_name  = 'Deleted user',
-         phone      = null,
-         avatar_url = null,
-         deleted_at = now()
+     set name              = 'Deleted user',
+         email             = 'deleted+' || p_user_id::text || '@deleted.invalid',
+         phone             = null,
+         whatsapp_number   = null,
+         avatar            = null,
+         is_email_verified = false,
+         is_phone_verified = false,
+         deleted_at        = now()
    where id = p_user_id;
 $$;
 

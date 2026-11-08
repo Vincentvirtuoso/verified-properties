@@ -118,7 +118,10 @@ export function mapCompanyRow(row: any, members: any[] = []): Company {
     type: row.type,
     verificationStatus: row.verification_status,
     onboardingDocs: row.onboarding_docs ?? { cacCertificateUrl: "" },
-    features: row.features,
+    features: {
+      whatsappNotifications: row.whatsapp_notifications,
+      prioritySupport: row.priority_support,
+    },
     team: members.map(
       (m): CompanyMember => ({
         userId: m.user_id,
