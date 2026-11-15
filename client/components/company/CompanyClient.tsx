@@ -9,7 +9,9 @@ import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { imageLoader } from "@/utils";
 import { cn } from "@/lib/utils";
-import { Avatar } from "@affilhomes/shared/ui";
+import { Avatar, VerifiedBadge } from "@affilhomes/shared/ui";
+import { OwnerFaqs } from "../common/OwnerFaqs";
+import { PublicFaq } from "@affilhomes/shared/supabase";
 
 const DEFAULT_LOGO = "/placeholder_avatar.png";
 
@@ -22,15 +24,6 @@ export interface PublicAgent {
   verified: boolean;
 }
 
-const mockAgent: PublicAgent[] = [
-  {
-    id: "1",
-    name: "Dani Olmo",
-    avatar: "/og-properties.jpg",
-    subRole: "Realtor",
-    verified: true,
-  },
-];
 
 type Tab = "listings" | "agents";
 
@@ -38,10 +31,12 @@ export function CompanyClient({
   company,
   agents,
   listings,
+  faqs,
 }: {
   company: Company;
   agents: PublicAgent[];
   listings: PopulatedProperty[];
+  faqs: PublicFaq[];
 }) {
   const [tab, setTab] = useState<Tab>("listings");
   const [logoSrc, setLogoSrc] = useState(company.logo || DEFAULT_LOGO);
@@ -144,6 +139,12 @@ export function CompanyClient({
         </div>
       </div>
 
+      {faqs.length > 0 && (
+        <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+          <OwnerFaqs faqs={faqs} />
+        </div>
+      )}
+
       <div className="mx-auto mt-8 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <div
           role="tablist"
@@ -214,9 +215,6 @@ export function CompanyClient({
                 description="No agents are currently linked to this company."
               />
             )}
-            {mockAgent.map((a) => (
-              <AgentCard key={a.id} agent={a} />
-            ))}
           </div>
         )}
       </div>
@@ -236,21 +234,13 @@ function AgentCard({ agent }: { agent: PublicAgent }) {
           name={agent.name}
           fallbackSrc={DEFAULT_LOGO}
           size={48}
-          className="object-cover"
+          className="object-cover bg-transparent"
         />
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1.5 truncate font-semibold text-foreground transition-colors group-hover:text-primary">
+          <div className="flex items-center gap-1.5 truncate font-semibold text-foreground transition-colors group-hover:text-primary">
             {agent.name}
-            {agent.verified && (
-              <>
-                <LuCircleCheck
-                  className="h-4 w-4 shrink-0 text-primary"
-                  aria-hidden="true"
-                />
-                <span className="sr-only"> (verified)</span>
-              </>
-            )}
-          </p>
+            {agent.verified && <VerifiedBadge size="md" showText={false} />}
+          </div>
           {agent.subRole && (
             <p className="text-sm capitalize text-muted">{agent.subRole}</p>
           )}

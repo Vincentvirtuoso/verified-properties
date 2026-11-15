@@ -13,6 +13,7 @@ import {
 import { createClient } from "@affilhomes/shared/supabase/client";
 import { Button, Spinner } from "@affilhomes/shared/ui";
 import { cn } from "@/lib/utils";
+import { PropertyOwnerType } from "@/types";
 
 type DocStatus =
   | "uploaded"
@@ -63,13 +64,15 @@ const STATUS: Record<DocStatus, { label: string; className: string }> = {
 const MB = 1024 * 1024;
 
 export function DocumentsPanel({
-  companyId,
+  ownerType,
+  ownerId,
   userId,
   canEdit,
   quotaMb,
   perFileMb,
 }: {
-  companyId: string;
+  ownerType: PropertyOwnerType;
+  ownerId: string;
   userId: string;
   canEdit: boolean;
   quotaMb: number;
@@ -93,7 +96,8 @@ export function DocumentsPanel({
       .select(
         "id, file_name, mime_type, size_bytes, storage_path, status, rejection_reason, created_at",
       )
-      .eq("company_id", companyId)
+      .eq("owner_type", ownerType)
+      .eq("owner_id", ownerId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -101,7 +105,7 @@ export function DocumentsPanel({
       return;
     }
     setDocs((data as DocRow[]) ?? []);
-  }, [companyId]);
+  }, [ownerType, ownerId]);
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
@@ -133,7 +137,8 @@ export function DocumentsPanel({
         "documents-upload-url",
         {
           body: {
-            companyId,
+            ownerId,
+            ownerType,
             fileName: file.name,
             mimeType: file.type,
             sizeBytes: file.size,
@@ -244,9 +249,7 @@ export function DocumentsPanel({
               <h2 className="text-base font-semibold text-foreground">
                 Documents
               </h2>
-              <p className="text-xs text-muted">
-                Manage your company's knowledge base
-              </p>
+              <p className="text-xs text-muted">Manage your knowledge base</p>
             </div>
           </div>
 
@@ -294,7 +297,7 @@ export function DocumentsPanel({
                 Storage usage
               </p>
               <p className="mt-1 text-xs text-muted">
-                Space available for company documents
+                Space available for your documents
               </p>
             </div>
 
@@ -423,7 +426,7 @@ export function DocumentsPanel({
             </h4>
 
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-              Your company documents will appear here once uploaded. Add your
+              Your documents will appear here once uploaded. Add your
               first document to get started.
             </p>
 
@@ -625,7 +628,7 @@ export function DocumentsPanel({
 
         {!canEdit && (
           <p className="text-xs leading-relaxed text-muted">
-            You can view company documents, but only company admins can upload,
+            You can view these documents, but only Only {ownerType === "company" ? "company admins" : "the account owner"} can upload,
             approve or delete them.
           </p>
         )}

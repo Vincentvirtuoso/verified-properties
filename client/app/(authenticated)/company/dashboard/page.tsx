@@ -11,12 +11,9 @@ import {
   LuShieldCheck,
   LuPhone,
   LuMail,
-  LuMessageCircle,
-  LuCrown,
   LuSparkles,
   LuUserPlus,
   LuClock3,
-  LuClipboardList,
   LuSettings,
 } from "react-icons/lu";
 import { FaWhatsapp } from "react-icons/fa";
@@ -28,7 +25,6 @@ import { Button } from "@affilhomes/shared/ui/Button";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { formatPhoneNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { useEntitlements } from "@/hooks/useEntitlements";
 import UserHeaderCard from "@/components/common/UserHeaderCard";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { TeamMemberRow } from "@/components/company/TeamMemberRow";
@@ -36,6 +32,7 @@ import { AICallingCard } from "@/components/company/AICallingCard";
 import { StatsCard } from "@/components/company/StatsCard";
 import { VerifiedBadge } from "@affilhomes/shared/ui";
 import { CompanyFaqs } from "@/components/company/CompanyFaqs";
+import { useAiPlan } from "@/hooks/useAiPlan";
 
 const naira = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -229,9 +226,18 @@ export default function CompanyDashboardPage() {
     companies.find((item) => item._id === ownId) ??
     companies[0];
 
-  const { tier, features, isTrial, periodEnd, ready } = useEntitlements(
-    company?._id,
-  );
+  const { row, live, ready } = useAiPlan("company", company?._id);
+  const isTrial = row?.status === "trialing";
+  const periodEnd =
+    row?.status === "trialing"
+      ? row.trial_ends_at
+      : (row?.current_period_end ?? null);
+  const PLAN_NAMES = {
+    starter: "Starter",
+    growth: "Growth",
+    business: "Business",
+  } as const;
+  const planName = row?.tier ? PLAN_NAMES[row.tier] : null;
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -279,8 +285,13 @@ export default function CompanyDashboardPage() {
 
   const isVerified = company.verificationStatus === "verified";
   const isPending = company.verificationStatus === "pending";
-  const isPro = tier === "pro";
+  const isPro = live;
   const isOwner = ownId === company._id;
+  const membership = company.team.find((m) => m.userId === user._id);
+  const canManageBilling =
+    isOwner ||
+    (membership?.role === "admin" &&
+      (membership.permissions ?? []).includes("manage_billing"));
   const isCompanyAdmin = company.team.some(
     (member) => member.userId === user._id && member.role === "admin",
   );
@@ -329,8 +340,8 @@ export default function CompanyDashboardPage() {
                   {isPending ? "Verification pending" : "Unverified"}
                 </Badge>
               )}
-              <Badge variant={isPro ? "default" : "secondary"}>
-                {isPro ? "Pro plan" : "Standard plan"}
+              <Badge variant={live ? "default" : "secondary"}>
+                {live ? `${planName} plan` : "No AI plan"}
                 {isTrial && daysLeft !== null ? ` · ${daysLeft}d trial` : ""}
               </Badge>
             </div>
@@ -474,33 +485,6 @@ export default function CompanyDashboardPage() {
             </div>
           </motion.section>
 
-          <motion.section
-            variants={shouldReduceMotion ? undefined : sectionVariants}
-            className={SECTION_CLASS}
-          >
-            <SectionHeading
-              title="Plan features"
-              description={
-                isPro
-                  ? "Features currently available on your plan."
-                  : "See what is included and what becomes available with Pro."
-              }
-              icon={<LuSparkles className="h-4 w-4" />}
-            />
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FeatureRow
-                icon={<LuMessageCircle className="h-4 w-4" />}
-                label="WhatsApp notifications"
-                active={features.whatsappNotifications}
-              />
-              <FeatureRow
-                icon={<LuCrown className="h-4 w-4" />}
-                label="Priority support"
-                active={features.prioritySupport}
-              />
-            </div>
-          </motion.section>
           <CompanyFaqs companyId={company._id} />
         </div>
 
@@ -564,7 +548,7 @@ export default function CompanyDashboardPage() {
             variants={shouldReduceMotion ? undefined : sectionVariants}
             className={cn(
               "rounded-2xl border p-5",
-              isPro
+              live
                 ? "border-primary/20 bg-card"
                 : "border-primary/25 bg-primary/4",
             )}
@@ -576,38 +560,44 @@ export default function CompanyDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">
-                    {isPro ? "Pro subscription" : "Explore Pro"}
+                    {live ? `${planName} plan` : "AI calling plans"}
                   </p>
                   <p className="text-xs text-muted">
-                    {isPro ? "Your current plan" : "Unlock more capabilities"}
+                    {live
+                      ? isTrial
+                        ? "Free chat trial"
+                        : "Your current plan"
+                      : "Not subscribed yet"}
                   </p>
                 </div>
               </div>
-              <Badge variant={isPro ? "success" : "secondary"}>
-                {isPro ? "Active" : "Standard"}
+              <Badge variant={live ? "success" : "secondary"}>
+                {live ? "Active" : "Inactive"}
               </Badge>
             </div>
 
             <p className="mt-4 text-sm leading-6 text-muted">
-              {isPro
+              {live
                 ? isTrial && daysLeft !== null
-                  ? `Your free trial ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`
-                  : "AI calling, AI chat and JV access are active on your subscription."
-                : `Upgrade to Pro for ${naira.format(30_000_000 / 100)}/month and unlock AI calling, AI chat and JV access.`}
+                  ? `Your chat trial ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Phone numbers and calls start once you subscribe.`
+                  : periodEnd
+                    ? `Renews ${new Date(periodEnd).toLocaleDateString("en-NG", { dateStyle: "medium" })}.`
+                    : "Your AI plan is active."
+                : "Choose a plan to start your AI assistant. Plans start at ₦100,000 a month."}
             </p>
 
-            {isOwner ? (
+            {canManageBilling ? (
               <Button
-                href="/company/pro"
+                href="/company/ai-plans"
                 className="mt-4 w-full"
                 size="sm"
                 leftIcon={<LuSparkles className="h-4 w-4" />}
               >
-                {isPro ? "Manage subscription" : "Try Pro free for 7 days"}
+                {live ? "Manage plan" : "Choose a plan"}
               </Button>
             ) : (
               <p className="mt-4 rounded-lg bg-muted/10 px-3 py-2 text-xs leading-5 text-muted">
-                Only the company owner can manage billing.
+                Only people with billing access can change the plan.
               </p>
             )}
           </motion.section>
@@ -639,7 +629,7 @@ export default function CompanyDashboardPage() {
                   <p className="mt-1 text-xs leading-5 text-muted">
                     {isPending
                       ? "Your company is under review, usually within 2–5 business days. You can prepare your AI assistant in draft mode while you wait."
-                      : "Complete company verification to unlock partnership features, including AI calling on Pro."}
+                      : "Complete company verification to unlock partnership features, including AI calling."}
                   </p>
                   {!isPending && (
                     <Button

@@ -16,7 +16,8 @@ function previewFor(row: any, isAgentSide: boolean): string {
   const mine =
     (isAgentSide && row.last_sender_type === "cs_agent") ||
     (!isAgentSide && row.last_sender_type === "viewer");
-  const who = row.last_sender_type === "system" ? "Assistant: " : mine ? "You: " : "";
+  const who =
+    row.last_sender_type === "system" ? "Assistant: " : mine ? "You: " : "";
   return `${who}${row.last_message}`;
 }
 
@@ -25,7 +26,11 @@ function mapMessage(m: any): ThreadEvent {
     type: "message",
     id: m.id,
     sender:
-      m.sender_type === "viewer" ? "buyer" : m.sender_type === "cs_agent" ? "agent" : "assistant",
+      m.sender_type === "viewer"
+        ? "buyer"
+        : m.sender_type === "cs_agent"
+          ? "agent"
+          : "assistant",
     text: m.content,
     timestamp: new Date(m.sent_at),
   };
@@ -42,20 +47,24 @@ export async function fetchMyEnquiries(
   if (error) throw error;
 
   return (data ?? [])
-    .filter((r: any) => (isAgentSide ? r.agent_id === userId : r.viewer_id === userId))
+    .filter((r: any) =>
+      isAgentSide ? r.agent_id === userId : r.viewer_id === userId,
+    )
     .map(
       (r: any): Enquiry => ({
         id: r.id,
         propertyId: r.listing_id,
         propertyTitle: r.listing_title,
         propertyImage: r.listing_image ?? "",
+        companyId: r.company_id ?? undefined,
+        companyName: r.company_name ?? undefined,
         buyerId: r.viewer_id,
         buyerName: r.viewer_name ?? "Buyer",
         buyerAvatar: r.viewer_avatar ?? undefined,
         buyerPhone: r.contact_phone ?? undefined,
         agentId: r.agent_id,
         agentName: r.agent_name ?? "Agent",
-        agentType: r.agent_type ?? "cs_agent",
+        agentType: r.company_id ? "company" : "user",
         stage: r.stage,
         status: r.status,
         lastEventPreview: previewFor(r, isAgentSide),
@@ -72,7 +81,9 @@ export async function fetchCompanyEnquiries(
   client?: SupabaseClient,
 ): Promise<Enquiry[]> {
   const supabase = client ?? createClient();
-  const { data, error } = await supabase.rpc("get_company_enquiries", { _company_id: companyId });
+  const { data, error } = await supabase.rpc("get_company_enquiries", {
+    _company_id: companyId,
+  });
   if (error) throw error;
   return (data ?? []).map(
     (r: any): Enquiry => ({
@@ -80,16 +91,17 @@ export async function fetchCompanyEnquiries(
       propertyId: r.listing_id,
       propertyTitle: r.listing_title,
       propertyImage: r.listing_image ?? "",
+      companyId: r.company_id ?? undefined,
+      companyName: r.company_name ?? undefined,
+      contactUserId: r.company_id ? r.agent_id : undefined,
+      contactUserName: r.company_id ? (r.agent_name ?? undefined) : undefined,
       buyerId: r.viewer_id,
       buyerName: r.viewer_name ?? "Buyer",
       buyerAvatar: r.viewer_avatar ?? undefined,
       buyerPhone: r.contact_phone ?? undefined,
       agentId: r.agent_id,
       agentName: r.agent_name ?? "Agent",
-      agentType: "cs_agent",
-      companyId,
-      contactUserId: r.agent_id ?? undefined,
-      contactUserName: r.agent_name ?? undefined,
+      agentType: "company",
       stage: r.stage,
       status: r.status,
       lastEventPreview: previewFor(r, true),
@@ -148,7 +160,12 @@ export async function sendEnquiryMessage(
   const { data, error } = await supabase
     .from("inquiry_messages")
     // sender_type is overwritten by the database from who is sending.
-    .insert({ inquiry_id: enquiryId, sender_id: senderId, sender_type: "viewer", content: text })
+    .insert({
+      inquiry_id: enquiryId,
+      sender_id: senderId,
+      sender_type: "viewer",
+      content: text,
+    })
     .select("id, sender_type, content, sent_at")
     .single();
   if (error) throw error;
@@ -161,7 +178,10 @@ export async function updateEnquiryStage(
   client?: SupabaseClient,
 ) {
   const supabase = client ?? createClient();
-  const { error } = await supabase.from("inquiries").update({ stage }).eq("id", enquiryId);
+  const { error } = await supabase
+    .from("inquiries")
+    .update({ stage })
+    .eq("id", enquiryId);
   if (error) throw error;
 }
 

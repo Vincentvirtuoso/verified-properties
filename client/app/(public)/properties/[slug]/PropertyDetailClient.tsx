@@ -18,7 +18,7 @@ import PropertyVideos from "@/components/property/PropertyVideos";
 import ContactForm from "@/components/property/ContactForm";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { LocationPlaceholder } from "@/components/property/PropertyLocation";
-import AgentCard from "@/components/property/AgentCard";
+import OwnerCard from "@/components/property/AgentCard";
 
 interface PropertyDetailClientProps {
   property: PopulatedProperty;
@@ -35,11 +35,11 @@ export default function PropertyDetailClient({
 }: PropertyDetailClientProps) {
   const { bannerHeight } = useBannerHeightContext();
 
+  console.log("company", property.company);
+
   return (
     <div
       className="min-h-screen bg-background"
-      // Expose the banner height as a CSS var so the sticky sidebar
-      // can offset itself with pure CSS — no resize listener needed.
       style={
         { "--banner-offset": `${bannerHeight ?? 0}px` } as React.CSSProperties
       }
@@ -156,14 +156,12 @@ export default function PropertyDetailClient({
           </div>
 
           <div className="lg:col-span-1">
-            {/* Pure CSS sticky offset — works on all screen sizes:
-                mobile  → non-sticky (sticky is lg: only)
-                desktop → 85px + banner height, updates reactively */}
             <div className="space-y-4 lg:sticky lg:top-[calc(85px+var(--banner-offset,0px))]">
               {typeof property.ownerId !== "string" && (
-                <AgentCard
+                <OwnerCard
                   owner={property.ownerId}
                   ownerType={property.ownerType}
+                  company={property.company ?? null}
                 />
               )}
               <ContactForm

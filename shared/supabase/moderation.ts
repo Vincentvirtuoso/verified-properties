@@ -97,7 +97,15 @@ export async function uploadIdentityDocument(
   client?: SupabaseClient,
 ) {
   if (file.size > MAX_ID_BYTES) throw new Error("The file must be 10 MB or smaller.");
-  if (!/^(image\/|application\/pdf)/.test(file.type)) throw new Error("Upload a photo or a PDF.");
+  const ALLOWED_ID_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+  ];
+  if (!ALLOWED_ID_TYPES.includes(file.type)) {
+    throw new Error("Upload a JPG, PNG, WebP or PDF.");
+  }
   const supabase = sb(client);
   const path = `${userId}/${crypto.randomUUID()}-${safeName(file.name)}`;
   const up = await supabase.storage.from("identity-documents").upload(path, file, { contentType: file.type });

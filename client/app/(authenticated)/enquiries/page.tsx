@@ -10,9 +10,11 @@ import type { Enquiry } from "@affilhomes/shared/types/enquiry";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { EnquiriesSkeleton } from "@/components/enquiries/EnquirySkeleton";
 import { useEnquiryListRealtime } from "@/components/enquiries/useEnquiryListRealtime";
+import Link from "next/link";
+import { Alert } from "@affilhomes/shared/ui/Alert";
 
 export default function EnquiriesPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, companies } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { bannerHeight } = useBannerHeightContext();
@@ -89,9 +91,22 @@ export default function EnquiriesPage() {
     selectedId,
     enquiries,
     setEnquiries,
-    onUnknownEnquiry: loadEnquiries, 
+    onUnknownEnquiry: loadEnquiries,
     // enabled: !isTeammate,
   });
+
+  const canViewTeamInbox = user
+    ? companies.some(
+        (c) =>
+          c.ownerId === user._id ||
+          c.team.some(
+            (m) =>
+              m.userId === user._id &&
+              m.role === "admin" &&
+              (m.permissions ?? []).includes("manage_enquiries"),
+          ),
+      )
+    : false;
 
   if (isLoading || (user && listLoading)) {
     return <EnquiriesSkeleton />;
@@ -106,19 +121,27 @@ export default function EnquiriesPage() {
           selected ? "hidden md:flex" : "flex"
         }`}
       >
-        <div className="px-4 py-4 border-b border-border">
-          <h1 className="text-lg font-semibold text-foreground">
-            {isAgentSide ? "Enquiries" : "My Enquiries"}
-          </h1>
-          <p className="text-sm text-muted mt-0.5">
-            {isAgentSide
-              ? "Buyers who've reached out about your listings"
-              : "Your conversations about properties you've enquired on"}
-          </p>
+        <div className="px-4 py-4 border-b border-border flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">
+              {isAgentSide ? "Enquiries" : "My Enquiries"}
+            </h1>
+            <p className="text-sm text-muted mt-0.5">
+              {isAgentSide
+                ? "Buyers who've reached out about your listings"
+                : "Your conversations about properties you've enquired on"}
+            </p>
+          </div>
+          {canViewTeamInbox && (
+            <Link
+              href="/company/enquiries"
+              className="shrink-0 text-xs font-medium text-primary hover:underline"
+            >
+              Team enquiries
+            </Link>
+          )}
         </div>
-        {listError && (
-          <p className="px-4 py-3 text-sm text-destructive">{listError}</p>
-        )}
+        {listError && <Alert>{listError}</Alert>}
         <EnquiryList
           enquiries={enquiries}
           selectedId={selected?.id}

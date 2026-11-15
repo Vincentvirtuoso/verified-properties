@@ -2,25 +2,38 @@
 
 import {
   createContext,
-  useContext,
-  useState,
-  ReactNode,
   useCallback,
+  useContext,
+  useId,
+  useState,
+  type ReactNode,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LuChevronDown } from "react-icons/lu";
 import { cn } from "../utils";
 
-interface AccordionContextType {
+type AccordionContextType = {
   expandedValue: string | null;
   onToggle: (value: string) => void;
-}
+  baseId: string;
+};
+
 const AccordionContext = createContext<AccordionContextType>({
   expandedValue: null,
   onToggle: () => {},
+  baseId: "",
 });
 
 const ItemContext = createContext<string>("");
+
+/** Builds valid, unique DOM ids for one item from the accordion's id and the item's value. */
+function itemIds(baseId: string, value: string) {
+  const safe = value.replace(/[^a-zA-Z0-9_-]/g, "");
+  return {
+    trigger: `${baseId}-${safe}-trigger`,
+    panel: `${baseId}-${safe}-panel`,
+  };
+}
 
 export function Accordion({
   children,
@@ -30,6 +43,7 @@ export function Accordion({
   className?: string;
 }) {
   const [expandedValue, setExpandedValue] = useState<string | null>(null);
+  const baseId = useId();
 
   const handleToggle = useCallback((value: string) => {
     setExpandedValue((prev) => (prev === value ? null : value));
@@ -37,7 +51,7 @@ export function Accordion({
 
   return (
     <AccordionContext.Provider
-      value={{ expandedValue, onToggle: handleToggle }}
+      value={{ expandedValue, onToggle: handleToggle, baseId }}
     >
       <div className={cn("space-y-4", className)}>{children}</div>
     </AccordionContext.Provider>
@@ -57,7 +71,7 @@ export function AccordionItem({
     <ItemContext.Provider value={value}>
       <div
         className={cn(
-          "border border-border rounded-xl overflow-hidden",
+          "overflow-hidden rounded-xl border border-border",
           className,
         )}
       >
@@ -74,39 +88,45 @@ export function AccordionTrigger({
 }: {
   children: ReactNode;
   className?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }) {
   const value = useContext(ItemContext);
-  const { expandedValue, onToggle } = useContext(AccordionContext);
+  const { expandedValue, onToggle, baseId } = useContext(AccordionContext);
   const isExpanded = expandedValue === value;
+  const ids = itemIds(baseId, value);
 
   return (
-    <button
-      onClick={() => onToggle(value)}
-      className={cn(
-        "w-full flex items-start gap-4 p-4 text-left hover:bg-muted/10 transition-colors",
-        className,
-      )}
-    >
-      {icon && (
-        <div className="shrink-0 w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400">
-          {icon}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-foreground text-sm sm:text-base">
+    <h3 className="m-0">
+      <button
+        type="button"
+        id={ids.trigger}
+        aria-expanded={isExpanded}
+        aria-controls={ids.panel}
+        onClick={() => onToggle(value)}
+        className={cn(
+          "flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          className,
+        )}
+      >
+        {icon && (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            {icon}
+          </span>
+        )}
+        <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-foreground sm:text-base">
             {children}
-          </h3>
+          </span>
           <LuChevronDown
+            aria-hidden="true"
             className={cn(
-              "w-4 h-4 text-muted transition-transform duration-200",
+              "h-4 w-4 shrink-0 text-muted transition-transform duration-200",
               isExpanded && "rotate-180",
             )}
           />
-        </div>
-      </div>
-    </button>
+        </span>
+      </button>
+    </h3>
   );
 }
 
@@ -118,14 +138,18 @@ export function AccordionContent({
   className?: string;
 }) {
   const value = useContext(ItemContext);
-  const { expandedValue } = useContext(AccordionContext);
+  const { expandedValue, baseId } = useContext(AccordionContext);
   const isExpanded = expandedValue === value;
+  const ids = itemIds(baseId, value);
 
   return (
     <AnimatePresence initial={false}>
       {isExpanded && (
         <motion.div
           key="content"
+          id={ids.panel}
+          role="region"
+          aria-labelledby={ids.trigger}
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -133,7 +157,7 @@ export function AccordionContent({
           className="overflow-hidden"
         >
           <div className={cn("px-4 pb-4 pt-2", className)}>
-            <div className="pt-2 border-t border-border">{children}</div>
+            <div className="border-t border-border pt-2">{children}</div>
           </div>
         </motion.div>
       )}

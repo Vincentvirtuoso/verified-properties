@@ -64,6 +64,8 @@ export interface ListPropertyFormData {
   videoLinks: string[];
 
   documentTypes: PropertyDocumentType[];
+
+  companyId: string;
 }
 
 const STORAGE_KEY = "listPropertyFormData";
@@ -96,6 +98,7 @@ const getDefaultData = (
   documentTypes: [],
   imageSections: [],
   locationVisibility: "private",
+  companyId: "",
 });
 
 function hasMeaningfulContent(data: ListPropertyFormData): boolean {
@@ -425,10 +428,10 @@ export function useListPropertyForm() {
         if (formData.imageFiles.length > MAX_IMAGES) {
           newErrors.imageFiles = `Up to ${MAX_IMAGES} photos allowed`;
         }
-          if (formData.imageSections.length !== formData.imageFiles.length) {
-            newErrors.imageFiles =
-              "Photo sections are out of sync. Please re-add the photos.";
-          }
+        if (formData.imageSections.length !== formData.imageFiles.length) {
+          newErrors.imageFiles =
+            "Photo sections are out of sync. Please re-add the photos.";
+        }
       }
 
       setErrors(newErrors);
@@ -502,5 +505,4 @@ export function useListPropertyForm() {
     missingPhotoCount,
     photoSaveFailed,
   };
-  
 }

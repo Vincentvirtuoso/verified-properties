@@ -5,7 +5,8 @@ import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role } from "@affilhomes/shared/types";
-import { useEntitlements } from "@/hooks/useEntitlements";
+import { useAiPlan } from "@/hooks/useAiPlan";
+// import { useEntitlements } from "@/hooks/useEntitlements";
 
 type Step = {
   title: string;
@@ -241,8 +242,8 @@ function PageSkeleton() {
 
 export default function AICallingPageClient() {
   const { user } = useAuth();
-  const { tier, ready } = useEntitlements(user?.companyId?._id);
-  const isPro = tier === "pro";
+  const { live, ready } = useAiPlan("company", user?.companyId?._id);
+  const isPro = live;
   const { content, isLoading } = usePageVariant(isPro);
 
   if (isLoading || !ready) {

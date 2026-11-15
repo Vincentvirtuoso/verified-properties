@@ -22,16 +22,19 @@ import {
 } from "react-icons/lu";
 import { useState } from "react";
 import { imageLoader } from "@/utils";
+import { PublicFaq } from "@affilhomes/shared/supabase";
+import { OwnerFaqs } from "@/components/common/OwnerFaqs";
 
 export default function AgentClient({
   agent,
   listings,
   closedDeals,
+  faqs,
 }: {
   agent: PopulatedUser;
-  id: string;
   listings: PopulatedProperty[];
   closedDeals: number;
+  faqs: PublicFaq[];
 }) {
   const populatedListings = listings;
   const defaultAgentImage = "/placeholder_avatar.png";
@@ -135,6 +138,10 @@ export default function AgentClient({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <OwnerFaqs faqs={faqs} />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-16">

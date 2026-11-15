@@ -26,7 +26,9 @@ export interface CompanyMemberDetails {
 export type CompanyPermission =
   | "manage_listings"
   | "manage_members"
-  | "view_analytics";
+  | "view_analytics"
+  | "manage_billing"
+  | "manage_enquiries";
 
 export interface CompanyOnboardingDocs {
   cacCertificateUrl: string;
@@ -40,6 +42,7 @@ export interface CompanyOnboardingDocs {
 
 export interface Company {
   _id: string;
+  ownerId: string;
   name: string;
   slug: string;
   logo?: string;

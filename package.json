@@ -10,7 +10,7 @@
     "unrs-resolver@1.12.2": true
   },
   "scripts": {
-    "dev": "concurrently -n client,admin -c blue,green \"npm run dev -w client\" \"npm run dev -w admin\"",
+    "dev": "concurrently -n client,admin -c red,yellow \"npm run dev -w client\" \"npm run dev -w admin\"",
     "dev:client": "npm run dev -w client",
     "dev:admin": "npm run dev -w admin"
   },

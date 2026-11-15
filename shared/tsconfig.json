@@ -11,6 +11,6 @@
     "isolatedModules": true,
     "types": ["node"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "../client/lib/entitlements.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

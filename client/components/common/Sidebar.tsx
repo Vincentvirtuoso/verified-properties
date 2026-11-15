@@ -23,6 +23,7 @@ import {
   LuCreditCard,
   LuCircleAlert,
   LuRotateCw,
+  LuSparkles,
 } from "react-icons/lu";
 import { useBannerHeightContext } from "@/contexts/BannerHeightContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -192,6 +193,12 @@ function getRoleLinks(
             data.analyticsIsNew ? labelSlot("New", "info") : undefined,
           ),
         },
+        {
+          href: "/dashboard/ai-plans",
+          label: "AI calling plans",
+          icon: <LuSparkles />,
+          category: "Management",
+        },
         ...commonTrailing,
       ];
 
@@ -235,16 +242,10 @@ function getRoleLinks(
           ),
         },
         {
-          href: "/company/pro",
-          label: "Manage Pro",
-          icon: <LuBriefcase />,
+          href: "/company/ai-plans",
+          label: "AI calling plans",
+          icon: <LuSparkles />,
           category: "Management",
-          ...withSlot(
-            labelSlot(
-              data.openRolesCount ? String(data.openRolesCount) : undefined,
-              "warning",
-            ),
-          ),
         },
         ...commonTrailing,
       ];

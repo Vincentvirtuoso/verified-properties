@@ -74,6 +74,32 @@ const EMPTY_COPY: Record<
   },
 };
 
+function idQuickReasons(
+  label: string,
+): Partial<Record<ReviewDecision, string[]>> {
+  return {
+    approve: [
+      `Name on the ${label} matches the account holder.`,
+      `${label} is government-issued and unexpired.`,
+      `All text and the ${label} number are legible.`,
+      "Photo matches the account holder.",
+    ],
+    reject: [
+      `Name on the ${label} doesn't match the account holder.`,
+      `${label} appears altered or photoshopped.`,
+      `${label} is expired.`,
+      `${label} is unreadable, blurred, or partially obscured.`,
+      "This isn't an accepted ID type (must be NIN, passport, or driver's license).",
+    ],
+    more_info: [
+      `Re-upload a clearer photo of your ${label}.`,
+      "Make sure all four corners of the document are visible.",
+      `The ${label} image is blurred or cropped.`,
+      `Use an unexpired ${label}.`,
+    ],
+  };
+}
+
 const ID_STATUS_TONE: Record<string, Tone> = {
   pending: "warning",
   approved: "success",
@@ -145,7 +171,8 @@ export function VerificationView() {
     win.opener = null;
     try {
       win.location.href = await documentLink(path, bucket);
-    } catch {
+    } catch (e) {
+      console.error("documentLink failed", path, bucket, e);
       win.close();
       setDocError("Couldn't open that document. Try again in a moment.");
     } finally {
@@ -307,6 +334,24 @@ function VerificationCard({
       typeof entry[1] === "string" && entry[1] !== "",
   );
 
+  const AGENT_QUICK_REASONS = {
+    approve: [
+      "Government ID name matches the account holder.",
+      "License or registration number checked and valid.",
+      "Contact details are reachable.",
+    ],
+    reject: [
+      "Government ID is unreadable or expired.",
+      "ID name doesn't match the account holder.",
+      "License or registration number could not be verified.",
+    ],
+    more_info: [
+      "Upload a clearer copy of your government ID.",
+      "Provide your professional license or registration number.",
+      "Upload a current proof of address.",
+    ],
+  };
+
   return (
     <li className="space-y-4 rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-sm sm:p-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -415,7 +460,11 @@ function VerificationCard({
           <SectionLabel icon={LuShieldCheck}>
             {isAgent ? "Agent decision" : "Company decision"}
           </SectionLabel>
-          <ReviewActions onDecide={onDecide} />
+          <ReviewActions
+            onDecide={onDecide}
+            quickReasons={isAgent ? AGENT_QUICK_REASONS : undefined}
+          />
+          ;
         </div>
       )}
     </li>
@@ -435,6 +484,8 @@ function IdDocRow({
 }) {
   const label = ID_DOC_LABEL[doc.docType as IdDocType] ?? doc.docType;
   const tone = ID_STATUS_TONE[doc.status] ?? "neutral";
+
+  const quickReasons = useMemo(() => idQuickReasons(label), [label]);
 
   return (
     <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">
@@ -456,6 +507,7 @@ function IdDocRow({
 
       {doc.status === "pending" && (
         <ReviewActions
+          quickReasons={quickReasons}
           onDecide={async (decision, reason) => {
             await reviewIdentityDocument(doc.id, decision, reason);
 

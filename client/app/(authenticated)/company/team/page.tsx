@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import {
   LuArrowLeft,
   LuEye,
@@ -14,6 +13,9 @@ import {
   LuUserRound,
   LuBuilding2,
   LuClock3,
+  LuEllipsisVertical,
+  LuReceipt,
+  LuSend,
 } from "react-icons/lu";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,13 +45,26 @@ import {
 import { MemberDetailsModal } from "@/components/company/MemberDetailsModal";
 import {
   ALL_PERMISSIONS,
+  InvitableRole,
   PERMISSION_LABELS,
   listPendingInvitations,
   removeCompanyMember,
   revokeCompanyInvitation,
+  setCompanyBillingAccess,
+  setCompanyEnquiryAccess,
+  updateCompanyMember,
   type CompanyInvitation,
 } from "@affilhomes/shared/supabase";
 import { Alert } from "@affilhomes/shared/ui/Alert";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownSeparator,
+} from "@affilhomes/shared/ui";
+import { PermissionsModal } from "@/components/company/PermissionsModal";
+import { Callout } from "@affilhomes/shared/ui/Callout";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-NG", {
@@ -68,10 +83,14 @@ export default function CompanyTeamPage() {
 
   const membership =
     company?.team.find((member) => member.userId === user?._id) ?? null;
+  const isOwner = !!company && company.ownerId === user?._id;
   const isAdmin = membership?.role === "admin";
-  const myPermissions: CompanyPermission[] = isAdmin
-    ? ALL_PERMISSIONS
-    : (membership?.permissions ?? []);
+  const hasBilling =
+    isOwner ||
+    (isAdmin && (membership?.permissions ?? []).includes("manage_billing"));
+
+  const myPermissions: CompanyPermission[] =
+    isOwner || isAdmin ? ALL_PERMISSIONS : (membership?.permissions ?? []);
   const canManageMembers = myPermissions.includes("manage_members");
 
   const canRemove = (member: CompanyMember) =>
@@ -79,6 +98,16 @@ export default function CompanyTeamPage() {
     canManageMembers &&
     member.userId !== user._id &&
     (member.role !== "admin" || !!isAdmin);
+  const canUpdatePermissions = useCallback(
+    (member: CompanyMember) => {
+      if (!user) return false;
+      if (member.userId === user._id) return false;
+      if (member.userId === company?.ownerId) return false;
+      if (isOwner) return true;
+      return isAdmin && member.role === "member";
+    },
+    [user, company?.ownerId, isOwner, isAdmin],
+  );
 
   const [invitations, setInvitations] = useState<CompanyInvitation[]>([]);
   const [invitationsLoading, setInvitationsLoading] = useState(false);
@@ -149,6 +178,103 @@ export default function CompanyTeamPage() {
       setBusyAction(null);
     }
   };
+
+  const handleBillingAccess = async (member: CompanyMember) => {
+    if (!teamId) return;
+    const granted = !member.permissions.includes("manage_billing");
+
+    const ok = await confirm({
+      title: granted ? "Give billing access?" : "Remove billing access?",
+      message: granted
+        ? "They can change the AI plan, add and release phone numbers, and see charges."
+        : "They will no longer be able to change the AI plan or manage phone numbers.",
+      confirmLabel: granted ? "Give access" : "Remove access",
+      cancelLabel: "Cancel",
+      ...(granted ? {} : { variant: "danger" as const }),
+    });
+    if (!ok) return;
+
+    setActionError(null);
+    setNotice(null);
+    setBusyAction(`billing:${member.userId}`);
+
+    try {
+      await setCompanyBillingAccess(teamId, member.userId, granted);
+      await refreshUser();
+      setNotice(granted ? "Billing access given." : "Billing access removed.");
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Couldn't update billing access."));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleEnquiryAccess = async (member: CompanyMember) => {
+    if (!teamId) return;
+    const granted = !member.permissions.includes("manage_enquiries");
+
+    const ok = await confirm({
+      title: granted
+        ? "Give access to enquiries?"
+        : "Remove access to enquiries?",
+      message: granted
+        ? "They can read every enquiry on the company's listings and reply to buyers as the team."
+        : "They will no longer see the team inbox.",
+      confirmLabel: granted ? "Give access" : "Remove access",
+      cancelLabel: "Cancel",
+    });
+    if (!ok) return;
+
+    setActionError(null);
+    setNotice(null);
+    setBusyAction(`enquiries:${member.userId}`);
+
+    try {
+      await setCompanyEnquiryAccess(teamId, member.userId, granted);
+      await refreshUser();
+      setNotice(granted ? "Enquiry access given." : "Enquiry access removed.");
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Couldn't update enquiry access."));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleSaveMember = async (
+    role: InvitableRole,
+    permissions: CompanyPermission[],
+  ) => {
+    if (!teamId || !permissionsTarget) return;
+
+    setActionError(null);
+    setNotice(null);
+    setBusyAction(`permissions:${permissionsTarget.userId}`);
+
+    try {
+      await updateCompanyMember({
+        companyId: teamId,
+        userId: permissionsTarget.userId,
+        role,
+        permissions,
+      });
+      await refreshUser();
+      setNotice(
+        role === "admin" && permissionsTarget.role !== "admin"
+          ? "Member promoted to admin."
+          : role === "member" && permissionsTarget.role === "admin"
+            ? "Admin demoted to member."
+            : "Member permissions updated.",
+      );
+      setPermissionsTarget(null);
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Couldn't update this member."));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const [permissionsTarget, setPermissionsTarget] =
+    useState<CompanyMember | null>(null);
 
   const handleRemove = async (member: CompanyMember) => {
     if (!teamId) return;
@@ -252,33 +378,6 @@ export default function CompanyTeamPage() {
           </Button>
         )}
       </header>
-
-      {(notice || actionError) && (
-        <div className="space-y-2" aria-live="polite">
-          {notice && (
-            <div
-              role="status"
-              className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-900/10 dark:text-emerald-200"
-            >
-              <span>{notice}</span>
-              <button
-                type="button"
-                onClick={() => setNotice(null)}
-                className="shrink-0 text-xs font-semibold underline underline-offset-2"
-                aria-label="Dismiss success message"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          {actionError && (
-            <Alert onDismiss={() => setActionError(null)}>
-              <span>{actionError}</span>
-            </Alert>
-          )}
-        </div>
-      )}
 
       <section aria-label="Team overview" className="space-y-3">
         <div>
@@ -413,7 +512,11 @@ export default function CompanyTeamPage() {
                       <TableCell className="min-w-47.5">
                         {member.role === "admin" ? (
                           <span className="text-xs text-muted">
-                            All permissions
+                            {member.userId === company.ownerId
+                              ? "Owner · billing access"
+                              : member.permissions.includes("manage_billing")
+                                ? "Admin · billing access"
+                                : "Admin · no billing access"}
                           </span>
                         ) : member.permissions.length > 0 ? (
                           <TagOverflow
@@ -430,31 +533,115 @@ export default function CompanyTeamPage() {
                           </span>
                         )}
                       </TableCell>
+
                       <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelected(member)}
-                            aria-label="Member Details"
-                            title="View Member Details"
-                          >
-                            <LuEye className="h-4 w-4" />
-                          </Button>
-                          {canRemove(member) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={!!busyAction}
-                              className="text-rose-600 hover:text-rose-700"
-                              aria-label="Remove"
-                              title="Remove Member"
-                              onClick={() => void handleRemove(member)}
-                              isLoading={isBusy}
-                            >
-                              <LuTrash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                        <div className="flex justify-end">
+                          <Dropdown placement="bottom-end" offset={4}>
+                            <DropdownTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Member actions"
+                                title="Member actions"
+                                disabled={!!busyAction}
+                              >
+                                <LuEllipsisVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownTrigger>
+                            <DropdownContent className="min-w-45">
+                              <DropdownItem
+                                icon={<LuEye className="h-4 w-4" />}
+                                onClick={() => setSelected(member)}
+                              >
+                                View details
+                              </DropdownItem>
+
+                              {canUpdatePermissions(member) && (
+                                <>
+                                  <DropdownSeparator />
+                                  <DropdownItem
+                                    icon={<LuShieldCheck className="h-4 w-4" />}
+                                    disabled={
+                                      !!busyAction &&
+                                      busyAction !==
+                                        `permissions:${member.userId}`
+                                    }
+                                    loading={
+                                      busyAction ===
+                                      `permissions:${member.userId}`
+                                    }
+                                    onClick={() => {
+                                      setActionError(null);
+                                      setPermissionsTarget(member);
+                                    }}
+                                  >
+                                    Edit member
+                                  </DropdownItem>
+                                </>
+                              )}
+
+                              {isOwner && member.role === "admin" && !isYou && (
+                                <>
+                                  <DropdownSeparator />
+                                  <DropdownItem
+                                    icon={<LuSend className="h-4 w-4" />}
+                                    disabled={
+                                      !!busyAction &&
+                                      busyAction !==
+                                        `enquiries:${member.userId}`
+                                    }
+                                    loading={
+                                      busyAction ===
+                                      `enquiries:${member.userId}`
+                                    }
+                                    onClick={() =>
+                                      void handleEnquiryAccess(member)
+                                    }
+                                  >
+                                    {member.permissions.includes(
+                                      "manage_enquiries",
+                                    )
+                                      ? "Revoke enquiries"
+                                      : "Grant enquiries"}
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    icon={<LuReceipt className="h-4 w-4" />}
+                                    disabled={
+                                      !!busyAction &&
+                                      busyAction !== `billing:${member.userId}`
+                                    }
+                                    loading={
+                                      busyAction === `billing:${member.userId}`
+                                    }
+                                    onClick={() =>
+                                      void handleBillingAccess(member)
+                                    }
+                                  >
+                                    {member.permissions.includes(
+                                      "manage_billing",
+                                    )
+                                      ? "Revoke billing"
+                                      : "Grant billing"}
+                                  </DropdownItem>
+                                </>
+                              )}
+
+                              {canRemove(member) && (
+                                <>
+                                  <DropdownSeparator />
+                                  <DropdownItem
+                                    icon={<LuTrash2 className="h-4 w-4" />}
+                                    destructive
+                                    disabled={!!busyAction}
+                                    loading={isBusy}
+                                    onClick={() => void handleRemove(member)}
+                                  >
+                                    Remove member
+                                  </DropdownItem>
+                                </>
+                              )}
+                            </DropdownContent>
+                          </Dropdown>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -632,6 +819,43 @@ export default function CompanyTeamPage() {
           isYou={selected?.userId === user._id}
         />
       )}
+      {teamId && (
+        <PermissionsModal
+          open={!!permissionsTarget}
+          onClose={() => {
+            if (!busyAction) setPermissionsTarget(null);
+          }}
+          member={permissionsTarget}
+          grantable={myPermissions}
+          isOwner={company.ownerId === user._id}
+          saving={
+            !!permissionsTarget &&
+            busyAction === `permissions:${permissionsTarget.userId}`
+          }
+          error={permissionsTarget ? actionError : null}
+          onSave={handleSaveMember}
+        />
+      )}
+      <Callout
+        open={!!notice}
+        onClose={() => setNotice(null)}
+        variant="success"
+        position="bottom-right"
+        title="Done"
+        icon={null}
+      >
+        {notice}
+      </Callout>
+
+      <Callout
+        open={!!actionError}
+        onClose={() => setActionError(null)}
+        variant="danger"
+        position="bottom-right"
+        title="Something went wrong"
+      >
+        {actionError}
+      </Callout>
     </div>
   );
 }

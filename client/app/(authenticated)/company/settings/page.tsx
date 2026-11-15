@@ -4,10 +4,10 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useEntitlements } from "@/hooks/useEntitlements";
+// import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
-import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
+// import { UpgradeToProCTA } from "@/components/common/UpgradeToProCTA";
 import { AICallingSettings } from "@/components/company/AICallingSettings";
 import { FaqEditor } from "@/components/company/FaqEditor";
 import { DocumentsPanel } from "@/components/company/DocumentsPanel";
@@ -16,6 +16,9 @@ import { Breadcrumbs } from "@/components/common/BreadCrumbs";
 import { CompanyFeaturesSection } from "@/components/company/CompanyFeaturesSection";
 import { setWhatsappNotifications } from "@affilhomes/shared/supabase";
 import { DeleteCompanyCard } from "@/components/company/DeleteCompanyCard";
+import { useAiPlan } from "@/hooks/useAiPlan";
+import { DOCUMENT_MAX_MB } from "@/lib/ai-plans";
+import { AIPlanCTA } from "@/components/common/AIPlanCTA";
 
 const TABS = [
   { id: "general", label: "General" },
@@ -110,8 +113,7 @@ function SettingsContent() {
     typeof user?.companyId === "string" ? user.companyId : user?.companyId?._id;
   const company = companies.find((c) => c._id === ownId) ?? companies[0];
 
-  const { tier, ready, training } = useEntitlements(company?._id);
-
+  const { ready, live, canTrainDocuments } = useAiPlan("company", company?._id);
   const requested = searchParams.get("tab");
   const requestedTab: TabId = TABS.some((t) => t.id === requested)
     ? (requested as TabId)
@@ -129,14 +131,19 @@ function SettingsContent() {
 
   const activeTab = requestedTab;
 
-  const isOwner = ownId === company._id;
+  const membership = company.team.find((m) => m.userId === user._id);
+  const isOwner = company.ownerId === user._id;
+  const canManageBilling =
+    isOwner ||
+    (membership?.role === "admin" &&
+      (membership.permissions ?? []).includes("manage_billing"));
   const isAdmin = company.team.some(
     (m) => m.userId === user._id && m.role === "admin",
   );
   const canEdit = isOwner || isAdmin;
   const isVerified = company.verificationStatus === "verified";
   const isPending = company.verificationStatus === "pending";
-  const isPro = tier === "pro";
+  const isPro = live;
 
   const selectTab = (id: TabId) => {
     router.replace(`?tab=${id}`, { scroll: false });
@@ -146,10 +153,7 @@ function SettingsContent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <Breadcrumbs
         items={[
-          {
-            href: "/company/dashboard",
-            label: "Dashboard",
-          },
+          { href: "/company/dashboard", label: "Dashboard" },
           { label: "Settings" },
         ]}
       />
@@ -207,6 +211,7 @@ function SettingsContent() {
             />
 
             <CompanyFeaturesSection
+              canManageBilling={canManageBilling}
               features={company.features}
               isPro={isPro}
               isOwner={isOwner}
@@ -215,6 +220,7 @@ function SettingsContent() {
                 await refreshCompanies();
               }}
             />
+
             {isOwner && (
               <DeleteCompanyCard
                 companyId={company._id}
@@ -223,17 +229,19 @@ function SettingsContent() {
             )}
           </div>
         )}
+
         {activeTab === "ai-calling" && (
           <div className="space-y-6">
             {(isVerified || isPending) && (
               <AICallingSettings
-                companyId={company._id}
+                ownerType="company"
+                ownerId={company._id}
                 canEdit={canEdit}
                 canActivate={isVerified && isPro}
               />
             )}
 
-            {!isPro && <UpgradeToProCTA variant="card" />}
+            <AIPlanCTA ownerType="company" variant="card" showWhenLive />
 
             {!isVerified && !isPending && (
               <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-5 text-sm text-muted">
@@ -242,20 +250,26 @@ function SettingsContent() {
             )}
           </div>
         )}
+
         {activeTab === "training" && (
           <div className="space-y-6">
-            <FaqEditor companyId={company._id} canEdit={canEdit} />
+            <FaqEditor
+              ownerType="company"
+              ownerId={company._id}
+              canEdit={canEdit}
+            />
 
-            {training.documents ? (
+            {canTrainDocuments ? (
               <DocumentsPanel
-                companyId={company._id}
+                ownerType="company"
+                ownerId={company._id}
                 userId={user._id}
-                canEdit={isOwner || isAdmin}
-                quotaMb={training.documentMaxMb}
-                perFileMb={training.documentMaxMb}
+                canEdit={canEdit}
+                quotaMb={DOCUMENT_MAX_MB}
+                perFileMb={DOCUMENT_MAX_MB}
               />
             ) : (
-              <UpgradeToProCTA variant="card" />
+              <AIPlanCTA ownerType="company" variant="card" />
             )}
           </div>
         )}

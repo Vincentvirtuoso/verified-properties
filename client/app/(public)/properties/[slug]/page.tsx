@@ -17,11 +17,6 @@ import {
   fetchSimilarProperties,
 } from "@affilhomes/shared/supabase";
 
-/**
- * ISR: page HTML re-renders at most every 60s.
- * The DB query is cached with a tag so admins can purge it via
- * `revalidateTag("properties")`.
- */
 export const revalidate = 60;
 
 const SITE_URL =
@@ -35,8 +30,7 @@ const isUnavailable = (status: PropertyStatus): status is UnavailableStatus =>
 const getProperty = cache(
   unstable_cache(
     async (slug: string): Promise<PopulatedProperty | null> => {
-      // Cookieless client: unstable_cache can't read request cookies.
-      const supabase = await createClient();
+      const supabase = createClient();
       return fetchPropertyBySlug(slug, supabase);
     },
     ["property-by-slug"],
@@ -64,7 +58,6 @@ export async function generateMetadata({
   const location = `${property.location.city}, ${property.location.state}`;
   const title = `${property.title} | ${location}`;
 
-  // Unavailable listings stay out of search results but keep their links followable.
   if (!isUnavailable(property.status) && property.status !== "active") {
     return { title, robots: { index: false, follow: false } };
   }
@@ -104,14 +97,12 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const property = await getProperty(slug);
 
-  // Missing, or still pending review: not public.
   if (!property) notFound();
 
   if (property.status === "active") {
     return <PropertyDetailClient property={property} />;
   }
 
-  // Draft and any unexpected status: not public.
   if (!isUnavailable(property.status)) notFound();
 
   // sold | rented | inactive

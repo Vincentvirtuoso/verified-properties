@@ -1,3 +1,4 @@
+import { Company } from "./company";
 import {
   MediaSection,
   PropertyCategory,
@@ -61,7 +62,10 @@ export type Property<Populated extends boolean = false> = {
   features?: PropertyFeature[];
 
   ownerId: Populated extends true ? PopulatedUser : string;
+  companyId?: string | null;
+  /** Who holds the listing: an agent acting alone, or a company member. The AI owner is companyId when set, otherwise ownerId. */
   ownerType: PropertyOwnerType;
+  company?: Company | null;
 
   tier: ListingTier;
 

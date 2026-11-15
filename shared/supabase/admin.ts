@@ -271,6 +271,7 @@ export async function fetchVerificationQueue(
     { _status: status },
     client,
   );
+  console.log("verification queue raw", status, data);
   return (data ?? []).map((r) => ({
     subjectType: r.subject_type,
     subjectId: r.subject_id,
@@ -695,8 +696,6 @@ export async function fetchAuditLog(
   }));
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
-
-/** Signed link (10 min) to a private file, e.g. a CAC certificate or ID card. */
 export async function documentLink(
   path: string,
   bucket:
@@ -706,7 +705,6 @@ export async function documentLink(
     | "listing-videos" = "company-documents",
   client?: SupabaseClient,
 ): Promise<string> {
-  if (/^https?:\/\//.test(path)) return path;
   const { data, error } = await sb(client)
     .storage.from(bucket)
     .createSignedUrl(path, 600);

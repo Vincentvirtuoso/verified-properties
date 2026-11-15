@@ -81,7 +81,6 @@ export default function UserHeaderCard({
   return (
     <section className="relative" aria-label="Your account">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 rounded-t-2xl bg-linear-to-r from-emerald-500/10 via-teal-500/5 to-transparent md:h-48" />
-
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-md transition-shadow duration-300 hover:shadow-lg">
         <div className="h-24 border-b border-border/50 bg-muted/20 md:h-32" />
 
@@ -111,7 +110,7 @@ export default function UserHeaderCard({
             <div className="flex w-full flex-1 flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-                  <span className="break-words">{user.name}</span>
+                  <span className="wrap-break-word">{user.name}</span>
                   {isVerified && (
                     <>
                       <VerifiedBadge showText={false} />
@@ -197,14 +196,31 @@ export default function UserHeaderCard({
               >
                 View profile
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label="Edit profile settings"
-                onClick={openSettings}
-              >
-                <FiSettings aria-hidden="true" className="h-4 w-4" />
-              </Button>
+              {isAgent ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Edit profile settings"
+                  href="/dashboard/settings"
+                  leftIcon={
+                    <FiSettings aria-hidden="true" className="h-4 w-4" />
+                  }
+                >
+                  Profile Settings
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Edit profile settings"
+                  onClick={openSettings}
+                  leftIcon={
+                    <FiSettings aria-hidden="true" className="h-4 w-4" />
+                  }
+                >
+                  Profile Settings
+                </Button>
+              )}
             </div>
 
             {needsVerification && (
@@ -221,16 +237,17 @@ export default function UserHeaderCard({
           </div>
         </div>
       </div>
-
-      <Modal open={settingsOpen} onClose={closeSettings}>
-        {settingsOpen && (
-          <UserSettingsForm
-            user={user}
-            company={company}
-            onClose={closeSettings}
-          />
-        )}
-      </Modal>
+      {!isAgent && (
+        <Modal open={settingsOpen} onClose={closeSettings}>
+          {settingsOpen && (
+            <UserSettingsForm
+              user={user}
+              company={company}
+              onClose={closeSettings}
+            />
+          )}
+        </Modal>
+      )}
     </section>
   );
 }

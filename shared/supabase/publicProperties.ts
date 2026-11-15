@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "./client";
 import { mapPropertyRow } from "./properties";
 import { fetchPublicVideoIds } from "./moderation";
-import type { PopulatedProperty, PopulatedUser } from "../types";
+import type { Company, PopulatedProperty, PopulatedUser } from "../types";
 
 /**
  * Public (visitor-facing) property reads.
@@ -16,21 +16,6 @@ const PUBLIC_PROPERTY_SELECT = "*, property_images(url, alt, sort_order)";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function mapPublicOwner(row: any): PopulatedUser {
-  const company = row.company_id
-    ? {
-        _id: row.company_id,
-        name: row.company_name,
-        slug: row.company_slug,
-        logo: row.company_logo ?? undefined,
-        type: row.company_type,
-        verificationStatus: row.company_verification_status,
-        contactEmail: row.company_contact_email,
-        contactPhone: row.company_contact_phone ?? undefined,
-        whatsappNumber: row.company_whatsapp_number ?? undefined,
-        team: [],
-      }
-    : undefined;
-
   return {
     _id: row.id,
     name: row.name,
@@ -51,10 +36,24 @@ function mapPublicOwner(row: any): PopulatedUser {
           activeBoostedListings: 0,
         }
       : undefined,
-    companyId: company,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.created_at),
   } as unknown as PopulatedUser;
+}
+
+function mapPublicCompany(row: any): Company {
+  return {
+    _id: row.id,
+    name: row.name,
+    slug: row.slug,
+    logo: row.logo ?? undefined,
+    type: row.type,
+    verificationStatus: row.verification_status,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone ?? undefined,
+    whatsappNumber: row.whatsapp_number ?? undefined,
+    team: [],
+  } as unknown as Company;
 }
 
 const unknownOwner = (id: string): PopulatedUser =>
@@ -77,17 +76,26 @@ async function hydrate(
   if (rows.length === 0) return [];
 
   const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
+  const companyIds = [
+    ...new Set(rows.map((r) => r.company_id).filter(Boolean)),
+  ] as string[];
   const propertyIds = rows.map((r) => r.id);
 
-  const [owners, docs] = await Promise.all([
+  const [owners, docs, companies] = await Promise.all([
     supabase.rpc("get_public_listing_owners", { _owner_ids: ownerIds }),
     supabase.rpc("get_public_listing_document_types", {
       _property_ids: propertyIds,
     }),
+    companyIds.length > 0
+      ? supabase.rpc("get_public_listing_companies", {
+          _company_ids: companyIds,
+        })
+      : Promise.resolve({ data: [], error: null }),
   ]);
   if (owners.error) throw owners.error;
   if (docs.error) throw docs.error;
-  // Only videos reviewed and posted to the Affilhomes YouTube channel.
+  if (companies.error) throw companies.error;
+
   const videoMap = await fetchPublicVideoIds(
     rows.map((r) => r.id),
     supabase,
@@ -95,6 +103,9 @@ async function hydrate(
 
   const ownerMap = new Map<string, PopulatedUser>(
     (owners.data ?? []).map((o: any) => [o.id, mapPublicOwner(o)]),
+  );
+  const companyMap = new Map<string, Company>(
+    (companies.data ?? []).map((c: any) => [c.id, mapPublicCompany(c)]),
   );
   const docMap = new Map<string, any[]>();
   for (const d of docs.data ?? []) {
@@ -109,6 +120,7 @@ async function hydrate(
       ownerMap.get(row.owner_id) ?? unknownOwner(row.owner_id),
     ),
     videoLinks: videoMap.get(row.id) ?? [],
+    company: row.company_id ? (companyMap.get(row.company_id) ?? null) : null,
   }));
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

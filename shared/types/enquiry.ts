@@ -34,6 +34,7 @@ export interface Enquiry {
   contactUserId?: string;
   contactUserName?: string;
   companyId?: string;
+  companyName?: string;
   agentId: string;
   agentName: string;
   agentType: string;

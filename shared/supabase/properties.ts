@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "./client";
-import type { PopulatedProperty, PopulatedUser } from "../types";
+import type { Company, PopulatedProperty, PopulatedUser } from "../types";
 
 export const PROPERTY_SELECT =
-  "*, property_images(url, alt, sort_order, section), property_documents(id, document_type, title, file_url, uploaded_at, review_status, review_note)"; 
+  "*, property_images(url, alt, sort_order, section), property_documents(id, document_type, title, file_url, uploaded_at, review_status, review_note)";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function mapPropertyRow(
@@ -11,12 +11,12 @@ export function mapPropertyRow(
   owner: PopulatedUser,
 ): PopulatedProperty {
   const gallery = [...(row.property_images ?? [])]
-  .sort((a: any, b: any) => a.sort_order - b.sort_order)
-  .map((img: any) => ({
-    url: img.url,
-    alt: img.alt ?? undefined,
-    section: img.section ?? "exterior",
-  }));
+    .sort((a: any, b: any) => a.sort_order - b.sort_order)
+    .map((img: any) => ({
+      url: img.url,
+      alt: img.alt ?? undefined,
+      section: img.section ?? "exterior",
+    }));
 
   return {
     _id: row.id,
@@ -68,11 +68,11 @@ export function mapPropertyRow(
     totalClosedDeals: row.total_closed_deals,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    companyId: row.company_id ?? null,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-/** All listings owned by the given user (drafts included; RLS: owner only). */
 export async function fetchMyListings(
   owner: PopulatedUser,
   client?: SupabaseClient,
@@ -84,10 +84,40 @@ export async function fetchMyListings(
     .select(PROPERTY_SELECT)
     .eq("owner_id", owner._id)
     .order("created_at", { ascending: false });
-
   if (error) throw error;
 
-  return (data ?? []).map((row) => mapPropertyRow(row, owner));
+  const rows = data ?? [];
+  const companyIds = [
+    ...new Set(rows.map((r) => r.company_id).filter(Boolean)),
+  ] as string[];
+
+  const companyMap = new Map<string, Company>();
+  if (companyIds.length > 0) {
+    const { data: companies, error: companyError } = await supabase.rpc(
+      "get_public_listing_companies",
+      { _company_ids: companyIds },
+    );
+    if (companyError) throw companyError;
+    for (const c of companies ?? []) {
+      companyMap.set(c.id, {
+        _id: c.id,
+        name: c.name,
+        slug: c.slug,
+        logo: c.logo ?? undefined,
+        type: c.type,
+        verificationStatus: c.verification_status,
+        contactEmail: c.contact_email,
+        contactPhone: c.contact_phone ?? undefined,
+        whatsappNumber: c.whatsapp_number ?? undefined,
+        team: [],
+      } as unknown as Company);
+    }
+  }
+
+  return rows.map((row) => ({
+    ...mapPropertyRow(row, owner),
+    company: row.company_id ? (companyMap.get(row.company_id) ?? null) : null,
+  }));
 }
 
 export function slugifyTitle(title: string) {

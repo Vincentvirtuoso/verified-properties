@@ -32,6 +32,7 @@ import {
   requestEmailVerification,
   requestPhoneVerification,
 } from "@affilhomes/shared/supabase/verification";
+import { Callout } from "@affilhomes/shared/ui/Callout";
 
 type Tone = "neutral" | "pending" | "success" | "danger";
 type AppealType = "verification" | "identity_document" | "suspension";
@@ -239,34 +240,6 @@ export default function VerificationPage() {
         </p>
       </header>
 
-      {notice && (
-        <div
-          role="status"
-          className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-foreground"
-        >
-          {notice}
-        </div>
-      )}
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          {actionError}
-        </div>
-      )}
-      {loadError && (
-        <div
-          role="alert"
-          className="flex items-center justify-between gap-3 text-sm text-destructive"
-        >
-          <span>{loadError}</span>
-          <Button size="sm" variant="outline" onClick={reload}>
-            Try again
-          </Button>
-        </div>
-      )}
-
       {suspension && (
         <Card tone="danger" title="Your account is suspended">
           <p className="text-sm text-muted">Reason: {suspension.reason}</p>
@@ -418,6 +391,41 @@ export default function VerificationPage() {
           </div>
         </Card>
       )}
+      <Callout
+        open={!!notice}
+        onClose={() => setNotice(null)}
+        variant="success"
+        position="bottom-left"
+        title="Done"
+        icon={null}
+      >
+        {notice}
+      </Callout>
+
+      <Callout
+        open={!!actionError}
+        onClose={() => setActionError(null)}
+        variant="danger"
+        position="bottom-left"
+        title="Something went wrong"
+      >
+        {actionError}
+      </Callout>
+
+      <Callout
+        open={!!loadError}
+        onClose={() => setLoadError(null)}
+        variant="danger"
+        position="bottom-right"
+        title="Couldn't load verification status"
+        actions={
+          <Button size="sm" variant="outline" onClick={reload}>
+            Try again
+          </Button>
+        }
+      >
+        {loadError}
+      </Callout>
     </div>
   );
 }
@@ -548,10 +556,15 @@ function IdSection({
             variant="document"
             maxFiles={1}
             maxSizeInMB={10}
-            accept="image/*,application/pdf"
-            allowedTypes={["image/*", "application/pdf"]}
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            allowedTypes={[
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf",
+            ]}
             label={busy ? "Uploading..." : "Upload your government ID"}
-            description="Photo or PDF, up to 10 MB. Only our team can see it."
+            description="JPG, PNG, WebP or PDF, up to 10 MB. Only our team can see it."
             onUploadComplete={(files) => {
               void onUpload(files[0]);
             }}

@@ -590,7 +590,6 @@ export const Sidebar = ({ links: externalLinks }: SidebarProps) => {
 
   return (
     <>
-      <p>{role}</p>
       <div className="lg:hidden">
         <AnimatePresence>
           {mobileOpen && (

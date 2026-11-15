@@ -13,9 +13,14 @@ import {
   LuBatteryFull,
   LuBot,
 } from "react-icons/lu";
-import { useEntitlements } from "@/hooks/useEntitlements";
+import { useAiPlan } from "@/hooks/useAiPlan";
 
-type SpotlightVariant = "guest" | "agent" | "company-locked" | "company-live";
+type SpotlightVariant =
+  | "guest"
+  | "agent"
+  | "company-locked"
+  | "company-live"
+  | "agent-live";
 
 interface SpotlightContent {
   label?: string;
@@ -41,9 +46,15 @@ function useSpotlightVariant(): {
   const isVerified =
     typeof company === "object" && company?.verificationStatus === "verified";
 
-  const { tier, ready } = useEntitlements(
-    role === Role.Company ? companyId : undefined,
-  );
+  const ownerType = role === Role.Agent ? "agent" : "company";
+  const ownerId =
+    role === Role.Agent
+      ? user?._id
+      : role === Role.Company
+        ? companyId
+        : undefined;
+
+  const { live, ready } = useAiPlan(ownerType, ownerId);
 
   return useMemo(() => {
     if (!isAuthenticated || role === Role.Viewer) {
@@ -59,13 +70,27 @@ function useSpotlightVariant(): {
     }
 
     if (role === Role.Agent) {
+      if (!ready) return null;
+      if (live) {
+        return {
+          variant: "agent-live" as const,
+          content: {
+            headline: "Your AI Calling is live",
+            body: "Review recent calls and transcripts from your dashboard.",
+            ctaLabel: "Manage AI Calling",
+            ctaHref: "/dashboard/ai-calling",
+            secondaryLabel: "How calls are handled",
+            secondaryHref: HOW_IT_WORKS_HREF,
+          },
+        };
+      }
       return {
         variant: "agent" as const,
         content: {
           headline: "Every minute an enquiry waits, it cools",
-          body: "Partnership accounts get an assistant that calls new leads back within moments of an enquiry — before they move on to another listing.",
-          ctaLabel: "Upgrade to Partnership",
-          ctaHref: "/register-company",
+          body: "An assistant can call new leads back within moments of an enquiry, before they move on to another listing.",
+          ctaLabel: "Choose an AI plan",
+          ctaHref: "/dashboard/ai-plans",
           secondaryLabel: "See how it works",
           secondaryHref: HOW_IT_WORKS_HREF,
         },
@@ -75,7 +100,7 @@ function useSpotlightVariant(): {
     if (role === Role.Company) {
       if (!ready) return null;
 
-      if (isVerified && tier === "pro") {
+      if (isVerified && live) {
         return {
           variant: "company-live" as const,
           content: {
@@ -96,10 +121,12 @@ function useSpotlightVariant(): {
             ? "Turn on AI Calling for your team"
             : "AI Calling is ready as soon as you're verified",
           body: isVerified
-            ? "Pro unlocks an assistant that calls every new enquiry back automatically, logs the conversation, and tracks the buyer through to close."
-            : "You can train your assistant now in draft mode — it activates the moment your CAC verification clears.",
-          ctaLabel: isVerified ? "Upgrade to Pro" : "Set up your assistant",
-          ctaHref: isVerified ? "/company/pro" : "/company/ai-calling/setup",
+            ? "Choose a plan for an assistant that calls every new enquiry back, logs the conversation, and tracks the buyer through to close."
+            : "You can set up your assistant now in draft mode. It activates the moment your CAC verification clears.",
+          ctaLabel: isVerified ? "Choose an AI plan" : "Set up your assistant",
+          ctaHref: isVerified
+            ? "/company/ai-plans"
+            : "/company/ai-calling/setup",
           secondaryLabel: "See how it works",
           secondaryHref: HOW_IT_WORKS_HREF,
         },
@@ -107,7 +134,7 @@ function useSpotlightVariant(): {
     }
 
     return null;
-  }, [isAuthenticated, role, isVerified, tier, ready]);
+  }, [isAuthenticated, role, isVerified, live, ready]);
 }
 
 const ASSISTANT_NAME = "Ada — AI Assistant";

@@ -188,7 +188,7 @@ function getExtraInfo(
   if (activeRole === Role.Company) {
     const company = user.companyId;
     const status = company?.verificationStatus;
-    // const hasAiCalling = company?.features?.tier === "pro";
+    // const hasAiCalling = company?.features?.live;
 
     if (status !== "verified") {
       return {
@@ -229,7 +229,8 @@ export default function WelcomePage() {
   }
 
   const activeRole = user.activeRole as Role;
-  const guide = roleGuides[activeRole as ProfileRole] ?? roleGuides[Role.Viewer];
+  const guide =
+    roleGuides[activeRole as ProfileRole] ?? roleGuides[Role.Viewer];
   const extraInfo = getExtraInfo(activeRole, user);
 
   const initial = user.name?.charAt(0)?.toUpperCase() ?? "👤";

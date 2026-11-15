@@ -6,6 +6,7 @@ import {
   fetchPublicCompany,
   fetchPublicCompanyAgents,
 } from "@affilhomes/shared/supabase/publicDirectory";
+import { fetchPublicFaqs } from "@affilhomes/shared/supabase";
 import { CompanyPublicGate } from "@/components/company/CompanyPublicGate";
 
 const loadCompany = cache(async (slug: string) => {
@@ -37,9 +38,18 @@ export default async function CompanyPage({ params }: Props) {
 
   const { company, listings } = result;
   const supabase = await createServerClient();
-  const agents = await fetchPublicCompanyAgents(company._id, supabase);
+
+  const [agents, faqs] = await Promise.all([
+    fetchPublicCompanyAgents(company._id, supabase),
+    fetchPublicFaqs("company", company._id, supabase),
+  ]);
 
   return (
-    <CompanyPublicGate company={company} agents={agents} listings={listings} />
+    <CompanyPublicGate
+      company={company}
+      agents={agents}
+      listings={listings}
+      faqs={faqs}
+    />
   );
 }

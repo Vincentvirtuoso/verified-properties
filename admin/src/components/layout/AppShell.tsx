@@ -23,7 +23,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       >
         <Topbar />
       </header>
-
       <div
         className={cn(
           "min-h-screen pt-16 pl-0",
@@ -33,7 +32,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       >
         <main className="px-4 py-6 md:px-6 lg:px-8">{children}</main>
       </div>
-
       <Sidebar />
     </>
   );

@@ -21,6 +21,7 @@ import {
   LuMessageSquare,
   LuFileText,
   LuPhone,
+  LuSparkles,
 } from "react-icons/lu";
 import { FiZap } from "react-icons/fi";
 import { PropertyCard } from "@/components/property/PropertyCard";
@@ -135,6 +136,38 @@ const ViewerDashboard = ({ user }: { user: PopulatedUser }) => {
   );
 };
 
+import type { IconType } from "react-icons";
+
+type QuickAction = {
+  label: string;
+  icon: IconType;
+  href: string;
+  color: "primary" | "amber" | "blue" | "emerald" | "purple" | "gray";
+};
+
+const ROLE_ACTIONS: Record<
+  "realtor" | "lawyer" | "surveyor" | "landlord",
+  Omit<QuickAction, "color">
+> = {
+  realtor: {
+    label: "Manage Brokerage",
+    icon: BsBuildingFillGear,
+    href: "/brokerage",
+  },
+  lawyer: { label: "Document Templates", icon: LuFileText, href: "/documents" },
+  surveyor: { label: "Survey Reports", icon: LuFileText, href: "/surveys" },
+  landlord: { label: "Tenant Applications", icon: LuUsers, href: "/tenants" },
+};
+
+const HOVER_CLASS: Record<QuickAction["color"], string> = {
+  primary: "hover:border-primary/50 hover:bg-primary/5",
+  amber: "hover:border-amber-500/50 hover:bg-amber-500/5",
+  blue: "hover:border-blue-500/50 hover:bg-blue-500/5",
+  emerald: "hover:border-emerald-500/50 hover:bg-emerald-500/5",
+  purple: "hover:border-purple-500/50 hover:bg-purple-500/5",
+  gray: "hover:border-muted-foreground/30",
+};
+
 const AgentDashboard = ({
   user,
   setProfileOpen,
@@ -160,7 +193,15 @@ const AgentDashboard = ({
     };
   }, [user]);
 
-  const quickActions = [
+  const roleAction: QuickAction | null =
+    subRole && subRole in ROLE_ACTIONS
+      ? {
+          ...ROLE_ACTIONS[subRole as keyof typeof ROLE_ACTIONS],
+          color: "purple",
+        }
+      : null;
+
+  const quickActions: QuickAction[] = [
     {
       label: "List a Property",
       icon: BsBuildingAdd,
@@ -168,74 +209,43 @@ const AgentDashboard = ({
       color: "primary",
     },
     {
+      label: "AI Calling Plans",
+      icon: LuSparkles,
+      href: "/dashboard/ai-plans",
+      color: "emerald",
+    },
+    {
       label: "Boost a Listing",
       icon: LuRocket,
-      href: "/dashboard/boost",
+      href: "/boost-listing",
       color: "amber",
     },
     {
       label: "View Inquiries",
       icon: LuMessageSquare,
-      href: "/dashboard/inquiries",
+      href: "/enquiries",
       color: "blue",
     },
     {
       label: "Analytics",
       icon: BsBarChartSteps,
-      href: "/dashboard/analytics",
+      href: "/analytics",
       color: "emerald",
     },
+    ...(roleAction ? [roleAction] : []),
+    {
+      label: "Contact Support",
+      icon: LuPhone,
+      href: "/support",
+      color: "gray",
+    },
   ];
-
-  // Role-specific actions
-  if (subRole === "realtor") {
-    quickActions.push({
-      label: "Manage Brokerage",
-      icon: BsBuildingFillGear,
-      href: "/dashboard/brokerage",
-      color: "purple",
-    });
-  }
-
-  if (subRole === "lawyer") {
-    quickActions.push({
-      label: "Document Templates",
-      icon: LuFileText,
-      href: "/dashboard/documents",
-      color: "purple",
-    });
-  }
-
-  if (subRole === "surveyor") {
-    quickActions.push({
-      label: "Survey Reports",
-      icon: LuFileText,
-      href: "/dashboard/surveys",
-      color: "purple",
-    });
-  }
-
-  if (subRole === "landlord") {
-    quickActions.push({
-      label: "Tenant Applications",
-      icon: LuUsers,
-      href: "/dashboard/tenants",
-      color: "purple",
-    });
-  }
-
-  quickActions.push({
-    label: "Contact Support",
-    icon: LuPhone,
-    href: "/support",
-    color: "gray",
-  });
 
   return (
     <div className="space-y-8">
       <UserHeaderCard user={user} onProfileOpen={() => setProfileOpen(true)} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <DashboardCard
           icon={<LuCirclePlus />}
           label="Active Listings"
@@ -246,6 +256,7 @@ const AgentDashboard = ({
           icon={<FiZap />}
           label="Boosted Listings"
           value={agentProfile?.activeBoostedListings ?? 0}
+          href="/boost-listing"
         />
 
         {subRole === "realtor" && (
@@ -273,38 +284,28 @@ const AgentDashboard = ({
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
           <LuRocket className="text-primary" />
           Quick Actions
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {quickActions.map((action) => (
-            <Button
-              key={action.label}
-              variant="outline"
-              size="sm"
-              fullWidth
-              href={action.href}
-              className={cn(
-                "gap-2 justify-start",
-                action.color === "primary" &&
-                  "hover:border-primary/50 hover:bg-primary/5",
-                action.color === "amber" &&
-                  "hover:border-amber-500/50 hover:bg-amber-500/5",
-                action.color === "blue" &&
-                  "hover:border-blue-500/50 hover:bg-blue-500/5",
-                action.color === "emerald" &&
-                  "hover:border-emerald-500/50 hover:bg-emerald-500/5",
-                action.color === "purple" &&
-                  "hover:border-purple-500/50 hover:bg-purple-500/5",
-                action.color === "gray" && "hover:border-muted-foreground/30",
-              )}
-              leftIcon={<action.icon className="h-4 w-4" />}
-            >
-              {action.label}
-            </Button>
-          ))}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Button
+                key={action.label}
+                variant="outline"
+                size="sm"
+                fullWidth
+                href={action.href}
+                className={cn("justify-start gap-2", HOVER_CLASS[action.color])}
+                leftIcon={<Icon className="h-4 w-4" />}
+              >
+                {action.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

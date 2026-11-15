@@ -529,10 +529,12 @@ export function ReviewActions({
   onDecide,
   labels,
   disabled = false,
+  quickReasons,
 }: {
   onDecide: (decision: ReviewDecision, reason: string) => Promise<void>;
   labels?: Partial<Record<ReviewDecision, string>>;
   disabled?: boolean;
+  quickReasons?: Partial<Record<ReviewDecision, string[]>>;
 }) {
   const [pending, setPending] = useState<ReviewDecision | null>(null);
 
@@ -550,7 +552,7 @@ export function ReviewActions({
           setPending(null);
         }}
         onCancel={() => setPending(null)}
-        suggestions={QUICK_REASONS[pending]}
+        suggestions={quickReasons?.[pending] ?? QUICK_REASONS[pending]}
       />
     );
   }

@@ -1,56 +1,100 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FaBed, FaBath, FaExpand, FaFire } from "react-icons/fa";
 import { FiClock, FiTag, FiTrendingDown } from "react-icons/fi";
 import { RiHeartLine, RiHeartFill } from "react-icons/ri";
-import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
-import { LuFileText, LuImage, LuMapPin, LuVideo } from "react-icons/lu";
+import {
+  LuBuilding2,
+  LuFileText,
+  LuImage,
+  LuMapPin,
+  LuUserRound,
+  LuVideo,
+} from "react-icons/lu";
 
-import { Badge } from "@affilhomes/shared/ui";
-import { VerifiedBadge } from "@affilhomes/shared/ui";
-import { LISTING_PURPOSE_LABELS } from "@/utils";
+import { Badge, VerifiedBadge } from "@affilhomes/shared/ui";
+import {
+  agentSubRoleLabels,
+  PopulatedUser,
+  Role,
+} from "@affilhomes/shared/types";
+import type { PopulatedProperty } from "@affilhomes/shared/types/property";
+import { useSavedProperties } from "@/contexts/SavedPropertiesContext";
+import { LISTING_PURPOSE_LABELS, imageLoader } from "@/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/formatters";
-import { imageLoader } from "@/utils";
-import { PopulatedProperty } from "@affilhomes/shared/types/property";
-import { PopulatedUser } from "@affilhomes/shared/types";
 import { cn } from "@/lib/utils";
 import { useCanHover } from "@/hooks/useCanHover";
 
-const defaultImage = "/placeholder-property.png";
+const DEFAULT_IMAGE = "/placeholder-property.png";
+const DEFAULT_AVATAR = "/placeholder_avatar.png";
 
-export function PropertyCard({
-  _id,
-  slug,
-  title,
-  location,
-  price,
-  bedrooms,
-  bathrooms,
-  area = 0,
-  image,
-  listingPurpose,
-  tier,
-  discount,
-  createdAt,
-  documents,
-  videoLinks,
-  gallery,
-  ownerType,
-  ownerId,
-  status,
-}: PopulatedProperty) {
+export function PropertyCard(listing: PopulatedProperty) {
+  const {
+    _id,
+    slug,
+    title,
+    location,
+    price,
+    bedrooms,
+    bathrooms,
+    area = 0,
+    image,
+    listingPurpose,
+    tier,
+    discount,
+    createdAt,
+    documents,
+    videoLinks,
+    gallery,
+    status,
+    companyId,
+    company,
+    ownerId,
+  } = listing;
+
   const router = useRouter();
-  const [imgSrc, setImgSrc] = useState(image || defaultImage);
-  const [isHovered, setIsHovered] = useState(false);
   const { isSaved, toggleSaved } = useSavedProperties();
   const isLiked = isSaved(_id);
 
   const canHover = useCanHover();
+  const [isHovered, setIsHovered] = useState(false);
   const showHoverLayer = !canHover || isHovered;
+
+  const [imgSrc, setImgSrc] = useState(image || DEFAULT_IMAGE);
+
+  const agent = ownerId as PopulatedUser;
+  const listedForCompany = !!companyId;
+
+  const headlineName = listedForCompany
+    ? (company?.name ?? "Company")
+    : agent.name;
+  const headlineImage = listedForCompany ? company?.logo : agent.avatar;
+  const headlineVerified = listedForCompany
+    ? company?.verificationStatus === "verified"
+    : agent.agentProfile?.verificationStatus === "verified";
+
+  const companyRoute = company?._id ? `/companies/${company._id}` : null;
+  const agentRoute = `/agents/${agent._id}`;
+  const headlineRoute = listedForCompany ? companyRoute : agentRoute;
+
+  const [headlineSrc, setHeadlineSrc] = useState(
+    headlineImage || DEFAULT_AVATAR,
+  );
+
+  const holder = ownerId as PopulatedUser;
+  const listerIsOwner = listedForCompany && company?.ownerId === holder._id;
+  const holderIsAgent = holder.roles?.includes(Role.Agent) ?? false;
+
+  const holderRoleLabel =
+    holderIsAgent && holder.agentProfile?.subRole
+      ? agentSubRoleLabels[holder.agentProfile.subRole]
+      : null;
+
+  const holderRoute = holderIsAgent ? `/agents/${holder._id}` : null;
 
   const discountedPrice = useMemo(() => {
     if (discount?.percentage)
@@ -59,118 +103,49 @@ export function PropertyCard({
     return price;
   }, [price, discount]);
 
-  const savingsAmount = useMemo(
-    () => price - discountedPrice,
-    [price, discountedPrice],
-  );
-  const savingsPercentage = useMemo(
-    () => discount?.percentage ?? Math.round((savingsAmount / price) * 100),
-    [discount, savingsAmount, price],
-  );
+  const savingsAmount = price - discountedPrice;
+  const savingsPercentage =
+    discount?.percentage ??
+    (price > 0 ? Math.round((savingsAmount / price) * 100) : 0);
+
   const hasDiscount = !!(discount?.percentage || discount?.amount);
   const hasDocuments = !!documents?.length;
   const hasVideoLinks = !!videoLinks?.length;
-  const hasGallery = !!(gallery && gallery.length > 0);
-
-  const defaultOwnerImage = "/placeholder_avatar.png";
+  const hasGallery = !!gallery?.length;
 
   const locationString = location ? `${location.city}, ${location.state}` : "";
 
-  const isCompany = ownerType === "company";
+  const openCard = () => router.push(`/properties/${slug}`);
 
-  const ownerName = useMemo(() => {
-    if (isCompany) return ownerId.companyId?.name || ownerId.name;
-    return ownerId.name;
-  }, [ownerId, isCompany]);
-
-  const ownerInitial = ownerName?.charAt(0);
-
-  const isVerified = useMemo(() => {
-    if (isCompany) return ownerId.companyId?.verificationStatus === "verified";
-    const user = ownerId as PopulatedUser;
-    return user.agentProfile?.verificationStatus === "verified";
-  }, [ownerId, isCompany]);
-
-  const ownerImg = useMemo(() => {
-    if (isCompany) return ownerId.companyId?.logo;
-    return ownerId.avatar;
-  }, [ownerId, isCompany]);
-
-  const [ownerImageSrc, setOwnerImageSrc] = useState(
-    ownerImg || defaultOwnerImage,
-  );
-
-  const ownerRoute = useMemo(() => {
-    if (isCompany) return `/companies/${ownerId.companyId?._id}`;
-    const routePrefix = "agents";
-    return `/${routePrefix}/${ownerId._id}/`;
-  }, [ownerId, isCompany]);
-
-  const handleCardClick = () => {
-    router.push(`/properties/${slug}`);
+  const navigate = (route: string | null) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (route) router.push(route);
   };
 
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleSaved(_id).then((ok) => {
-      if (!ok)
+      if (!ok) {
         router.push(
           `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`,
         );
+      }
     });
   };
 
-  const handleOwnerClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(ownerRoute);
-  };
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.article
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
-      role="article"
-      aria-label={title}
-      className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 group cursor-pointer relative h-full flex flex-col touch-manipulation"
+      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-xl"
     >
-      {status === "active"
-        ? hasDiscount && (
-            <div className="absolute -top-2 -left-1 w-32 h-32 overflow-hidden z-20 pointer-events-none">
-              <motion.div
-                initial={{ x: -100 }}
-                animate={{ x: 0 }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
-              >
-                <div className="bg-linear-to-r from-destructive to-destructive/80 text-destructive-foreground py-1.5 px-8 transform -rotate-45 translate-y-6 -translate-x-8 shadow-lg">
-                  <div className="flex items-center gap-1">
-                    <FiTrendingDown className="w-3.5 h-3.5" />
-                    <span className="text-xs font-bold tracking-wider max-w-20">
-                      {savingsPercentage}% OFF
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          )
-        : (status === "rented" || status === "sold") && (
-            <div className="absolute -top-3.5 -left-1 w-32 h-32 overflow-hidden z-20 pointer-events-none">
-              <motion.div
-                initial={{ x: -100 }}
-                animate={{ x: 0 }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
-              >
-                <div className="bg-linear-to-r from-destructive to-destructive/80 text-destructive-foreground py-1.5 px-8 transform -rotate-45 translate-y-6 -translate-x-8 shadow-lg text-sm font-bold text-center">
-                  {status.toUpperCase()}
-                </div>
-              </motion.div>
-            </div>
-          )}
-
-      <div className="relative h-64 overflow-hidden shrink-0">
+      <div
+        onClick={openCard}
+        className="relative h-60 shrink-0 cursor-pointer overflow-hidden sm:h-64"
+      >
         <Image
           src={imgSrc}
           alt={title}
@@ -179,215 +154,208 @@ export function PropertyCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={tier === "featured"}
           onError={() => {
-            if (imgSrc !== defaultImage) setImgSrc(defaultImage);
+            if (imgSrc !== DEFAULT_IMAGE) setImgSrc(DEFAULT_IMAGE);
           }}
           className={cn(
             "object-cover transition-transform duration-700",
-            isHovered && canHover ? "scale-110" : "scale-100",
+            isHovered && canHover ? "scale-105" : "scale-100",
           )}
         />
 
-        {/* Gradient overlay — always visible on touch, hover-only on mouse.
-            This is what makes the badges and heart readable on top of the image. */}
-        <div
-          aria-hidden="true"
-          className={cn(
-            "absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none transition-opacity duration-300",
-            showHoverLayer ? "opacity-100" : "opacity-0",
-          )}
-        />
+        <div className="absolute inset-0 bg-linear-to-t from-black/45 via-transparent to-black/10" />
 
-        <div
-          className={cn(
-            "absolute top-3 z-10 pointer-events-none flex flex-wrap gap-2",
-            hasDiscount ? "right-3 top-12" : "left-3",
-          )}
-        >
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           {tier === "featured" && (
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg flex items-center gap-2"
-            >
-              <FaFire className="text-red-600" /> Featured
-            </motion.div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-background/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-md">
+              <FaFire className="text-orange-500" />
+              Featured
+            </span>
+          )}
+
+          {status === "active" && hasDiscount && (
+            <span className="rounded-full bg-destructive px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+              {savingsPercentage}% OFF
+            </span>
           )}
         </div>
 
-        <div className="absolute top-3 right-3 z-10 pointer-events-none">
-          <motion.div
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="bg-background/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-foreground capitalize shadow-lg border border-border"
-          >
+        <div className="absolute right-3 top-3">
+          <span className="rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
             {LISTING_PURPOSE_LABELS[listingPurpose]}
-          </motion.div>
+          </span>
         </div>
 
-        <div className="absolute bottom-3 right-3 z-10 pointer-events-none flex flex-wrap gap-2">
-          {hasDocuments && (
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-linear-to-r from-primary to-primary/80 text-primary-foreground text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
-            >
-              <LuFileText size={18} /> {documents!.length}
-            </motion.div>
-          )}
-          {hasVideoLinks && (
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
-            >
-              <LuVideo size={18} /> {videoLinks!.length}
-            </motion.div>
-          )}
-          {hasGallery && (
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-linear-to-r from-orange-600 to-orange-600/80 text-white text-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"
-            >
-              <LuImage size={18} /> {gallery.length}
-            </motion.div>
-          )}
-        </div>
+        {(status === "rented" || status === "sold") && (
+          <div className="absolute bottom-3 left-3">
+            <span className="rounded-lg bg-background/95 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground shadow-sm">
+              {status}
+            </span>
+          </div>
+        )}
 
-        {/* Favourite button — always rendered. Visibility is controlled by
-            `showHoverLayer`, which is permanently true on touch devices. */}
+        {(hasDocuments || hasVideoLinks || hasGallery) && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+            {hasDocuments && (
+              <span className="flex h-8 items-center gap-1.5 rounded-lg bg-black/45 px-2.5 text-xs font-medium text-white backdrop-blur-md">
+                <LuFileText size={14} />
+                {documents?.length}
+              </span>
+            )}
+
+            {hasVideoLinks && (
+              <span className="flex h-8 items-center gap-1.5 rounded-lg bg-black/45 px-2.5 text-xs font-medium text-white backdrop-blur-md">
+                <LuVideo size={14} />
+                {videoLinks?.length}
+              </span>
+            )}
+
+            {hasGallery && (
+              <span className="flex h-8 items-center gap-1.5 rounded-lg bg-black/45 px-2.5 text-xs font-medium text-white backdrop-blur-md">
+                <LuImage size={14} />
+                {gallery?.length}
+              </span>
+            )}
+          </div>
+        )}
+
         <motion.button
           type="button"
           onClick={handleLikeClick}
-          whileTap={{ scale: 0.88 }}
+          whileTap={{ scale: 0.9 }}
           aria-label={isLiked ? "Remove from favourites" : "Add to favourites"}
           aria-pressed={isLiked}
           className={cn(
-            "absolute bottom-3 left-3 z-20 rounded-full shadow-lg",
-            "bg-background/95 backdrop-blur-md hover:bg-background",
-            "flex items-center justify-center",
-            // 44×44 minimum touch target on mobile, 40×40 on desktop
-            "w-11 h-11 sm:w-10 sm:h-10",
-            "transition-all duration-200",
-            showHoverLayer
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 translate-y-2 pointer-events-none",
+            "absolute bottom-3 left-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-background/90 shadow-md backdrop-blur-md transition-colors hover:bg-background",
+            status === "rented" || status === "sold" ? "bottom-14" : "",
           )}
         >
           {isLiked ? (
-            <RiHeartFill className="text-destructive text-xl" />
+            <RiHeartFill className="text-lg text-destructive" />
           ) : (
-            <RiHeartLine className="text-xl text-foreground" />
+            <RiHeartLine className="text-lg text-foreground" />
           )}
         </motion.button>
       </div>
 
-      <div className="p-5 flex flex-col flex-1">
-        <div className="flex items-baseline gap-2 flex-wrap shrink-0">
-          {hasDiscount ? (
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            {formatPrice(discountedPrice)}
+          </p>
+
+          {hasDiscount && (
             <>
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <p className="text-primary font-bold text-2xl tracking-tight">
-                  {formatPrice(discountedPrice)}
-                </p>
-                <p className="text-muted text-sm line-through">
-                  {formatPrice(price)}
-                </p>
-              </div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                className="bg-destructive/10 text-destructive text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1"
-              >
-                <FiTag className="w-3 h-3" />
+              <span className="text-sm text-muted line-through">
+                {formatPrice(price)}
+              </span>
+
+              <span className="rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive">
                 Save {formatPrice(savingsAmount)}
-              </motion.div>
+              </span>
             </>
-          ) : (
-            <p className="text-primary font-bold text-2xl tracking-tight">
-              {formatPrice(price)}
-            </p>
           )}
         </div>
 
-        <h3 className="font-semibold text-lg mt-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors shrink-0 text-foreground">
+        <h3
+          onClick={openCard}
+          className="mt-3 line-clamp-2 cursor-pointer text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg"
+        >
           {title}
         </h3>
 
-        <p className="text-muted text-sm mt-1 flex items-center gap-1 shrink-0">
-          <LuMapPin className="shrink-0" />
-          <span className="line-clamp-1">{locationString}</span>
+        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
+          <LuMapPin size={15} className="shrink-0" />
+          <span className="truncate">{locationString}</span>
         </p>
 
-        <div className="flex items-center gap-5 mt-auto pt-4 text-sm text-muted">
-          <div className="flex items-center gap-1.5">
-            <FaBed className="text-lg" />
-            <span className="font-medium">{bedrooms}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <FaBath className="text-lg" />
-            <span className="font-medium">{bathrooms}</span>
-          </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/70 pb-4 text-sm text-muted">
+          <span className="flex items-center gap-2">
+            <FaBed size={15} />
+            <span>{bedrooms} Beds</span>
+          </span>
+
+          <span className="flex items-center gap-2">
+            <FaBath size={15} />
+            <span>{bathrooms} Baths</span>
+          </span>
+
           {area > 0 && (
-            <div className="flex items-center gap-1.5">
-              <FaExpand className="text-lg" />
-              <span className="font-medium">{area.toLocaleString()} m²</span>
-            </div>
+            <span className="flex items-center gap-2">
+              <FaExpand size={14} />
+              <span>{area.toLocaleString()} m²</span>
+            </span>
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {ownerImageSrc ? (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                <Image
-                  src={ownerImageSrc}
-                  alt={ownerName}
-                  width={100}
-                  height={100}
-                  loader={imageLoader}
-                  onError={() => setOwnerImageSrc(defaultOwnerImage)}
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-linear-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-xs font-bold shrink-0">
-                {ownerInitial}
-              </div>
-            )}
+        <div className="mt-auto flex min-w-0 items-center justify-between gap-3 pt-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted">
+              <Image
+                src={headlineSrc}
+                alt={headlineName}
+                fill
+                sizes="36px"
+                loader={imageLoader}
+                onError={() => setHeadlineSrc(DEFAULT_AVATAR)}
+                className="object-cover"
+              />
+            </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1 mt-0.5">
-                <button
-                  type="button"
-                  onClick={handleOwnerClick}
-                  className="font-medium text-foreground/80 truncate hover:text-primary transition-colors text-left"
-                >
-                  {ownerName}
-                </button>
-                {isVerified && <VerifiedBadge showText={false} />}
+              <div className="flex min-w-0 items-center gap-1">
+                {headlineRoute ? (
+                  <button
+                    type="button"
+                    onClick={navigate(headlineRoute)}
+                    className="truncate text-left text-sm font-semibold text-foreground hover:text-primary"
+                  >
+                    {headlineName}
+                  </button>
+                ) : (
+                  <span className="truncate text-sm font-semibold text-foreground">
+                    {headlineName}
+                  </span>
+                )}
+
+                {headlineVerified && (
+                  <VerifiedBadge showText={false} className="shrink-0" />
+                )}
               </div>
-              <Badge
-                className="text-xs capitalize"
-                variant={isCompany ? "premium" : "secondary"}
-              >
-                {ownerType}
-              </Badge>
+
+              <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted">
+                {!listedForCompany ? (
+                  holderRoleLabel && (
+                    <span className="truncate">{holderRoleLabel}</span>
+                  )
+                ) : (
+                  <>
+                    <span className="shrink-0">Listed by</span>
+
+                    {listerIsOwner || !holderRoute ? (
+                      <span className="truncate">{holder.name}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={navigate(holderRoute)}
+                        className="truncate hover:text-primary"
+                      >
+                        {holder.name}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           {createdAt && (
-            <div className="flex items-center gap-1.5 text-muted/60 shrink-0 ml-2">
-              <FiClock size={13} className="shrink-0" />
-              <span className="whitespace-nowrap">
-                {formatRelativeTime(createdAt, { short: true })}
-              </span>
-            </div>
+            <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted">
+              <FiClock size={12} />
+              {formatRelativeTime(createdAt, { short: true })}
+            </span>
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }

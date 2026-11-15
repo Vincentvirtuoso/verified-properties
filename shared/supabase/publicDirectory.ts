@@ -100,6 +100,7 @@ function toCompany(r: any): PublicCompany {
     totalRemitted: 0,
     createdAt: new Date(r.created_at),
     updatedAt: new Date(r.created_at),
+    ownerId: r.owner_id,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -112,6 +113,29 @@ export async function fetchDirectoryAgents(
   );
   if (error) throw error;
   return (data ?? []).map(toDirectoryAgent);
+}
+
+export type PublicFaq = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+export async function fetchPublicFaqs(
+  ownerType: "company" | "agent",
+  ownerId: string,
+  client?: SupabaseClient,
+): Promise<PublicFaq[]> {
+  const { data, error } = await (client ?? createClient())
+    .from("ai_faqs")
+    .select("id, question, answer")
+    .eq("owner_type", ownerType)
+    .eq("owner_id", ownerId)
+    .eq("enabled", true)
+    .order("position", { ascending: true });
+
+  if (error) return [];
+  return (data ?? []) as PublicFaq[];
 }
 
 export async function fetchPublicAgent(

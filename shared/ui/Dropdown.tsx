@@ -367,7 +367,7 @@ export function DropdownItem({
         "transition-colors duration-150",
         disabled && "opacity-50 cursor-not-allowed",
         destructive
-          ? "text-red-600 hover:bg-red-50 focus:bg-red-50"
+          ? "text-destructive hover:bg-destructive/30 focus:bg-destructive/30"
           : "text-foreground hover:text-primary hover:bg-card-foreground/10 focus:bg-card-foreground/20",
         className,
       )}

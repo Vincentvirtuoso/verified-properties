@@ -61,6 +61,7 @@ export function AuthForm({
                 type="submit"
                 className="mt-2"
                 isLoading={loading}
+                loadingText={submitText}
               >
                 {submitText}
               </Button>

@@ -5,19 +5,15 @@ import { LuChevronDown, LuUserRound } from "react-icons/lu";
 import { Badge } from "@affilhomes/shared/ui";
 import { CompanyMember, CompanyMemberDetails } from "@affilhomes/shared/types";
 import { getErrorMessage } from "@/utils";
-import { getCompanyMemberDetails } from "@affilhomes/shared/supabase";
+import {
+  getCompanyMemberDetails,
+  PERMISSION_LABELS,
+} from "@affilhomes/shared/supabase";
 
 const ROLE_LABELS: Record<CompanyMember["role"], string> = {
   admin: "Admin",
   member: "Member",
 };
-
-const PERMISSION_LABELS: Record<CompanyMember["permissions"][number], string> =
-  {
-    manage_listings: "Manage listings",
-    manage_members: "Manage members",
-    view_analytics: "View analytics",
-  };
 
 type DetailsState =
   | { status: "idle" }

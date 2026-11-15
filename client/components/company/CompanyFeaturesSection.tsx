@@ -10,11 +10,13 @@ export function CompanyFeaturesSection({
   features,
   isPro,
   isOwner,
+  canManageBilling,
   onWhatsappChange,
 }: {
   features: CompanyFeatures;
   isPro: boolean;
   isOwner: boolean;
+  canManageBilling: boolean;
   onWhatsappChange?: (enabled: boolean) => Promise<void>;
 }) {
   const [whatsapp, setWhatsapp] = useState(features.whatsappNotifications);
@@ -52,13 +54,15 @@ export function CompanyFeaturesSection({
 
       {!isPro && (
         <div className="flex items-center justify-between gap-3 text-sm text-muted">
-          <span>These are included with Pro.</span>
-          {isOwner ? (
-            <Button href="/company/pro" size="xs" variant="outline">
-              Upgrade
+          <span>These need an AI plan.</span>
+          {canManageBilling ? (
+            <Button href="/company/ai-plans" size="xs" variant="outline">
+              Choose a plan
             </Button>
           ) : (
-            <span className="text-xs">Ask the owner to upgrade.</span>
+            <span className="text-xs">
+              Ask someone with billing access to choose a plan.
+            </span>
           )}
         </div>
       )}

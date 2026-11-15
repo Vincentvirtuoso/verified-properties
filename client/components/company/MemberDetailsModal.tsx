@@ -125,7 +125,7 @@ export function MemberDetailsModal({
                   {state.details.email}
                 </a>
               ) : (
-                "Not set"
+                <span className="text-muted">Hidden for your role</span>
               )}
             </dd>
 

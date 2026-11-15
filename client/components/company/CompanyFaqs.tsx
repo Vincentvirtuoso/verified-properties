@@ -9,12 +9,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@affilhomes/shared/ui";
-
-type PublicFaq = {
-  id: string;
-  question: string;
-  answer: string;
-};
+import { PublicFaq } from "@affilhomes/shared/supabase";
 
 export function CompanyFaqs({
   companyId,

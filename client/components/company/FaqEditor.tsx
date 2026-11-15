@@ -19,9 +19,10 @@ import {
   Textarea,
 } from "@affilhomes/shared/ui";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
-import { FAQ_LIMIT } from "@/lib/entitlements";
+import { FAQ_LIMIT } from "@/lib/ai-plans";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/contexts/ConfirmDialog";
+import { PropertyOwnerType } from "@/types";
 
 type Faq = {
   id: string;
@@ -110,11 +111,13 @@ function FaqEditorSkeleton() {
 }
 
 export function FaqEditor({
-  companyId,
+  ownerType,
   canEdit,
+  ownerId,
 }: {
-  companyId: string;
+  ownerId: string;
   canEdit: boolean;
+  ownerType: PropertyOwnerType;
 }) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -141,7 +144,8 @@ export function FaqEditor({
     supabase
       .from("ai_faqs")
       .select("id, question, answer, position, enabled")
-      .eq("company_id", companyId)
+      .eq("owner_type", ownerType)
+      .eq("owner_id", ownerId)
       .order("position", { ascending: true })
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -160,7 +164,7 @@ export function FaqEditor({
     return () => {
       cancelled = true;
     };
-  }, [supabase, companyId]);
+  }, [supabase, ownerId]);
 
   useEffect(() => {
     return () => {
@@ -254,7 +258,9 @@ export function FaqEditor({
     const { data, error } = await supabase
       .from("ai_faqs")
       .insert({
-        company_id: companyId,
+        owner_type: ownerType,
+        owner_id: ownerId,
+        company_id: ownerType === "company" ? ownerId : null,
         question: DEFAULT_QUESTION,
         answer: "",
         position: faqs.length,
@@ -336,7 +342,7 @@ export function FaqEditor({
   const handleDelete = async (id: string, question: string) => {
     const confirmed = await confirm({
       title: "Delete this FAQ?",
-      message: `You're about to delete ${quoteQuestion(question)}. It'll be removed from your company page and the assistant will stop using it in replies. This can't be undone.`,
+      message: `You're about to delete ${quoteQuestion(question)}. It'll be removed from your public page and the assistant will stop using it in replies. This can't be undone.`,
       cancelLabel: "Keep FAQ",
       confirmLabel: "Delete FAQ",
       variant: "danger",
@@ -356,7 +362,7 @@ export function FaqEditor({
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">FAQs</h2>
           <p className="mt-1 text-sm text-muted">
-            Common questions and answers. Live FAQs appear on your company page
+            Common questions and answers. Live FAQs appear on your public page
             and are used by the assistant.
           </p>
           <p className="mt-1 text-xs text-muted">
@@ -499,7 +505,7 @@ export function FaqEditor({
                     onChange={(e) => toggleEnabled(faq, e.target.checked)}
                     label={
                       hasAnswer
-                        ? "Show on company page and to the assistant"
+                        ? "Show on your public page and to the assistant"
                         : "Off until an answer is added"
                     }
                   />
@@ -538,7 +544,9 @@ export function FaqEditor({
 
       {!canEdit && (
         <p className="mt-4 text-xs text-muted">
-          Only company admins can edit FAQs.
+          Only{" "}
+          {ownerType === "company" ? "company admins" : "the account owner"} can
+          edit FAQs
         </p>
       )}
     </div>

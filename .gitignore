@@ -33,3 +33,6 @@ desktop.ini
 # Test and coverage
 coverage/
 .tests/
+
+voice/.env
+voice/.venv/

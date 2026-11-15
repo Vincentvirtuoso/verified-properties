@@ -1,5 +1,4 @@
 import { RequireCompany } from "@/components/access/RouteGates";
-import { ProBanner } from "@/components/company/ProBanner";
 
 export default function CompanyLayout({
   children,
@@ -9,7 +8,7 @@ export default function CompanyLayout({
   return (
     <RequireCompany>
       <div className="space-y-4 p-4 md:p-6">
-        <ProBanner />
+        {/* <ProBanner /> */}
         {children}
       </div>
     </RequireCompany>

@@ -109,8 +109,7 @@ export default function CompanyListingsPage() {
       const { data, error } = await supabase
         .from("properties")
         .select(PROPERTY_SELECT)
-        .eq("owner_type", "company")
-        .in("owner_id", memberIds)
+        .eq("company_id", company!._id)
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -128,7 +127,11 @@ export default function CompanyListingsPage() {
         (data ?? []).map((r) => {
           const owner = { _id: r.owner_id } as PopulatedUser;
           return {
-            property: mapPropertyRow(r, owner),
+            property: {
+              ...mapPropertyRow(r, owner),
+              company: company ?? null,
+              companyId: company?._id ?? null,
+            },
             ownerId: r.owner_id,
             ownerName:
               r.owner_id === user._id
@@ -143,7 +146,7 @@ export default function CompanyListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, memberKey, tick]);
+  }, [user, memberKey, company?._id, tick]);
 
   const counts = useMemo(() => {
     const c: Record<Bucket, number> = {

@@ -34,11 +34,12 @@ import {
 } from "@affilhomes/shared/types";
 import RoleIcon from "@/components/ui/RoleIcon";
 import { ProfileModal } from "@/components/profile/ProfileModal";
-import { UpgradeToProCTA } from "./UpgradeToProCTA";
+// import { UpgradeToProCTA } from "./UpgradeToProCTA";
 import { ListNewPropertyIcon } from "@affilhomes/shared/icons/ListNewPropertyIcon";
 import { useConfirm } from "@/contexts/ConfirmDialog";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { AIPlanCTA } from "./AIPlanCTA";
 
 interface UserMenuProps {
   isAuthenticated: boolean;
@@ -204,7 +205,7 @@ const ProfileMenu = ({
                 registration={pendingRegistration}
               />
             </div>
-            <UpgradeToProCTA variant="compact" />
+            <AIPlanCTA variant="compact" />
           </div>
 
           <DropdownSeparator />

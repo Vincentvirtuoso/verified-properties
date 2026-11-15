@@ -1,6 +1,6 @@
 import { Badge, Button } from "@affilhomes/shared/ui";
 import { LuPhoneCall } from "react-icons/lu";
-import { UpgradeToProCTA } from "../common/UpgradeToProCTA";
+import { AIPlanCTA } from "../common/AIPlanCTA";
 
 const AI_CALLING_SETTINGS_HREF = "/company/settings?tab=ai-calling";
 
@@ -53,7 +53,7 @@ export function AICallingCard({
   }
 
   if (isVerified && !isPro) {
-    return <UpgradeToProCTA variant="card" />;
+    return <AIPlanCTA variant="card" />;
   }
 
   return (

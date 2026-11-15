@@ -304,14 +304,46 @@ export async function POST(request: Request) {
   if ("error" in parsed) return bad(parsed.error);
   const input = parsed.value;
 
-    let ownerType: "agent" | "company" | null;
-    try {
-      ownerType = await getOwnerType(supabase, user.id);
-    } catch {
-      return bad("Could not verify your account. Please try again.", 500);
+  let ownerType: "agent" | "company" | null;
+  try {
+    ownerType = await getOwnerType(supabase, user.id);
+  } catch {
+    return bad("Could not verify your account. Please try again.", 500);
+  }
+  if (!ownerType)
+    return bad("Only agents and companies can list properties", 403);
+
+  const { data: memberships, error: memberError } = await supabase
+    .from("company_members")
+    .select("company_id, role, permissions")
+    .eq("user_id", user.id);
+
+  if (memberError) {
+    return bad("Could not verify your company. Please try again.", 500);
+  }
+
+  const eligible = (memberships ?? []).filter(
+    (m) =>
+      m.role === "admin" ||
+      (Array.isArray(m.permissions) &&
+        m.permissions.includes("manage_listings")),
+  );
+
+  const listingFor = form.get("listingFor");
+  let companyId: string | null = null;
+
+  if (listingFor === "independent") {
+    companyId = null;
+  } else if (typeof listingFor === "string" && listingFor) {
+    if (!eligible.some((m) => m.company_id === listingFor)) {
+      return bad("You can't list properties for that company.", 403);
     }
-    if (!ownerType)
-      return bad("Only agents and companies can list properties", 403);
+    companyId = listingFor;
+  } else if (eligible.length === 1) {
+    companyId = eligible[0].company_id;
+  } else if (eligible.length > 1) {
+    return bad("Choose which company this listing is for.", 400);
+  }
 
   const slug = `${slugifyTitle(input.title)}-${crypto.randomUUID().slice(0, 8)}`;
   const hasDeclaredDocs = input.declaredDocuments.length > 0;
@@ -345,6 +377,7 @@ export async function POST(request: Request) {
       declared_document_types: input.declaredDocuments,
       document_status: hasDeclaredDocs ? "declared" : "none",
       video_links: [],
+      company_id: companyId,
     })
     .select("id, slug")
     .single();

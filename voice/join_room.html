@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+  <body style="font-family: sans-serif; max-width: 640px; margin: 2rem auto">
+    <h3>Affilhomes agent test</h3>
+    <textarea
+      id="token"
+      rows="4"
+      style="width: 100%"
+      placeholder="paste the token here"
+    ></textarea>
+    <p>
+      <button id="join">Join room</button> <button id="leave">Leave</button>
+    </p>
+
+    <pre
+      id="log"
+      style="background: #f4f4f4; padding: 0.5rem; white-space: pre-wrap"
+    ></pre>
+
+    <p id="meter" style="font-family: monospace">mic level: 0</p>
+
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.9.2/dist/livekit-client.umd.min.js"></script>
+    <script>
+      const SERVER_URL = "wss://affilhomes-eijiemur.livekit.cloud";
+      const logEl = document.getElementById("log");
+      const log = (msg) => (logEl.textContent += msg + "\n");
+
+      let room = null;
+
+      document.getElementById("join").onclick = async () => {
+        room = new LivekitClient.Room();
+
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === "audio") {
+            const el = track.attach();
+            document.body.appendChild(el);
+            el.play();
+            log("agent audio connected");
+          }
+        });
+        room.on(LivekitClient.RoomEvent.ParticipantConnected, (p) =>
+          log("joined: " + p.identity),
+        );
+        room.on(LivekitClient.RoomEvent.Disconnected, () =>
+          log("disconnected"),
+        );
+        room.remoteParticipants.forEach((p) => log("in room: " + p.identity));
+
+        try {
+          await room.connect(
+            SERVER_URL,
+            document.getElementById("token").value.trim(),
+          );
+          log("connected to " + room.name);
+          await room.localParticipant.setMicrophoneEnabled(true);
+          log("microphone on. Speak to the agent.");
+          const micTrack = room.localParticipant.getTrackPublication(
+            LivekitClient.Track.Source.Microphone,
+          )?.track?.mediaStreamTrack;
+          const audioCtx = new AudioContext();
+          const analyser = audioCtx.createAnalyser();
+          audioCtx
+            .createMediaStreamSource(new MediaStream([micTrack]))
+            .connect(analyser);
+          const samples = new Uint8Array(analyser.fftSize);
+          setInterval(() => {
+            analyser.getByteTimeDomainData(samples);
+            let peak = 0;
+            for (const v of samples) peak = Math.max(peak, Math.abs(v - 128));
+            document.getElementById("meter").textContent = "mic level: " + peak;
+          }, 200);
+        } catch (e) {
+          log("error: " + e.message);
+        }
+      };
+
+      document.getElementById("leave").onclick = () =>
+        room && room.disconnect();
+    </script>
+  </body>
+</html>

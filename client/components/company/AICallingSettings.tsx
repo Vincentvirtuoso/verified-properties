@@ -8,6 +8,8 @@ import { Badge, Button, Textarea } from "@affilhomes/shared/ui";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { Toggle, Field as Input } from "@affilhomes/shared/ui";
+import { AICallNumbers } from "./AICallNumbers";
+import { PropertyOwnerType } from "@/types";
 
 type AssistantConfig = {
   assistant_name: string;
@@ -87,11 +89,13 @@ function AssistantSettingsSkeleton() {
 }
 
 export function AICallingSettings({
-  companyId,
+  ownerType,
+  ownerId,
   canEdit,
   canActivate,
 }: {
-  companyId: string;
+  ownerType: PropertyOwnerType;
+  ownerId: string;
   canEdit: boolean;
   canActivate: boolean;
 }) {
@@ -110,7 +114,8 @@ export function AICallingSettings({
     createClient()
       .from("ai_assistant_configs")
       .select("assistant_name, greeting, auto_call")
-      .eq("company_id", companyId)
+      .eq("owner_type", ownerType)
+      .eq("owner_id", ownerId)
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
@@ -129,7 +134,7 @@ export function AICallingSettings({
     return () => {
       cancelled = true;
     };
-  }, [companyId]);
+  }, [ownerId, ownerType]);
 
   const dirty = JSON.stringify(config) !== JSON.stringify(saved);
   const nameValid = config.assistant_name.trim().length > 0;
@@ -140,7 +145,9 @@ export function AICallingSettings({
     setStatus(null);
 
     const payload = {
-      company_id: companyId,
+      owner_type: ownerType,
+      owner_id: ownerId,
+      company_id: ownerType === "company" ? ownerId : null,
       assistant_name: config.assistant_name.trim(),
       greeting: config.greeting.trim(),
       auto_call: canActivate ? config.auto_call : false,
@@ -149,8 +156,7 @@ export function AICallingSettings({
 
     const { error } = await createClient()
       .from("ai_assistant_configs")
-      .upsert(payload, { onConflict: "company_id" });
-
+      .upsert(payload, { onConflict: "owner_type,owner_id" });
     setSaving(false);
 
     if (error) {
@@ -177,29 +183,29 @@ export function AICallingSettings({
             <p className="mt-1 text-sm text-muted">
               {canActivate
                 ? "Your assistant can call new enquiries automatically."
-                : "Set up your assistant now. Auto-calls turn on with Pro and a verified company."}
+                : "Set up your assistant now. Auto-calls turn on once your plan is active and your account is verified."}
             </p>
           </div>
         </div>
-        <Badge variant="secondary">{canActivate ? "Pro" : "Draft"}</Badge>
+        <Badge variant="secondary">{canActivate ? "Live" : "Draft"}</Badge>
       </div>
 
       <div className="mt-6 space-y-5">
-          <Input
-            label="Assistant name"
-            hint={`${NAME_MAX} characters max`}
-            value={config.assistant_name}
-            onChange={(e) =>
-              setConfig({
-                ...config,
-                assistant_name: e.target.value.slice(0, NAME_MAX),
-              })
-            }
-            disabled={!canEdit}
-          />
-          {!nameValid && (
-            <p className="mt-1 text-xs text-destructive">Name is required.</p>
-          )}
+        <Input
+          label="Assistant name"
+          hint={`${NAME_MAX} characters max`}
+          value={config.assistant_name}
+          onChange={(e) =>
+            setConfig({
+              ...config,
+              assistant_name: e.target.value.slice(0, NAME_MAX),
+            })
+          }
+          disabled={!canEdit}
+        />
+        {!nameValid && (
+          <p className="mt-1 text-xs text-destructive">Name is required.</p>
+        )}
 
         <Textarea
           label="Opening line"
@@ -224,7 +230,7 @@ export function AICallingSettings({
             <p className="text-xs text-muted">
               {canActivate
                 ? "Calls go out as soon as an enquiry is sent."
-                : "Available on Pro, after verification."}
+                : "Available once your plan is active."}
             </p>
           </div>
           <Toggle
@@ -234,6 +240,14 @@ export function AICallingSettings({
             label="Auto-call new enquiries"
           />
         </div>
+      </div>
+
+      <div className="mt-6 border-t border-border pt-6">
+        <AICallNumbers
+          ownerType={ownerType}
+          ownerId={ownerId}
+          canEdit={canEdit}
+        />{" "}
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-3">
@@ -258,11 +272,12 @@ export function AICallingSettings({
           </Button>
         ) : (
           <p className="text-xs text-muted">
-            Only company admins can edit this.
+            Only{" "}
+            {ownerType === "company" ? "company admins" : "the account owner"}{" "}
+            can edit this
           </p>
         )}
       </div>
     </div>
   );
 }
-

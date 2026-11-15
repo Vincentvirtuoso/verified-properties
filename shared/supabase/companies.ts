@@ -18,6 +18,8 @@ export const PERMISSION_LABELS: Record<CompanyPermission, string> = {
   manage_listings: "Manage listings",
   manage_members: "Manage members",
   view_analytics: "View analytics",
+  manage_billing: "Manage billing",
+  manage_enquiries: "Manage enquiries",
 };
 
 export interface CompanyInvitation {
@@ -112,6 +114,7 @@ function toInviteError(error: {
 export function mapCompanyRow(row: any, members: any[] = []): Company {
   return {
     _id: row.id,
+    ownerId: row.owner_id,
     name: row.name,
     slug: row.slug,
     logo: row.logo ?? undefined,
@@ -373,4 +376,62 @@ export async function fetchTeamProfiles(
       },
     ]),
   );
+}
+
+export async function setCompanyBillingAccess(
+  companyId: string,
+  userId: string,
+  granted: boolean,
+) {
+  const { error } = await createClient().rpc("set_company_billing_access", {
+    p_company_id: companyId,
+    p_user_id: userId,
+    p_granted: granted,
+  });
+  if (error) throw toError(error);
+}
+
+export async function setCompanyEnquiryAccess(
+  companyId: string,
+  userId: string,
+  granted: boolean,
+) {
+  const { error } = await createClient().rpc("set_company_enquiry_access", {
+    p_company_id: companyId,
+    p_user_id: userId,
+    p_granted: granted,
+  });
+  if (error) throw toError(error);
+}
+
+export async function updateCompanyMemberPermissions(
+  companyId: string,
+  userId: string,
+  permissions: CompanyPermission[],
+): Promise<void> {
+  const { error } = await createClient().rpc("set_company_member_permissions", {
+    p_company_id: companyId,
+    p_user_id: userId,
+    p_permissions: permissions,
+  });
+  if (error) throw toError(error);
+}
+
+export async function updateCompanyMember(input: {
+  companyId: string;
+  userId: string;
+  role: InvitableRole;
+  permissions: CompanyPermission[];
+}): Promise<void> {
+  const permissions =
+    input.role === "admin" ? ALL_PERMISSIONS : input.permissions;
+
+  const { error } = await createClient().rpc("update_company_member", {
+    p_company_id: input.companyId,
+    p_user_id: input.userId,
+    p_role: input.role,
+    p_permissions: permissions,
+  });
+
+  if (error) throw toError(error);
 }

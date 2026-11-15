@@ -6,16 +6,21 @@ import type { Company, PopulatedProperty } from "@affilhomes/shared/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageSpinner } from "@affilhomes/shared/ui/Spinner";
 import { CompanyClient } from "./CompanyClient";
-import type { PublicCompanyAgent } from "@affilhomes/shared/supabase/publicDirectory";
+import type {
+  PublicCompanyAgent,
+  PublicFaq,
+} from "@affilhomes/shared/supabase/publicDirectory";
 
 export function CompanyPublicGate({
   company,
   agents,
   listings,
+  faqs,
 }: {
   company: Company;
   agents: PublicCompanyAgent[];
   listings: PopulatedProperty[];
+  faqs: PublicFaq[];
 }) {
   const { companies, isLoading } = useAuth();
   const router = useRouter();
@@ -32,6 +37,11 @@ export function CompanyPublicGate({
   if (isMember) return <PageSpinner label="Opening your company workspace" />;
 
   return (
-    <CompanyClient company={company} agents={agents} listings={listings} />
+    <CompanyClient
+      company={company}
+      agents={agents}
+      listings={listings}
+      faqs={faqs}
+    />
   );
 }

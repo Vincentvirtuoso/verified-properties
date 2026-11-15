@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
         label="New Password"
         name="password"
         type="password"
-        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+        placeholder="••••••••"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
@@ -71,7 +71,7 @@ const ResetPasswordPage = () => {
         label="Repeat Password"
         name="repeatPassword"
         type="password"
-        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+        placeholder="••••••••"
         value={repeatPassword}
         onChange={(e) => setRepeatPassword(e.target.value)}
         error={error}

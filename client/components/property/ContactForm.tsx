@@ -37,7 +37,6 @@ const enquirySchema = z.object({
     .max(2000, "Message is too long"),
 });
 
-
 export default function ContactForm({
   propertyId,
   propertyTitle,
