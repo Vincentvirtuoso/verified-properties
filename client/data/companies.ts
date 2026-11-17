@@ -20,6 +20,7 @@ export const mockCompanies: Company[] = [
         permissions: ["manage_listings", "manage_members", "view_analytics"],
       },
     ],
+    ownerId: "user_007",
     contactEmail: "info@skyline.com",
     contactPhone: "+2348000000001",
     activeListings: 15,
@@ -39,6 +40,8 @@ export const mockCompanies: Company[] = [
     logo: "/logos/green-acres.png",
     type: "real_estate_company",
     verificationStatus: "pending",
+    ownerId: "user_009",
+
     features: {
       whatsappNotifications: false,
       prioritySupport: false,
@@ -65,6 +68,8 @@ export const mockCompanies: Company[] = [
     slug: "apex-prime-heights",
     logo: "/logos/apex-prime.png",
     type: "developer",
+    ownerId: "user_008",
+
     verificationStatus: "verified",
     features: {
       whatsappNotifications: true,
@@ -108,7 +113,7 @@ export const mockCompanies: Company[] = [
       whatsappNotifications: true,
       prioritySupport: false,
     },
-
+ownerId:"user_008",
     onboardingDocs: { cacCertificateUrl: "" },
 
     team: [
@@ -148,6 +153,7 @@ export const mockCompanies: Company[] = [
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
+    ownerId: "user_011",
     team: [
       {
         userId: "user_011",
@@ -174,6 +180,7 @@ export const mockCompanies: Company[] = [
     },
     onboardingDocs: { cacCertificateUrl: "" },
 
+    ownerId: "user_012",
     team: [
       {
         userId: "user_012",
@@ -204,6 +211,7 @@ export const mockCompanies: Company[] = [
       prioritySupport: false,
     },
     onboardingDocs: { cacCertificateUrl: "" },
+    ownerId: "user_013",
     team: [
       {
         userId: "user_013",
