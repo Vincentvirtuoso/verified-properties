@@ -1,13 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export function normaliseNgNumber(input: string): string {
-  const digits = input.replace(/[\s\-()]/g, "");
-  if (/^0\d{10}$/.test(digits)) return "+234" + digits.slice(1);
-  if (/^234\d{10}$/.test(digits)) return "+" + digits;
-  if (/^\+234\d{10}$/.test(digits)) return digits;
-  throw new Error("invalid_ng_number");
-}
-
 export interface NumberProvider {
   describe(e164: string): { carrier: "mtn" | "other" };
 }

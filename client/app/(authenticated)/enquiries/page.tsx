@@ -14,7 +14,7 @@ import Link from "next/link";
 import { Alert } from "@affilhomes/shared/ui/Alert";
 
 export default function EnquiriesPage() {
-  const { user, isLoading, companies } = useAuth();
+  const { user, isLoading, companies, switchRole } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { bannerHeight } = useBannerHeightContext();
@@ -22,17 +22,13 @@ export default function EnquiriesPage() {
   useEffect(() => {
     const updateStickyTop = () => {
       const topOffset = 10 + bannerHeight;
-
       document.documentElement.style.setProperty(
         "--banner-navbar-height",
         `${topOffset}px`,
       );
     };
-
     updateStickyTop();
-
     window.addEventListener("resize", updateStickyTop);
-
     return () => {
       window.removeEventListener("resize", updateStickyTop);
     };
@@ -108,6 +104,20 @@ export default function EnquiriesPage() {
       )
     : false;
 
+  const handleRoleSwitch = useCallback(
+    async (targetRole: Role) => {
+      setSelectedId(null);
+      setEnquiries([]);
+      setListLoading(true);
+      try {
+        await switchRole(targetRole);
+      } catch {
+        await loadEnquiries();
+      }
+    },
+    [switchRole, loadEnquiries],
+  );
+
   if (isLoading || (user && listLoading)) {
     return <EnquiriesSkeleton />;
   }
@@ -147,6 +157,8 @@ export default function EnquiriesPage() {
           selectedId={selected?.id}
           onSelect={handleSelect}
           isAgentSide={isAgentSide}
+          isAgentOrViewer
+          onRoleSwitch={handleRoleSwitch}
         />
       </div>
 

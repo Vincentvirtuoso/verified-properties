@@ -4,15 +4,17 @@
   "workspaces": [
     "client",
     "admin",
+    "marketing",
     "shared"
   ],
   "allowScripts": {
     "unrs-resolver@1.12.2": true
   },
   "scripts": {
-    "dev": "concurrently -n client,admin -c red,yellow \"npm run dev -w client\" \"npm run dev -w admin\"",
+    "dev": "concurrently -n client,admin,marketing -c blue,green,yellow \"npm run dev -w client\" \"npm run dev -w admin\" \"npm run dev -w marketing\"",
     "dev:client": "npm run dev -w client",
-    "dev:admin": "npm run dev -w admin"
+    "dev:admin": "npm run dev -w admin",
+    "dev:marketing": "npm run dev -w marketing"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

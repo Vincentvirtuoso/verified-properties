@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@affilhomes/shared/supabase/client";
 import {
+  callRowToEvent,
+  EnquiryCallRow,
+  fetchEnquiryCall,
   fetchEnquiryMessages,
   fetchTeamEnquiryMessages,
   markEnquiryRead,
@@ -25,6 +28,7 @@ import {
 } from "@affilhomes/shared/supabase";
 import Select from "@affilhomes/shared/ui/Select";
 import { Skeleton } from "@affilhomes/shared/ui/Skeleton";
+import { AiCallCard } from "./AiCallCard";
 
 const STAGES: EnquiryStage[] = ["qualification", "selection", "inspection"];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -145,6 +149,8 @@ export function EnquiryThread({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<EnquiryStage>(enquiry.stage);
+  const [callRow, setCallRow] = useState<EnquiryCallRow | null>(null);
+
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
 
   const isClosed =
@@ -154,6 +160,13 @@ export function EnquiryThread({
     setStage(enquiry.stage);
   }, [enquiry.stage]);
 
+  const loadCall = useCallback(
+    () =>
+      fetchEnquiryCall(enquiry.id)
+        .then(setCallRow)
+        .catch(() => {}),
+    [enquiry.id],
+  );
   const loadThread = useCallback(
     () =>
       isTeammate
@@ -211,15 +224,23 @@ export function EnquiryThread({
   }, [loadThread, isTeammate]);
 
   useEffect(() => {
+    void loadCall();
+  }, [loadCall]);
+
+  useEffect(() => {
     if (!user) return;
     markEnquiryRead(enquiry.id, user._id).catch(() => {});
   }, [enquiry.id, user]);
 
-  const groupedEvents = useMemo(() => groupEvents(events), [events]);
-
   useEffect(() => {
     scrollAnchorRef.current?.scrollIntoView({ block: "end" });
   }, [events]);
+
+  const callEvent = useMemo(() => callRowToEvent(callRow), [callRow]);
+  const groupedEvents = useMemo(
+    () => groupEvents(callEvent ? [...events, callEvent] : events),
+    [events, callEvent],
+  );
 
   const handleSend = async (text: string): Promise<boolean> => {
     if (!text || !user || sending) return false;
@@ -356,7 +377,9 @@ export function EnquiryThread({
           )}
         </div>
       </div>
-
+      {!isAgentSide && !isTeammate && !readOnly && !isClosed && (
+        <AiCallCard enquiryId={enquiry.id} onChanged={loadCall} />
+      )}
       {isClosed || readOnly ? (
         <div className="shrink-0 border-t border-border bg-card px-4 py-3">
           <p className="text-center text-xs text-muted">

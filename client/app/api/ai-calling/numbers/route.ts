@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromServer } from "@affilhomes/shared/supabase/server";
-import {
-  normaliseNgNumber,
-  mockProvider,
-} from "@/server/services/aiCallNumbers";
+import { mockProvider } from "@/server/services/aiCallNumbers";
+import { normalizeNigerianPhone } from "@/utils";
 
 type OwnerType = "company" | "agent";
 
@@ -97,7 +95,8 @@ export async function POST(req: Request) {
 
   let e164: string;
   try {
-    e164 = normaliseNgNumber(body.number ?? "");
+    const phoneNumber = normalizeNigerianPhone(body.number ?? "");
+    e164 = phoneNumber ?? "";
   } catch {
     return NextResponse.json(
       { error: "Enter a valid Nigerian number, for example 0803 123 4567." },

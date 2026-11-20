@@ -5,11 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { createEnquiry } from "@affilhomes/shared/supabase";
+import {
+  createEnquiry,
+  findActiveEnquiry,
+} from "@affilhomes/shared/supabase/enquiries";
 import { motion } from "framer-motion";
 import { RiSendPlane2Line, RiCheckLine } from "react-icons/ri";
 import { LuPhoneCall } from "react-icons/lu";
 import { normalizeNigerianPhone } from "@/utils";
+import { AiCallCard } from "../enquiries/AiCallCard";
 
 interface ContactFormProps {
   propertyId: string;
@@ -60,6 +64,28 @@ export default function ContactForm({
     phone: null,
     message: `Hi, I'm interested in "${propertyTitle}". Please contact me.`,
   });
+  const callChannel = process.env.NEXT_PUBLIC_AI_CALL_CHANNEL ?? "off";
+  const [enquiryId, setEnquiryId] = useState<string | null>(null);
+  const [checkedFor, setCheckedFor] = useState<string | null>(null);
+  const checkKey = user?._id ? `${user._id}:${propertyId}` : null;
+  const checking = isLoading || (!!checkKey && checkedFor !== checkKey);
+
+  useEffect(() => {
+    if (!checkKey || !user?._id) return;
+    let cancelled = false;
+    findActiveEnquiry(propertyId, user._id)
+      .then((id) => {
+        if (!cancelled) setEnquiryId(id);
+      })
+      .catch(() => {}) // if the check fails, fall back to showing the form
+      .finally(() => {
+        if (!cancelled) setCheckedFor(checkKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkKey]);
 
   const [touched, setTouched] = useState({ name: false, phone: false });
 
@@ -115,7 +141,8 @@ export default function ContactForm({
 
     setSubmitting(true);
     try {
-      await createEnquiry({ propertyId, ...parsed.data });
+      const id = await createEnquiry({ propertyId, ...parsed.data });
+      setEnquiryId(id);
       setSentWithCall(willCall);
       setSent(true);
     } catch {
@@ -125,11 +152,16 @@ export default function ContactForm({
     }
   };
 
-  const subtitle = !emailVerified
-    ? "Verify your email to send an enquiry"
-    : willCall
-      ? "An assistant calls you back moments after you submit"
-      : "The agent will follow up by email";
+  const subtitle =
+    enquiryId && !sent
+      ? "You already have an enquiry open for this property"
+      : !emailVerified
+        ? "Verify your email to send an enquiry"
+        : willCall && callChannel === "browser"
+          ? "Talk to an AI assistant right after you submit"
+          : willCall && callChannel === "phone"
+            ? "An assistant calls you back moments after you submit"
+            : "The agent will follow up by email";
 
   return (
     <motion.div
@@ -151,22 +183,50 @@ export default function ContactForm({
           <p className="text-sm text-muted">
             This is your listing, so you can't enquire about it.
           </p>
+        ) : checking ? (
+          <div className="space-y-3" aria-busy="true">
+            <div className="h-4 w-2/3 animate-pulse rounded bg-muted/30" />
+            <div className="h-10 w-full animate-pulse rounded-xl bg-muted/30" />
+          </div>
         ) : sent ? (
           <div className="space-y-3 text-sm">
             <p className="flex items-center gap-2 font-semibold text-foreground">
               <RiCheckLine className="h-4 w-4 text-success" /> Enquiry sent
             </p>
             <p className="text-muted">
-              {sentWithCall
+              {sentWithCall && callChannel === "phone"
                 ? "An assistant will call you shortly. The agent has your message and number."
-                : "The agent has your message and will follow up by email."}
+                : sentWithCall && callChannel === "browser"
+                  ? "The agent has your message and number. You can talk to our AI assistant below."
+                  : "The agent has your message and will follow up by email."}
             </p>
+            {callChannel === "browser" && enquiryId && (
+              <AiCallCard enquiryId={enquiryId} />
+            )}
             {/* TODO: switch user to viewer when user sends enquiry and activeRole=agent */}
             <Link
               href="/enquiries"
               className="inline-block font-semibold text-primary hover:underline"
             >
               View my enquiries
+            </Link>
+          </div>
+        ) : enquiryId ? (
+          <div className="space-y-3 text-sm">
+            <p className="flex items-center gap-2 font-semibold text-foreground">
+              <RiCheckLine className="h-4 w-4 text-success" /> You've already
+              sent an enquiry
+            </p>
+            <p className="text-muted">
+              The agent has your message. Pick up the conversation where you
+              left off.
+            </p>
+            {callChannel === "browser" && <AiCallCard enquiryId={enquiryId} />}
+            <Link
+              href={`/enquiries?enquiry=${enquiryId}`}
+              className="flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Continue enquiry
             </Link>
           </div>
         ) : !emailVerified && user ? (

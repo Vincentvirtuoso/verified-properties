@@ -200,3 +200,99 @@ export async function createEnquiry(
   if (error) throw error;
   return data as string;
 }
+
+/** The buyer's active enquiry on a listing, if any (create_enquiry reuses it). */
+export async function findActiveEnquiry(
+  listingId: string,
+  viewerId: string,
+  client?: SupabaseClient,
+): Promise<string | null> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase
+    .from("inquiries")
+    .select("id")
+    .eq("listing_id", listingId)
+    .eq("viewer_id", viewerId)
+    .in("status", ["open", "in_progress"])
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0]?.id ?? null;
+}
+
+export type EnquiryCallRow = {
+  id: string;
+  inquiry_id: string;
+  status: "pending" | "skipped" | "in_progress" | "completed" | "failed";
+  skip_reason: string | null;
+  channel: "browser" | "phone" | null;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  summary: string | null;
+};
+
+export async function fetchEnquiryCall(
+  enquiryId: string,
+  client?: SupabaseClient,
+): Promise<EnquiryCallRow | null> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase
+    .from("enquiry_calls")
+    .select(
+      "id, inquiry_id, status, skip_reason, channel, started_at, ended_at, duration_seconds, summary",
+    )
+    .eq("inquiry_id", enquiryId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as EnquiryCallRow | null;
+}
+
+export class StartCallError extends Error {
+  constructor(
+    public code: string,
+    public status?: string | null,
+    public skipReason?: string | null,
+  ) {
+    super(code);
+  }
+}
+
+export async function startEnquiryCall(
+  enquiryId: string,
+  client?: SupabaseClient,
+): Promise<{ url: string; token: string; room: string }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.functions.invoke(
+    "start-enquiry-call",
+    { body: { enquiryId } },
+  );
+  if (error) {
+    let body: any = null;
+    try {
+      body = await (error as any).context?.json();
+    } catch {}
+    throw new StartCallError(
+      body?.error ?? "start_failed",
+      body?.status ?? null,
+      body?.skip_reason ?? null,
+    );
+  }
+  return data;
+}
+
+/** Turns a finished call row into a thread event for CallCard. */
+export function callRowToEvent(row: EnquiryCallRow | null): ThreadEvent | null {
+  if (!row || (row.status !== "completed" && row.status !== "failed")) {
+    return null;
+  }
+  return {
+    type: "call",
+    id: `call-${row.id}`,
+    caller: "assistant",
+    outcome: row.status === "completed" ? "answered" : "missed",
+    timestamp: new Date(row.started_at ?? row.ended_at ?? Date.now()),
+    durationSeconds: row.duration_seconds ?? 0,
+    summary: row.summary ?? undefined,
+  } as ThreadEvent;
+}
